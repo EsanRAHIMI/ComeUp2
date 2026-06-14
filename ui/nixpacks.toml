@@ -2,13 +2,13 @@
 NODE_ENV = "production"
 
 [phases.setup]
-nixPkgs = ["nodejs_22"]
+nixPkgs = ["nodejs_24"]
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = ["npm ci --omit=optional"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["npm run build", "npm prune --omit=dev --omit=optional"]
 
 [start]
 cmd = "npm run start"
