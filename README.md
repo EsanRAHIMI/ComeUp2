@@ -5,7 +5,6 @@ ComeUp is a gym workout companion with three deployable parts:
 - `ui`: Expo / React Native web app
 - `backend`: Fastify API for auth, MongoDB Atlas persistence, programs, sessions, progress, and AI proxy routes
 - `ai`: internal AI service for workout generation and recommendations
-- `mongo`: MongoDB database used by the backend in the Docker Compose deployment
 
 ## Services
 
@@ -95,21 +94,50 @@ docker compose up --build
 
 ## Dokploy Deployment
 
-Use the repository root as the Compose project path and deploy `docker-compose.yml`.
-Configure these environment variables in Dokploy before the first deployment:
+The hosted deployment uses three separate Dokploy services with the Nixpacks builder.
 
-- `MONGO_PASSWORD`
+### `ui` service
+
+- Root directory: `ui`
+- Builder: Nixpacks
+- Port: `3000`
+- Start command: handled by `ui/nixpacks.toml`
+
+### `backend` service
+
+- Root directory: `backend`
+- Builder: Nixpacks
+- Port: `4000`
+- Start command: handled by `backend/nixpacks.toml`
+
+Configure these environment variables:
+
+- `MONGODB_URI` with the MongoDB Atlas connection string
 - `JWT_SECRET`
-- `AI_SERVICE_TOKEN`
 - `CORS_ORIGIN`
+- `AI_SERVICE_URL` pointing to the deployed AI service URL
+- `AI_SERVICE_TOKEN`
+- `HOST=0.0.0.0`
 
-Optional port variables:
+### `ai` service
+
+- Root directory: `ai`
+- Builder: Nixpacks
+- Port: `4100`
+- Start command: handled by `ai/nixpacks.toml`
+
+Configure these environment variables:
+
+- `AI_SERVICE_TOKEN`, with the same value used by `backend`
+- `HOST=0.0.0.0`
+
+Optional port variables if Dokploy does not inject `PORT` automatically:
 
 - `UI_PORT` defaults to `3000`
 - `BACKEND_PORT` defaults to `4000`
 - `AI_PORT` defaults to `4100`
 
-Expose `ui` publicly for the web app and `backend` publicly only if the mobile app or external clients need direct API access. Keep `ai` and `mongo` private on the internal Docker network.
+Expose `ui` publicly for the web app and `backend` publicly only if the mobile app or external clients need direct API access. Keep `ai` private when Dokploy networking allows it.
 
 ## Production Notes
 

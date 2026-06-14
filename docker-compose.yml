@@ -29,18 +29,16 @@ services:
       NODE_ENV: production
       PORT: ${BACKEND_PORT:-4000}
       HOST: 0.0.0.0
-      MONGODB_URI: ${MONGODB_URI:-mongodb://comeup:${MONGO_PASSWORD:?Set MONGO_PASSWORD}@mongo:27017/comeup?authSource=admin}
+      MONGODB_URI: ${MONGODB_URI:?Set MONGODB_URI}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
-      AI_SERVICE_URL: http://ai:${AI_PORT:-4100}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai:${AI_PORT:-4100}}
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?Set AI_SERVICE_TOKEN}
     ports:
       - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
     depends_on:
       ai:
-        condition: service_healthy
-      mongo:
         condition: service_healthy
     healthcheck:
       test:
@@ -75,25 +73,3 @@ services:
       retries: 3
       start_period: 15s
     restart: unless-stopped
-
-  mongo:
-    image: mongo:7
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: comeup
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Set MONGO_PASSWORD}
-    volumes:
-      - mongo-data:/data/db
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mongosh --quiet --eval \"db.adminCommand('ping').ok\" mongodb://comeup:${MONGO_PASSWORD:?Set MONGO_PASSWORD}@127.0.0.1:27017/admin | grep 1",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    restart: unless-stopped
-
-volumes:
-  mongo-data:
