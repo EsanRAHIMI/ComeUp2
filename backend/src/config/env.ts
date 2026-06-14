@@ -15,7 +15,17 @@ const envSchema = z.object({
   AI_SERVICE_TOKEN: z.string().min(16),
 });
 
-export const env = envSchema.parse(process.env);
+const parsedEnv = envSchema.safeParse(process.env);
+
+if (!parsedEnv.success) {
+  console.error('Backend environment validation failed. Fix these Dokploy variables:');
+  for (const issue of parsedEnv.error.issues) {
+    console.error(`- ${issue.path.join('.') || 'ENV'}: ${issue.message}`);
+  }
+  process.exit(1);
+}
+
+export const env = parsedEnv.data;
 
 export const corsOrigins =
   env.CORS_ORIGIN === '*'
