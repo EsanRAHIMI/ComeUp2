@@ -1,0 +1,10 @@
+node_modules
+dist
+.expo
+web-build
+npm-debug.log
+.env
+.DS_Store
+ios/build
+android/.gradle
+android/app/build

@@ -2,9 +2,10 @@
 
 ComeUp is a gym workout companion with three deployable parts:
 
-- `ui`: Expo / React Native app
+- `ui`: Expo / React Native web app
 - `backend`: Fastify API for auth, MongoDB Atlas persistence, programs, sessions, progress, and AI proxy routes
 - `ai`: internal AI service for workout generation and recommendations
+- `mongo`: MongoDB database used by the backend in the Docker Compose deployment
 
 ## Services
 
@@ -87,8 +88,28 @@ cd ui && npm run dev
 Or with Docker:
 
 ```bash
+cp .env.example .env
+# Edit .env and replace every secret before deploying.
 docker compose up --build
 ```
+
+## Dokploy Deployment
+
+Use the repository root as the Compose project path and deploy `docker-compose.yml`.
+Configure these environment variables in Dokploy before the first deployment:
+
+- `MONGO_PASSWORD`
+- `JWT_SECRET`
+- `AI_SERVICE_TOKEN`
+- `CORS_ORIGIN`
+
+Optional port variables:
+
+- `UI_PORT` defaults to `3000`
+- `BACKEND_PORT` defaults to `4000`
+- `AI_PORT` defaults to `4100`
+
+Expose `ui` publicly for the web app and `backend` publicly only if the mobile app or external clients need direct API access. Keep `ai` and `mongo` private on the internal Docker network.
 
 ## Production Notes
 
@@ -96,5 +117,5 @@ docker compose up --build
 - Keep `ai` private on the same network as backend.
 - Use a long random `JWT_SECRET`.
 - Use a long random shared `AI_SERVICE_TOKEN`.
-- In MongoDB Atlas, restrict network access to deployment IPs.
+- If using MongoDB Atlas instead of the bundled MongoDB service, set `MONGODB_URI` in Dokploy and restrict Atlas network access to deployment IPs.
 - The current AI service is deterministic and production-safe for MVP recommendations. Real LLM or pose-analysis providers can be added behind the same `ai` service contract later.
