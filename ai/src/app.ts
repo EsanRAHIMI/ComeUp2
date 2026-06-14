@@ -14,7 +14,7 @@ export async function buildApp() {
   await app.register(cors, { origin: false });
 
   app.addHook('preHandler', async (request, reply) => {
-    if (request.url === '/health') return;
+    if (request.url === '/health' || request.url === '/ai/health') return;
     const token = request.headers.authorization?.replace(/^Bearer\s+/i, '');
     if (token !== env.AI_SERVICE_TOKEN) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -24,6 +24,9 @@ export async function buildApp() {
   await app.register(healthRoutes);
   await app.register(workoutRoutes);
   await app.register(recommendationRoutes);
+  await app.register(healthRoutes, { prefix: '/ai' });
+  await app.register(workoutRoutes, { prefix: '/ai' });
+  await app.register(recommendationRoutes, { prefix: '/ai' });
 
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof ZodError) {

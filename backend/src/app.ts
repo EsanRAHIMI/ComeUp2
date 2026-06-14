@@ -21,6 +21,7 @@ export async function buildApp() {
   await app.register(authPlugin);
 
   await app.register(healthRoutes);
+  await app.register(healthRoutes, { prefix: '/api' });
   await app.register(authRoutes, { prefix: '/api/v1' });
   await app.register(profileRoutes, { prefix: '/api/v1' });
   await app.register(programRoutes, { prefix: '/api/v1' });

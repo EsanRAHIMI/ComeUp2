@@ -100,8 +100,8 @@ Configure these environment variables:
 
 - `MONGODB_URI` with the MongoDB Atlas connection string
 - `JWT_SECRET`
-- `CORS_ORIGIN`
-- `AI_SERVICE_URL` pointing to the deployed AI service URL
+- `CORS_ORIGIN=https://gym.najahai.com`
+- `AI_SERVICE_URL=https://gym.najahai.com/ai`
 - `AI_SERVICE_TOKEN`
 - `HOST=0.0.0.0`
 

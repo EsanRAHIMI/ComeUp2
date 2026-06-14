@@ -74,6 +74,14 @@ type ViewKey = 'dashboard' | 'programs' | 'workout' | 'profile';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? 'http://localhost:4000';
 
+function buildApiUrl(path: string) {
+  const baseUrl = new URL(API_BASE_URL, window.location.origin);
+  const basePath = baseUrl.pathname.replace(/\/$/, '');
+  const requestPath = basePath.endsWith('/api') && path.startsWith('/api/') ? path.slice('/api'.length) : path;
+  baseUrl.pathname = `${basePath}${requestPath}`.replace(/\/{2,}/g, '/');
+  return baseUrl.toString();
+}
+
 const demoPrograms: Program[] = [
   {
     _id: 'demo-strength',
@@ -156,7 +164,7 @@ const demoUser: User = {
 };
 
 async function apiRequest<T>(path: string, token: string | null, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     ...options,
     headers: {
       'content-type': 'application/json',
