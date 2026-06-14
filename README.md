@@ -79,22 +79,24 @@ docker compose up --build
 
 ## Dokploy Deployment
 
-The hosted deployment uses three separate Dokploy services with the Nixpacks builder.
+The hosted deployment uses three separate Dokploy services. Prefer the Dockerfile builder for production deployments. Nixpacks works, but it can spend several minutes downloading and preparing the Nix toolchain before the real app build starts.
 
 ### `ui` service
 
 - Root directory: `ui`
-- Builder: Nixpacks
-- Port: `3000`
-- Start command: handled by `ui/nixpacks.toml`
+- Builder: Dockerfile
+- Dockerfile path: `Dockerfile`
+- Port: `80`
 - Optional env: `VITE_API_URL=https://gym.najahai.com/api`
+
+The UI is built once with Vite and served as static files by Nginx. This is faster and smaller than running a Node server for the web app.
 
 ### `backend` service
 
 - Root directory: `backend`
-- Builder: Nixpacks
+- Builder: Dockerfile
+- Dockerfile path: `Dockerfile`
 - Port: `4000`
-- Start command: handled by `backend/nixpacks.toml`
 
 Configure these environment variables:
 
@@ -108,9 +110,9 @@ Configure these environment variables:
 ### `ai` service
 
 - Root directory: `ai`
-- Builder: Nixpacks
+- Builder: Dockerfile
+- Dockerfile path: `Dockerfile`
 - Port: `4100`
-- Start command: handled by `ai/nixpacks.toml`
 
 Configure these environment variables:
 
@@ -124,6 +126,8 @@ Optional port variables if Dokploy does not inject `PORT` automatically:
 - `AI_PORT` defaults to `4100`
 
 Expose `ui` publicly for the web app and `backend` publicly only if the mobile app or external clients need direct API access. Keep `ai` private when Dokploy networking allows it.
+
+If a service must stay on Nixpacks, keep the matching `nixpacks.toml` file. For faster deploys, switch all three services to Dockerfile in Dokploy.
 
 ## Production Notes
 
