@@ -51,6 +51,8 @@ type Exercise = {
   muscleGroups: string[];
   difficulty?: Difficulty;
   equipment?: string[];
+  thumbnailUrl?: string;
+  videoUrl?: string;
   category?: 'Strength' | 'Cardio' | 'Flexibility' | 'Balance';
   trackingType?: 'reps' | 'time';
 };
@@ -88,6 +90,12 @@ type Program = {
     focus?: string;
     exerciseNames: string[];
   }>;
+};
+
+type ExerciseMedia = {
+  exerciseKey: string;
+  exerciseName: string;
+  imageUrl: string;
 };
 
 type AuthMode = 'login' | 'register';
@@ -128,6 +136,31 @@ function formatSessionDate(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value));
+}
+
+function exerciseKey(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]+/g, '-').replace(/^-|-$/g, '');
+}
+
+const fallbackExerciseImages = {
+  chest: 'https://images.unsplash.com/photo-1571019613914-85f342c6a11e?auto=format&fit=crop&w=900&q=80',
+  legs: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?auto=format&fit=crop&w=900&q=80',
+  back: 'https://images.unsplash.com/photo-1534367610401-9f5ed68180aa?auto=format&fit=crop&w=900&q=80',
+  shoulders: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=900&q=80',
+  arms: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=900&q=80',
+  cardio: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=900&q=80',
+  default: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=80',
+};
+
+function defaultExerciseImage(exercise: Exercise) {
+  const text = `${exercise.name} ${exercise.muscleGroups.join(' ')}`.toLowerCase();
+  if (/chest|press|fly|سینه/.test(text)) return fallbackExerciseImages.chest;
+  if (/leg|quad|squat|lunge|calf|ران|پا|ساق|glute|hamstring/.test(text)) return fallbackExerciseImages.legs;
+  if (/back|row|pulldown|lat|لت|زیربغل/.test(text)) return fallbackExerciseImages.back;
+  if (/shoulder|delt|سرشانه/.test(text)) return fallbackExerciseImages.shoulders;
+  if (/curl|biceps|triceps|بازو/.test(text)) return fallbackExerciseImages.arms;
+  if (/cardio|treadmill|run|walk/.test(text)) return fallbackExerciseImages.cardio;
+  return exercise.thumbnailUrl || fallbackExerciseImages.default;
 }
 
 const demoPrograms: Program[] = [
@@ -256,6 +289,7 @@ function App() {
   const [coachWeeks, setCoachWeeks] = useState(12);
   const [coachSessionDuration, setCoachSessionDuration] = useState(75);
   const [nowMs] = useState(() => Date.now());
+  const [exerciseMedia, setExerciseMedia] = useState<Record<string, string>>({});
 
   const currentUser = user ?? demoUser;
   const activeProgram = programs.find((program) => program.isActive) ?? programs[0] ?? null;
@@ -298,6 +332,25 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const savedToken = localStorage.getItem('comeup_token');
+    if (!savedToken) return;
+
+    let isCancelled = false;
+    apiRequest<{ media: ExerciseMedia[] }>('/api/v1/exercise-media', savedToken)
+      .then((result) => {
+        if (isCancelled) return;
+        setExerciseMedia(
+          Object.fromEntries(result.media.map((item) => [item.exerciseKey, item.imageUrl])),
+        );
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   async function handleAuth(mode: AuthMode, formData: FormData) {
     setIsBusy(true);
     setStatus(mode === 'login' ? 'Signing in...' : 'Creating account...');
@@ -329,6 +382,7 @@ function App() {
       setUser(result.user);
       setStatus('Connected to backend');
       await refreshPrograms(result.token);
+      await refreshExerciseMedia(result.token);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Authentication failed');
     } finally {
@@ -353,6 +407,27 @@ function App() {
     } finally {
       setIsBusy(false);
     }
+  }
+
+  async function refreshExerciseMedia(authToken = token) {
+    if (!authToken) return;
+    const result = await apiRequest<{ media: ExerciseMedia[] }>('/api/v1/exercise-media', authToken);
+    setExerciseMedia(Object.fromEntries(result.media.map((item) => [item.exerciseKey, item.imageUrl])));
+  }
+
+  async function saveExerciseImage(exercise: Exercise, imageUrl: string) {
+    if (!token) {
+      setExerciseMedia((current) => ({ ...current, [exerciseKey(exercise.name)]: imageUrl }));
+      setStatus('Image updated for this device');
+      return;
+    }
+
+    const result = await apiRequest<{ media: ExerciseMedia }>('/api/v1/exercise-media', token, {
+      method: 'PUT',
+      body: JSON.stringify({ exerciseName: exercise.name, imageUrl }),
+    });
+    setExerciseMedia((current) => ({ ...current, [result.media.exerciseKey]: result.media.imageUrl }));
+    setStatus('Exercise image saved');
   }
 
   async function generateProgram() {
@@ -504,6 +579,7 @@ function App() {
     setToken(null);
     setUser(null);
     setPrograms(demoPrograms);
+    setExerciseMedia({});
     setStatus('Signed out. Demo mode active.');
     setActiveView('dashboard');
   }
@@ -604,7 +680,15 @@ function App() {
           />
         ) : null}
 
-        {activeView === 'workout' ? <WorkoutView program={activeProgram} onGenerate={generateProgram} nowMs={nowMs} /> : null}
+        {activeView === 'workout' ? (
+          <WorkoutView
+            program={activeProgram}
+            onGenerate={generateProgram}
+            nowMs={nowMs}
+            exerciseMedia={exerciseMedia}
+            onSaveExerciseImage={saveExerciseImage}
+          />
+        ) : null}
 
         {activeView === 'profile' ? <ProfileView user={currentUser} apiUrl={API_BASE_URL} /> : null}
       </main>
@@ -991,10 +1075,24 @@ function ProgramsView({
   );
 }
 
-function WorkoutView({ program, onGenerate, nowMs }: { program: Program | null; onGenerate: () => void; nowMs: number }) {
+function WorkoutView({
+  program,
+  onGenerate,
+  nowMs,
+  exerciseMedia,
+  onSaveExerciseImage,
+}: {
+  program: Program | null;
+  onGenerate: () => void;
+  nowMs: number;
+  exerciseMedia: Record<string, string>;
+  onSaveExerciseImage: (exercise: Exercise, imageUrl: string) => Promise<void>;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({});
   const [restRemaining, setRestRemaining] = useState(0);
+  const [imageDraft, setImageDraft] = useState('');
+  const [isEditingImage, setIsEditingImage] = useState(false);
 
   useEffect(() => {
     if (!restRemaining) return;
@@ -1022,15 +1120,16 @@ function WorkoutView({ program, onGenerate, nowMs }: { program: Program | null; 
     : program.exercises;
   const exercises = sessionExercises.length ? sessionExercises : program.exercises;
   const current = exercises[currentIndex] ?? exercises[0];
-  const exerciseKey = current._id ?? `${current.name}-${currentIndex}`;
+  const exerciseId = current._id ?? `${current.name}-${currentIndex}`;
+  const currentImageUrl = exerciseMedia[exerciseKey(current.name)] || current.thumbnailUrl || defaultExerciseImage(current);
   const totalSets = exercises.reduce((sum, exercise) => sum + exercise.sets, 0);
   const completedCount = Object.values(completedSets).filter(Boolean).length;
   const progress = totalSets ? Math.round((completedCount / totalSets) * 100) : 0;
-  const setKeys = Array.from({ length: current.sets }, (_, index) => `${exerciseKey}-${index + 1}`);
+  const setKeys = Array.from({ length: current.sets }, (_, index) => `${exerciseId}-${index + 1}`);
   const currentSetDone = setKeys.filter((key) => completedSets[key]).length;
 
   function toggleSet(index: number) {
-    const key = `${exerciseKey}-${index + 1}`;
+    const key = `${exerciseId}-${index + 1}`;
     setCompletedSets((currentSets) => ({ ...currentSets, [key]: !currentSets[key] }));
     setRestRemaining(current.restTime);
   }
@@ -1038,6 +1137,8 @@ function WorkoutView({ program, onGenerate, nowMs }: { program: Program | null; 
   function moveExercise(direction: 1 | -1) {
     setCurrentIndex((value) => Math.min(Math.max(value + direction, 0), exercises.length - 1));
     setRestRemaining(0);
+    setIsEditingImage(false);
+    setImageDraft('');
   }
 
   return (
@@ -1056,6 +1157,39 @@ function WorkoutView({ program, onGenerate, nowMs }: { program: Program | null; 
         </div>
 
         <article className="active-exercise">
+          <div className="exercise-visual">
+            <img src={currentImageUrl} alt={current.name} />
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => {
+                setImageDraft(currentImageUrl);
+                setIsEditingImage((value) => !value);
+              }}
+            >
+              Replace image
+            </button>
+          </div>
+          {isEditingImage ? (
+            <div className="image-editor">
+              <input
+                value={imageDraft}
+                onChange={(event) => setImageDraft(event.target.value)}
+                placeholder="Paste image URL"
+              />
+              <button
+                className="primary-button"
+                type="button"
+                onClick={async () => {
+                  await onSaveExerciseImage(current, imageDraft);
+                  setIsEditingImage(false);
+                }}
+                disabled={!/^https?:\/\/.+/i.test(imageDraft)}
+              >
+                Save image
+              </button>
+            </div>
+          ) : null}
           <div className="section-heading">
             <div>
               <p className="eyebrow">Exercise {currentIndex + 1} of {exercises.length}</p>
