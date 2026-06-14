@@ -4,7 +4,7 @@ import { env } from './config/env.js';
 const app = await buildApp();
 
 try {
-  await app.listen({ port: env.PORT, host: env.HOST });
+  await app.listen({ port: env.PORT, host: env.BIND_HOST });
 } catch (error) {
   app.log.error(error);
   process.exit(1);

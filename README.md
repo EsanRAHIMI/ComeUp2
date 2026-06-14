@@ -103,7 +103,7 @@ Configure these environment variables:
 - `CORS_ORIGIN=https://gym.najahai.com`
 - `AI_SERVICE_URL=https://gym.najahai.com/ai`
 - `AI_SERVICE_TOKEN`
-- `HOST=0.0.0.0`
+- `BIND_HOST=0.0.0.0`
 
 ### `ai` service
 
@@ -115,7 +115,7 @@ Configure these environment variables:
 Configure these environment variables:
 
 - `AI_SERVICE_TOKEN`, with the same value used by `backend`
-- `HOST=0.0.0.0`
+- `BIND_HOST=0.0.0.0`
 
 Optional port variables if Dokploy does not inject `PORT` automatically:
 

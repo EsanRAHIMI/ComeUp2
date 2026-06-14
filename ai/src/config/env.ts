@@ -7,6 +7,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(4100),
   HOST: z.string().default('0.0.0.0'),
+  BIND_HOST: z.string().default('0.0.0.0'),
   AI_SERVICE_TOKEN: z.string().min(16),
 });
 
