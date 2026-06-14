@@ -169,13 +169,17 @@ const demoUser: User = {
 };
 
 async function apiRequest<T>(path: string, token: string | null, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (options.body !== undefined && !headers.has('content-type')) {
+    headers.set('content-type', 'application/json');
+  }
+  if (token) {
+    headers.set('authorization', `Bearer ${token}`);
+  }
+
   const response = await fetch(buildApiUrl(path), {
     ...options,
-    headers: {
-      'content-type': 'application/json',
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
+    headers,
   });
 
   const text = await response.text();
