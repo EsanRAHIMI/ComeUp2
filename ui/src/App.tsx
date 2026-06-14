@@ -72,7 +72,8 @@ type Program = {
 type AuthMode = 'login' | 'register';
 type ViewKey = 'dashboard' | 'programs' | 'workout' | 'profile';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? 'http://localhost:4000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? (import.meta.env.DEV ? 'http://localhost:4000' : '/api');
 
 function buildApiUrl(path: string) {
   const baseUrl = new URL(API_BASE_URL, window.location.origin);
