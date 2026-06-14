@@ -2,7 +2,7 @@
 
 ComeUp is a gym workout companion with three deployable parts:
 
-- `ui`: Expo / React Native web app
+- `ui`: Vite / React web app
 - `backend`: Fastify API for auth, MongoDB Atlas persistence, programs, sessions, progress, and AI proxy routes
 - `ai`: internal AI service for workout generation and recommendations
 
@@ -61,21 +61,6 @@ cd ../ai && npm install && npm run build
 cd ../ui && npm install && npm run build
 ```
 
-For mobile camera rep counting, use Node `22.13.0` or another React Native supported version:
-
-```bash
-nvm use
-```
-
-The workout camera uses native VisionCamera/Worklets/TFLite dependencies, so it requires an Expo development build:
-
-```bash
-cd ui
-npx expo prebuild --clean
-npx expo run:ios
-npx expo run:android
-```
-
 Run services:
 
 ```bash
@@ -102,6 +87,7 @@ The hosted deployment uses three separate Dokploy services with the Nixpacks bui
 - Builder: Nixpacks
 - Port: `3000`
 - Start command: handled by `ui/nixpacks.toml`
+- Optional env: `VITE_API_URL=https://gym.najahai.com/api`
 
 ### `backend` service
 
