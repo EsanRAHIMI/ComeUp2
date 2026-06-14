@@ -409,6 +409,30 @@ button:disabled {
   background: #ffffff;
 }
 
+.empty-state {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  min-height: 260px;
+  padding: 28px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.empty-state svg {
+  color: #f97316;
+}
+
+.empty-state h2 {
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  max-width: 560px;
+  color: #64748b;
+}
+
 .program-card-header {
   display: flex;
   justify-content: space-between;

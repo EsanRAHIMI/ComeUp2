@@ -24,7 +24,7 @@ import {
   UserRound,
   Zap,
 } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 
 type Goal = 'Weight Loss' | 'Muscle Gain' | 'General Fitness' | 'Strength';
 type FitnessLevel = 'Beginner' | 'Intermediate' | 'Advanced';
@@ -81,6 +81,10 @@ function buildApiUrl(path: string) {
   const requestPath = basePath.endsWith('/api') && path.startsWith('/api/') ? path.slice('/api'.length) : path;
   baseUrl.pathname = `${basePath}${requestPath}`.replace(/\/{2,}/g, '/');
   return baseUrl.toString();
+}
+
+function getPersistedProgramId(program: Program) {
+  return typeof program._id === 'string' && /^[a-f\d]{24}$/i.test(program._id) ? program._id : null;
 }
 
 const demoPrograms: Program[] = [
@@ -190,14 +194,18 @@ function App() {
     const saved = localStorage.getItem('comeup_user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [programs, setPrograms] = useState<Program[]>(demoPrograms);
+  const [programs, setPrograms] = useState<Program[]>(() =>
+    localStorage.getItem('comeup_token') ? [] : demoPrograms,
+  );
   const [activeView, setActiveView] = useState<ViewKey>('dashboard');
-  const [status, setStatus] = useState('Ready');
-  const [isBusy, setIsBusy] = useState(false);
+  const [status, setStatus] = useState(() =>
+    localStorage.getItem('comeup_token') ? 'Syncing programs...' : 'Ready',
+  );
+  const [isBusy, setIsBusy] = useState(() => Boolean(localStorage.getItem('comeup_token')));
   const [searchTerm, setSearchTerm] = useState('');
 
   const currentUser = user ?? demoUser;
-  const activeProgram = programs.find((program) => program.isActive) ?? programs[0];
+  const activeProgram = programs.find((program) => program.isActive) ?? programs[0] ?? null;
 
   const metrics = useMemo(() => {
     const totalExercises = programs.reduce((sum, program) => sum + program.exercises.length, 0);
@@ -211,6 +219,30 @@ function App() {
       weeklyCalories,
     };
   }, [programs]);
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem('comeup_token');
+    if (!savedToken) return;
+
+    let isCancelled = false;
+    apiRequest<{ programs: Program[] }>('/api/v1/programs', savedToken)
+      .then((result) => {
+        if (isCancelled) return;
+        setPrograms(result.programs);
+        setStatus(result.programs.length ? 'Programs synced' : 'No saved programs yet');
+      })
+      .catch((error: unknown) => {
+        if (isCancelled) return;
+        setStatus(error instanceof Error ? error.message : 'Could not sync programs');
+      })
+      .finally(() => {
+        if (!isCancelled) setIsBusy(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   async function handleAuth(mode: AuthMode, formData: FormData) {
     setIsBusy(true);
@@ -260,8 +292,8 @@ function App() {
     setStatus('Syncing programs...');
     try {
       const result = await apiRequest<{ programs: Program[] }>('/api/v1/programs', authToken);
-      setPrograms(result.programs.length ? result.programs : demoPrograms);
-      setStatus('Programs synced');
+      setPrograms(result.programs);
+      setStatus(result.programs.length ? 'Programs synced' : 'No saved programs yet');
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Could not sync programs');
     } finally {
@@ -319,15 +351,22 @@ function App() {
   }
 
   async function activateProgram(program: Program) {
-    if (!token || !program._id) {
-      setPrograms((current) => current.map((item) => ({ ...item, isActive: item._id === program._id })));
+    const programId = getPersistedProgramId(program);
+
+    if (!token) {
+      setPrograms((current) => current.map((item) => ({ ...item, isActive: item === program })));
+      return;
+    }
+
+    if (!programId) {
+      setStatus('Generate a saved program before activating it');
       return;
     }
 
     setIsBusy(true);
     setStatus('Activating program...');
     try {
-      const result = await apiRequest<{ program: Program }>(`/api/v1/programs/${program._id}/activate`, token, {
+      const result = await apiRequest<{ program: Program }>(`/api/v1/programs/${programId}/activate`, token, {
         method: 'POST',
       });
       setPrograms((current) =>
@@ -342,8 +381,15 @@ function App() {
   }
 
   async function shareProgram(program: Program) {
-    if (!token || !program._id) {
+    const programId = getPersistedProgramId(program);
+
+    if (!token) {
       setStatus('Sign in to create a real share code');
+      return;
+    }
+
+    if (!programId) {
+      setStatus('Generate a saved program before sharing it');
       return;
     }
 
@@ -351,7 +397,7 @@ function App() {
     setStatus('Creating share code...');
     try {
       const result = await apiRequest<{ shareCode: string; program: Program }>(
-        `/api/v1/programs/${program._id}/share`,
+        `/api/v1/programs/${programId}/share`,
         token,
         { method: 'POST' },
       );
@@ -455,10 +501,11 @@ function App() {
             onShare={shareProgram}
             onGenerate={generateProgram}
             isBusy={isBusy}
+            isSignedIn={Boolean(token)}
           />
         ) : null}
 
-        {activeView === 'workout' ? <WorkoutView program={activeProgram} /> : null}
+        {activeView === 'workout' ? <WorkoutView program={activeProgram} onGenerate={generateProgram} /> : null}
 
         {activeView === 'profile' ? <ProfileView user={currentUser} apiUrl={API_BASE_URL} /> : null}
       </main>
@@ -548,7 +595,7 @@ function Dashboard({
 }: {
   user: User;
   metrics: { totalPrograms: number; totalExercises: number; weeklyMinutes: number; weeklyCalories: number };
-  activeProgram: Program;
+  activeProgram: Program | null;
   onGenerate: () => void;
   onOpenPrograms: () => void;
 }) {
@@ -559,8 +606,9 @@ function Dashboard({
           <p className="eyebrow">Today</p>
           <h2>Train with a plan that adapts around {user.goal.toLowerCase()}.</h2>
           <p>
-            Your active program is ready with {activeProgram.exercises.length} exercises, {activeProgram.duration} minutes,
-            and recovery-aware pacing.
+            {activeProgram
+              ? `Your active program is ready with ${activeProgram.exercises.length} exercises, ${activeProgram.duration} minutes, and recovery-aware pacing.`
+              : 'Generate your first saved program to start tracking a real training plan.'}
           </p>
           <div className="button-row">
             <button className="primary-button" onClick={onGenerate}>
@@ -590,7 +638,16 @@ function Dashboard({
         <Metric icon={Flame} label="Weekly calories" value={metrics.weeklyCalories} />
       </div>
 
-      <ProgramDetail program={activeProgram} />
+      {activeProgram ? (
+        <ProgramDetail program={activeProgram} />
+      ) : (
+        <EmptyState
+          title="No active program yet"
+          description="Create an AI program and it will appear here with its exercises, weekly load, and workout flow."
+          actionLabel="Generate program"
+          onAction={onGenerate}
+        />
+      )}
     </section>
   );
 }
@@ -614,6 +671,7 @@ function ProgramsView({
   onShare,
   onGenerate,
   isBusy,
+  isSignedIn,
 }: {
   programs: Program[];
   searchTerm: string;
@@ -623,6 +681,7 @@ function ProgramsView({
   onShare: (program: Program) => void;
   onGenerate: () => void;
   isBusy: boolean;
+  isSignedIn: boolean;
 }) {
   return (
     <section className="stack">
@@ -641,53 +700,83 @@ function ProgramsView({
         </button>
       </div>
 
-      <div className="program-grid">
-        {programs.map((program) => (
-          <article className="program-card" key={program._id ?? program.id ?? program.name}>
-            <div className="program-card-header">
-              <div>
-                <span className={`difficulty ${program.difficulty.toLowerCase()}`}>{program.difficulty}</span>
-                <h3>{program.name}</h3>
-              </div>
-              {program.isActive ? <span className="active-badge">Active</span> : null}
-            </div>
-            <p>{program.description}</p>
-            <div className="program-stats">
-              <span>
-                <Clock3 size={15} />
-                {program.duration} min
-              </span>
-              <span>
-                <CalendarDays size={15} />
-                {program.daysPerWeek} days/wk
-              </span>
-              <span>
-                <Flame size={15} />
-                {program.totalCalories} cal
-              </span>
-            </div>
-            <div className="tag-row">
-              {program.tags.slice(0, 4).map((tag) => (
-                <span key={tag}>{tag}</span>
-              ))}
-            </div>
-            <div className="button-row compact">
-              <button className="secondary-button" onClick={() => onActivate(program)}>
-                Activate
-              </button>
-              <button className="icon-button" onClick={() => onShare(program)} aria-label="Share program">
-                <Share2 size={17} />
-              </button>
-            </div>
-          </article>
-        ))}
-      </div>
+      {programs.length ? (
+        <div className="program-grid">
+          {programs.map((program) => {
+            const isPersisted = Boolean(getPersistedProgramId(program));
+            const lockRealAction = isSignedIn && !isPersisted;
+            return (
+              <article className="program-card" key={program._id ?? program.id ?? program.name}>
+                <div className="program-card-header">
+                  <div>
+                    <span className={`difficulty ${program.difficulty.toLowerCase()}`}>{program.difficulty}</span>
+                    <h3>{program.name}</h3>
+                  </div>
+                  {program.isActive ? <span className="active-badge">Active</span> : null}
+                </div>
+                <p>{program.description}</p>
+                <div className="program-stats">
+                  <span>
+                    <Clock3 size={15} />
+                    {program.duration} min
+                  </span>
+                  <span>
+                    <CalendarDays size={15} />
+                    {program.daysPerWeek} days/wk
+                  </span>
+                  <span>
+                    <Flame size={15} />
+                    {program.totalCalories} cal
+                  </span>
+                </div>
+                <div className="tag-row">
+                  {program.tags.slice(0, 4).map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
+                </div>
+                <div className="button-row compact">
+                  <button className="secondary-button" onClick={() => onActivate(program)} disabled={isBusy || lockRealAction}>
+                    Activate
+                  </button>
+                  <button
+                    className="icon-button"
+                    onClick={() => onShare(program)}
+                    disabled={isBusy || lockRealAction}
+                    aria-label="Share program"
+                  >
+                    <Share2 size={17} />
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <EmptyState
+          title="No programs saved"
+          description="Generate a program to save it in Atlas, activate it, and create share codes."
+          actionLabel="Generate AI program"
+          onAction={onGenerate}
+        />
+      )}
     </section>
   );
 }
 
-function WorkoutView({ program }: { program: Program }) {
+function WorkoutView({ program, onGenerate }: { program: Program | null; onGenerate: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!program) {
+    return (
+      <EmptyState
+        title="No workout loaded"
+        description="Generate and activate a saved program before starting a workout session."
+        actionLabel="Generate program"
+        onAction={onGenerate}
+      />
+    );
+  }
+
   const current = program.exercises[currentIndex] ?? program.exercises[0];
 
   return (
@@ -713,6 +802,32 @@ function WorkoutView({ program }: { program: Program }) {
       </div>
       <ProgramDetail program={program} />
     </section>
+  );
+}
+
+function EmptyState({
+  title,
+  description,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  description: string;
+  actionLabel: string;
+  onAction: () => void;
+}) {
+  return (
+    <article className="empty-state">
+      <Sparkles size={22} />
+      <div>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <button className="primary-button" onClick={onAction}>
+        <Plus size={18} />
+        {actionLabel}
+      </button>
+    </article>
   );
 }
 
