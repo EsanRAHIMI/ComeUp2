@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { Program } from '../models/Program.js';
+import { coachPlanImportSchema, parseCoachPlan } from '../services/coachPlanParser.js';
 import { createShareCode } from '../services/shareCodes.js';
 import { objectIdSchema, parseBody, programInputSchema } from '../utils/schemas.js';
 
@@ -14,6 +15,18 @@ export const programRoutes: FastifyPluginAsync = async (app) => {
   app.post('/programs', { preHandler: [app.authenticate] }, async (request, reply) => {
     const input = parseBody(programInputSchema, request.body);
     const program = await Program.create({ ...input, ownerId: request.user.sub });
+    return reply.code(201).send({ program });
+  });
+
+  app.post('/programs/import-coach-plan', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const rawInput = parseBody(coachPlanImportSchema, request.body);
+    const input = {
+      ...rawInput,
+      weeks: rawInput.weeks ?? 12,
+      sessionDuration: rawInput.sessionDuration ?? 75,
+    };
+    const parsed = parseCoachPlan(input);
+    const program = await Program.create({ ...parsed, ownerId: request.user.sub });
     return reply.code(201).send({ program });
   });
 
