@@ -120,6 +120,16 @@ function nextScheduledSession(program: Program | null, now: number) {
   );
 }
 
+function formatSessionDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
 const demoPrograms: Program[] = [
   {
     _id: 'demo-strength',
@@ -983,6 +993,16 @@ function ProgramsView({
 
 function WorkoutView({ program, onGenerate, nowMs }: { program: Program | null; onGenerate: () => void; nowMs: number }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({});
+  const [restRemaining, setRestRemaining] = useState(0);
+
+  useEffect(() => {
+    if (!restRemaining) return;
+    const timer = window.setInterval(() => {
+      setRestRemaining((value) => Math.max(0, value - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [restRemaining]);
 
   if (!program) {
     return (
@@ -995,30 +1015,128 @@ function WorkoutView({ program, onGenerate, nowMs }: { program: Program | null; 
     );
   }
 
-  const current = program.exercises[currentIndex] ?? program.exercises[0];
+  const scheduledSession = nextScheduledSession(program, nowMs);
+  const scheduledNames = scheduledSession?.exerciseNames.map((name) => name.toLowerCase()) ?? [];
+  const sessionExercises = scheduledNames.length
+    ? program.exercises.filter((exercise) => scheduledNames.includes(exercise.name.toLowerCase()))
+    : program.exercises;
+  const exercises = sessionExercises.length ? sessionExercises : program.exercises;
+  const current = exercises[currentIndex] ?? exercises[0];
+  const exerciseKey = current._id ?? `${current.name}-${currentIndex}`;
+  const totalSets = exercises.reduce((sum, exercise) => sum + exercise.sets, 0);
+  const completedCount = Object.values(completedSets).filter(Boolean).length;
+  const progress = totalSets ? Math.round((completedCount / totalSets) * 100) : 0;
+  const setKeys = Array.from({ length: current.sets }, (_, index) => `${exerciseKey}-${index + 1}`);
+  const currentSetDone = setKeys.filter((key) => completedSets[key]).length;
+
+  function toggleSet(index: number) {
+    const key = `${exerciseKey}-${index + 1}`;
+    setCompletedSets((currentSets) => ({ ...currentSets, [key]: !currentSets[key] }));
+    setRestRemaining(current.restTime);
+  }
+
+  function moveExercise(direction: 1 | -1) {
+    setCurrentIndex((value) => Math.min(Math.max(value + direction, 0), exercises.length - 1));
+    setRestRemaining(0);
+  }
 
   return (
     <section className="workout-layout">
-      <div className="session-panel">
-        <p className="eyebrow">Live session</p>
-        <h2>{program.name}</h2>
-        <div className="session-ring">
-          <span>{currentIndex + 1}</span>
-          <small>of {program.exercises.length}</small>
+      <div className="workout-console">
+        <div className="session-hero">
+          <div>
+            <p className="eyebrow">Live workout</p>
+            <h2>{scheduledSession?.title ?? program.name}</h2>
+            <span>{scheduledSession ? formatSessionDate(scheduledSession.startsAt) : `${exercises.length} exercises ready`}</span>
+          </div>
+          <div className="session-ring">
+            <span>{progress}%</span>
+            <small>complete</small>
+          </div>
         </div>
-        <h3>{current.name}</h3>
-        <p>{current.instructions}</p>
+
+        <article className="active-exercise">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Exercise {currentIndex + 1} of {exercises.length}</p>
+              <h2>{current.name}</h2>
+            </div>
+            <Dumbbell size={22} />
+          </div>
+          <p>{current.instructions}</p>
+          {current.notes ? <small>{current.notes}</small> : null}
+          <div className="set-board">
+            {setKeys.map((key, index) => (
+              <button key={key} className={completedSets[key] ? 'set-chip done' : 'set-chip'} onClick={() => toggleSet(index)}>
+                {completedSets[key] ? <CheckCircle2 size={16} /> : <span>{index + 1}</span>}
+                <strong>Set {index + 1}</strong>
+                <small>{current.repRange || current.reps} {current.trackingType === 'time' ? 'sec' : 'reps'}</small>
+              </button>
+            ))}
+          </div>
+          <div className="session-meta-grid">
+            <div>
+              <span>Rest</span>
+              <strong>{restRemaining ? `${restRemaining}s` : `${current.restTime}s`}</strong>
+            </div>
+            <div>
+              <span>Sets done</span>
+              <strong>{currentSetDone}/{current.sets}</strong>
+            </div>
+            <div>
+              <span>Muscles</span>
+              <strong>{current.muscleGroups.slice(0, 2).join(', ')}</strong>
+            </div>
+          </div>
+        </article>
+
         <div className="button-row">
-          <button className="primary-button" onClick={() => setCurrentIndex((value) => Math.min(value + 1, program.exercises.length - 1))}>
+          <button className="secondary-button" onClick={() => moveExercise(-1)} disabled={currentIndex === 0}>
+            Previous
+          </button>
+          <button className="primary-button" onClick={() => moveExercise(1)} disabled={currentIndex === exercises.length - 1}>
             Next exercise
             <ChevronRight size={18} />
           </button>
-          <button className="secondary-button" onClick={() => setCurrentIndex(0)}>
-            Reset
+          <button className="secondary-button" onClick={() => {
+            setCompletedSets({});
+            setCurrentIndex(0);
+            setRestRemaining(0);
+          }}>
+            Reset session
           </button>
         </div>
       </div>
-      <ProgramDetail program={program} nowMs={nowMs} />
+
+      <aside className="workout-sidebar">
+        <article className="coach-card">
+          <p className="eyebrow">Coach rules</p>
+          <ul>
+            {(program.executionRules?.length ? program.executionRules : ['Last set: stop one rep before failure', 'Main lifts: keep rest disciplined']).slice(0, 4).map((rule) => (
+              <li key={rule}>{rule}</li>
+            ))}
+          </ul>
+        </article>
+
+        <article className="exercise-timeline">
+          <p className="eyebrow">Session order</p>
+          {exercises.map((exercise, index) => (
+            <button
+              key={exercise._id ?? `${exercise.name}-${index}`}
+              className={index === currentIndex ? 'timeline-row active' : 'timeline-row'}
+              onClick={() => setCurrentIndex(index)}
+            >
+              <span>{index + 1}</span>
+              <div>
+                <strong>{exercise.name}</strong>
+                <small>{exercise.sets} x {exercise.repRange || exercise.reps}</small>
+              </div>
+            </button>
+          ))}
+        </article>
+
+        <ProgramDetail program={program} nowMs={nowMs} />
+      </aside>
     </section>
   );
 }
