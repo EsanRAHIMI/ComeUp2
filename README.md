@@ -119,6 +119,8 @@ Configure these environment variables:
 - `AI_SERVICE_TOKEN`, with the same value used by `backend`
 - `BIND_HOST=0.0.0.0`
 
+Do not set `VITE_API_URL` on the `ai` service. It is only used by the frontend build.
+
 Optional port variables if Dokploy does not inject `PORT` automatically:
 
 - `UI_PORT` defaults to `3000`
