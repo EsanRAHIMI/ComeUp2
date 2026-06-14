@@ -1,0 +1,39 @@
+import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
+import Fastify from 'fastify';
+import { ZodError } from 'zod';
+import { corsOrigins } from './config/env.js';
+import { authPlugin } from './plugins/auth.js';
+import { aiRoutes } from './routes/ai.js';
+import { authRoutes } from './routes/auth.js';
+import { healthRoutes } from './routes/health.js';
+import { profileRoutes } from './routes/profile.js';
+import { programRoutes } from './routes/programs.js';
+import { sessionRoutes } from './routes/sessions.js';
+
+export async function buildApp() {
+  const app = Fastify({ logger: true });
+
+  await app.register(helmet);
+  await app.register(cors, { origin: corsOrigins, credentials: true });
+  await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
+  await app.register(authPlugin);
+
+  await app.register(healthRoutes);
+  await app.register(authRoutes, { prefix: '/api/v1' });
+  await app.register(profileRoutes, { prefix: '/api/v1' });
+  await app.register(programRoutes, { prefix: '/api/v1' });
+  await app.register(sessionRoutes, { prefix: '/api/v1' });
+  await app.register(aiRoutes, { prefix: '/api/v1' });
+
+  app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ZodError) {
+      return reply.code(400).send({ message: 'Validation failed', issues: error.issues });
+    }
+    app.log.error(error);
+    return reply.code(500).send({ message: 'Internal server error' });
+  });
+
+  return app;
+}

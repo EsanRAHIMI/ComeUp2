@@ -97,7 +97,7 @@ export default function HomeScreen() {
         >
           <View style={styles.workoutCardContent}>
             <View style={styles.workoutInfo}>
-              <Text style={styles.workoutTitle}>Today's Workout</Text>
+              <Text style={styles.workoutTitle}>Today&apos;s Workout</Text>
               <Text style={styles.workoutName}>{todayWorkout.name}</Text>
               <View style={styles.workoutDetails}>
                 <View style={styles.workoutDetail}>

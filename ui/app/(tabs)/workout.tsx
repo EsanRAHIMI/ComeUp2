@@ -6,19 +6,17 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
-  AppState,
   ScrollView,
   Image,
 } from 'react-native';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { Play, Pause, SkipForward, Camera, RotateCcw, X, Volume2 } from 'lucide-react-native';
+import { Play, Pause, Camera, RotateCcw, X, Volume2 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Audio, Video, ResizeMode } from 'expo-av';
 import * as WebBrowser from 'expo-web-browser';
-import { Platform } from 'react-native';
+import WorkoutCamera from '../../components/workout/WorkoutCamera';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 interface Exercise {
   id: string;
@@ -49,10 +47,10 @@ interface WorkoutSession {
 }
 
 export default function WorkoutScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [facing, setFacing] = useState<CameraType>('front');
+  const [facing, setFacing] = useState<'front' | 'back'>('front');
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const [isCameraActive, setIsCameraActive] = useState(true);
+  const [, setTrackingStatus] = useState<'permission-required' | 'camera-unavailable' | 'frame-pipeline-ready'>('permission-required');
   
   // Active workout program (in real app, this would come from user's active program)
   const [activeProgram] = useState<WorkoutProgram>({
@@ -223,24 +221,6 @@ export default function WorkoutScreen() {
       if (restInterval) clearInterval(restInterval);
     };
   }, [workout.isResting, workout.restTimeRemaining]);
-
-  // Simulated movement detection (in real app, this would be computer vision)
-  useEffect(() => {
-    let detectionInterval: ReturnType<typeof setInterval>;
-    
-    if (workout.isActive && !workout.isResting && workout.phase === 'exercising') {
-      detectionInterval = setInterval(() => {
-        // Simulate movement detection (30% chance per second)
-        if (Math.random() > 0.7) {
-          handleRepDetected();
-        }
-      }, 1000);
-    }
-
-    return () => {
-      if (detectionInterval) clearInterval(detectionInterval);
-    };
-  }, [workout.isActive, workout.isResting, workout.phase, workout.currentRep]);
 
   // Video player functions
   const playVideo = async () => {
@@ -445,36 +425,12 @@ export default function WorkoutScreen() {
     );
   };
 
-  // Manual rep button for testing (remove when CV is implemented)
+  // Manual fallback until native pose landmarks are connected.
   const handleManualRep = () => {
     if (workout.isActive && !workout.isResting) {
       handleRepDetected();
     }
   };
-
-  if (!permission) {
-    return (
-      <View style={styles.permissionContainer}>
-        <Text style={styles.permissionText}>Loading camera...</Text>
-      </View>
-    );
-  }
-
-  if (!permission.granted) {
-    return (
-      <SafeAreaView style={styles.permissionContainer}>
-        <View style={styles.permissionContent}>
-          <Text style={styles.permissionTitle}>Camera Permission Required</Text>
-          <Text style={styles.permissionText}>
-            ComeUp needs camera access to track your movements and provide real-time form feedback.
-          </Text>
-          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-            <Text style={styles.permissionButtonText}>Grant Permission</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   const currentExercise = workout.program.exercises[workout.currentExerciseIndex];
 
@@ -484,16 +440,15 @@ export default function WorkoutScreen() {
         <>
           {/* User Camera - Optimized Position */}
           <View style={styles.cameraContainer}>
-            <CameraView 
-              style={styles.camera} 
+            <WorkoutCamera
+              style={styles.camera}
               facing={facing}
-              autofocus="on"
-              enableTorch={false}
-              zoom={0}
-              animateShutter={false}
-            >
+              isActive={isCameraActive}
+              onTrackingStatusChange={setTrackingStatus}
+            />
               {/* Glass Camera Overlay */}
-              <View style={styles.glassOverlay}>
+              <View style={styles.cameraOverlayLayer} pointerEvents="box-none">
+              <View style={styles.glassOverlay} pointerEvents="box-none">
                 <SafeAreaView style={styles.cameraOverlay}>
                   {/* Top Controls */}
                   <View style={styles.topControls}>
@@ -558,7 +513,7 @@ export default function WorkoutScreen() {
                       }
                     </TouchableOpacity>
                     
-                    {/* Manual rep button for testing */}
+                    {/* Manual fallback. Automatic counting must come from pose landmarks, never simulation. */}
                     {workout.isActive && !workout.isResting && (
                       <TouchableOpacity 
                         style={styles.manualRepButton}
@@ -581,7 +536,7 @@ export default function WorkoutScreen() {
                   </View>
                 </SafeAreaView>
               </View>
-            </CameraView>
+              </View>
           </View>
 
           {/* Exercise Demo Video - Optimized Layout */}
@@ -814,6 +769,9 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
     borderRadius: 0,
+  },
+  cameraOverlayLayer: {
+    ...StyleSheet.absoluteFillObject,
   },
   glassOverlay: {
     flex: 1,

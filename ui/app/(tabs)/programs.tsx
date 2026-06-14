@@ -18,6 +18,8 @@ import { exerciseDatabase, ExerciseTemplate } from '../../services/exerciseDatab
 import { programSharingService } from '../../services/programSharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const createClientId = () => Date.now().toString();
+
 interface Exercise {
   id: string;
   name: string;
@@ -206,7 +208,7 @@ export default function ProgramsScreen() {
     }, 0) / 60;
 
     const newProgram: WorkoutProgram = {
-      id: editingProgram?.id || Date.now().toString(),
+      id: editingProgram?.id || createClientId(),
       name: programName,
       description: programDescription,
       difficulty: programDifficulty,
@@ -245,7 +247,7 @@ export default function ProgramsScreen() {
 
   const handleAddExercise = (exerciseTemplate: ExerciseTemplate) => {
     const newExercise: Exercise = {
-      id: Date.now().toString(),
+      id: createClientId(),
       name: exerciseTemplate.name,
       sets: exerciseTemplate.defaultSets,
       reps: exerciseTemplate.defaultReps,
@@ -953,7 +955,7 @@ export default function ProgramsScreen() {
               />
               
               <TouchableOpacity 
-                style={styles.importButton}
+                style={styles.importSubmitButton}
                 onPress={handleImportProgram}
               >
                 <Download size={16} color="#fff" />
@@ -1175,7 +1177,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
-  importButton: {
+  importSubmitButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -1859,34 +1861,6 @@ const styles = StyleSheet.create({
   },
   categoryOptionTextActive: {
     color: '#fff',
-  },
-  trackingTypeSelector: {
-    gap: 12,
-  },
-  trackingTypeOption: {
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#333',
-    borderWidth: 1,
-    borderColor: '#555',
-  },
-  trackingTypeOptionActive: {
-    backgroundColor: 'rgba(0,201,167,0.2)',
-    borderColor: '#00C9A7',
-  },
-  trackingTypeText: {
-    fontSize: 14,
-    color: '#fff',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  trackingTypeTextActive: {
-    color: '#00C9A7',
-  },
-  trackingTypeSubtext: {
-    fontSize: 12,
-    color: '#999',
-    lineHeight: 16,
   },
   defaultValuesContainer: {
     flexDirection: 'row',

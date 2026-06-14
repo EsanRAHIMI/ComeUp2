@@ -32,6 +32,7 @@ class ComputerVisionService {
   private poseHistory: Pose[] = [];
   private repCount: number = 0;
   private lastRepTime: number = 0;
+  private movementState: 'top' | 'bottom' | 'unknown' = 'unknown';
 
   // Exercise validators for different movements
   private validators: { [key: string]: ExerciseValidator } = {
@@ -60,6 +61,7 @@ class ComputerVisionService {
     this.poseHistory = [];
     this.repCount = 0;
     this.lastRepTime = 0;
+    this.movementState = 'unknown';
   }
 
   // Main analysis function called for each frame
@@ -177,41 +179,86 @@ class ComputerVisionService {
     return { score: Math.max(0, score), issues };
   }
 
-  // Rep counting logic (simplified simulation)
   private countPushUpRep(poses: Pose[]): boolean {
-    if (poses.length < 10) return false;
-    
-    // Simulate rep detection based on vertical movement of shoulders
-    const recentPoses = poses.slice(-10);
-    const shoulderHeights = recentPoses.map(pose => pose.keypoints.left_shoulder?.y || 0);
-    
-    const maxHeight = Math.max(...shoulderHeights);
-    const minHeight = Math.min(...shoulderHeights);
-    const movement = maxHeight - minHeight;
-    
-    // If significant vertical movement detected, count as rep
-    return movement > 50; // Threshold for rep detection
+    const pose = poses[poses.length - 1];
+    const elbowAngle = this.calculateAngle(
+      pose.keypoints.left_shoulder,
+      pose.keypoints.left_elbow,
+      pose.keypoints.left_wrist
+    );
+
+    if (elbowAngle < 95) {
+      this.movementState = 'bottom';
+      return false;
+    }
+
+    if (this.movementState === 'bottom' && elbowAngle > 155) {
+      this.movementState = 'top';
+      return true;
+    }
+
+    if (elbowAngle > 155) {
+      this.movementState = 'top';
+    }
+
+    return false;
   }
 
   private countSquatRep(poses: Pose[]): boolean {
-    if (poses.length < 15) return false;
-    
-    // Simulate rep detection based on hip movement
-    const recentPoses = poses.slice(-15);
-    const hipHeights = recentPoses.map(pose => pose.keypoints.left_hip?.y || 0);
-    
-    const maxHeight = Math.max(...hipHeights);
-    const minHeight = Math.min(...hipHeights);
-    const movement = maxHeight - minHeight;
-    
-    return movement > 60;
+    const pose = poses[poses.length - 1];
+    const kneeAngle = this.calculateAngle(
+      pose.keypoints.left_hip,
+      pose.keypoints.left_knee,
+      pose.keypoints.left_ankle
+    );
+
+    if (kneeAngle < 105) {
+      this.movementState = 'bottom';
+      return false;
+    }
+
+    if (this.movementState === 'bottom' && kneeAngle > 160) {
+      this.movementState = 'top';
+      return true;
+    }
+
+    if (kneeAngle > 160) {
+      this.movementState = 'top';
+    }
+
+    return false;
   }
 
   private countLungeRep(poses: Pose[]): boolean {
-    if (poses.length < 12) return false;
-    
-    // Simulate rep detection based on leg position changes
-    return Math.random() > 0.8; // Simplified detection
+    const pose = poses[poses.length - 1];
+    const leftKneeAngle = this.calculateAngle(
+      pose.keypoints.left_hip,
+      pose.keypoints.left_knee,
+      pose.keypoints.left_ankle
+    );
+    const rightKneeAngle = this.calculateAngle(
+      pose.keypoints.right_hip,
+      pose.keypoints.right_knee,
+      pose.keypoints.right_ankle
+    );
+    const deepestKneeAngle = Math.min(leftKneeAngle, rightKneeAngle);
+    const recoveredKneeAngle = Math.max(leftKneeAngle, rightKneeAngle);
+
+    if (deepestKneeAngle < 105) {
+      this.movementState = 'bottom';
+      return false;
+    }
+
+    if (this.movementState === 'bottom' && recoveredKneeAngle > 155) {
+      this.movementState = 'top';
+      return true;
+    }
+
+    if (leftKneeAngle > 155 && rightKneeAngle > 155) {
+      this.movementState = 'top';
+    }
+
+    return false;
   }
 
   // Utility functions
@@ -293,6 +340,7 @@ class ComputerVisionService {
     this.poseHistory = [];
     this.repCount = 0;
     this.lastRepTime = 0;
+    this.movementState = 'unknown';
   }
 
   // Get current rep count
