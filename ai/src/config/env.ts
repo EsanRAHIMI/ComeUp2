@@ -9,6 +9,11 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   BIND_HOST: z.string().default('0.0.0.0'),
   AI_SERVICE_TOKEN: z.string().min(16),
+  // GPT lives server-side only. Optional: when unset, the GPT path returns 503
+  // and the rule-based "Quick Generate" still works.
+  GPT_API_KEY: z.string().optional(),
+  GPT_MODEL: z.string().default('gpt-4o-mini'),
+  GPT_BASE_URL: z.string().url().default('https://api.openai.com/v1'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

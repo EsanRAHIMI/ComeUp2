@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { classifyExercise } from './exerciseDictionary.js';
+import { buildSchedule } from './scheduleBuilder.js';
 
 const dayHeaderPattern = /(?:DAY|روز)\s*(\d+)\s*[—-]\s*(.+)/i;
 const setRepPattern = /(\d+)\s*[×x]\s*([^\s]+)/i;
@@ -9,21 +11,39 @@ export const coachPlanImportSchema = z.object({
   workoutTime: z.string().regex(/^\d{2}:\d{2}$/),
   weeks: z.number().int().min(1).max(24).default(12),
   sessionDuration: z.number().int().min(30).max(180).default(75),
+  preferredDays: z.array(z.number().int().min(0).max(6)).optional(),
 });
 
 type CoachPlanImportInput = z.output<typeof coachPlanImportSchema>;
 
+type ParsedExercise = {
+  name: string;
+  sets: number;
+  reps: number;
+  repRange: string;
+  notes: string;
+  muscleGroups: string[];
+  needsReview: boolean;
+  reviewReason?: string;
+};
+
 type ParsedDay = {
   day: number;
   title: string;
-  exercises: Array<{
-    name: string;
-    sets: number;
-    reps: number;
-    repRange: string;
-    notes: string;
-    muscleGroups: string[];
-  }>;
+  exercises: ParsedExercise[];
+};
+
+export type ReviewItem = {
+  day: number;
+  dayTitle: string;
+  name: string;
+  sets: number;
+  reps: number;
+  repRange: string;
+  restTime: number;
+  muscleGroups: string[];
+  needsReview: boolean;
+  reason?: string;
 };
 
 function cleanLine(line: string) {
@@ -31,19 +51,6 @@ function cleanLine(line: string) {
     .replace(/^[^\p{L}\p{N}]+/u, '')
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function inferMuscles(title: string, name: string) {
-  const text = `${title} ${name}`.toLowerCase();
-  const groups: string[] = [];
-  if (/chest|press|fly|سینه/.test(text)) groups.push('chest');
-  if (/tri|triceps|push-up|پشت بازو/.test(text)) groups.push('triceps');
-  if (/leg|quad|squat|lunge|calf|ران|پا|ساق/.test(text)) groups.push('legs');
-  if (/hamstring|glute|deadlift|thrust|curl/.test(text)) groups.push('glutes');
-  if (/back|row|pulldown|lat|لت|زیربغل/.test(text)) groups.push('back');
-  if (/biceps|curl|بازو/.test(text)) groups.push('biceps');
-  if (/shoulder|delt|سرشانه/.test(text)) groups.push('shoulders');
-  return groups.length ? [...new Set(groups)] : ['full body'];
 }
 
 function normalizeReps(raw: string) {
@@ -68,7 +75,7 @@ function extractListAfterHeading(lines: string[], headingPattern: RegExp) {
   return items;
 }
 
-function parseDays(lines: string[]) {
+function parseDays(lines: string[]): ParsedDay[] {
   const days: ParsedDay[] = [];
   let current: ParsedDay | null = null;
 
@@ -89,17 +96,22 @@ function parseDays(lines: string[]) {
     if (!setRepMatch) continue;
 
     const [namePart, notePart = ''] = line.split(/[—-]\s*/);
-    const name = namePart.replace(setRepPattern, '').trim();
+    const name = (namePart.replace(setRepPattern, '').trim() || line.replace(setRepPattern, '').trim()).trim();
     const sets = Number(setRepMatch[1]);
     const repRange = setRepMatch[2].replace(/[^\d–—\-تا]+/g, '') || setRepMatch[2];
 
+    // Name-based classification — independent of the (often misleading) day title.
+    const classification = classifyExercise(name);
+
     current.exercises.push({
-      name: name || line.replace(setRepPattern, '').trim(),
+      name,
       sets,
       reps: /ناتوانی/i.test(line) ? 20 : normalizeReps(repRange),
       repRange: /ناتوانی/i.test(line) ? 'to failure' : repRange.replace(/[–—]/g, '-'),
       notes: notePart.trim(),
-      muscleGroups: inferMuscles(current.title, name),
+      muscleGroups: classification.groups,
+      needsReview: classification.needsReview,
+      reviewReason: classification.reason,
     });
   }
 
@@ -113,45 +125,48 @@ function parseNutrition(lines: string[]) {
   return { calories, protein, mealRule, notes: extractListAfterHeading(lines, /🍗|تغذیه/i) };
 }
 
-function buildSchedule(days: ParsedDay[], input: CoachPlanImportInput) {
-  const startsAt = new Date(`${input.startDate}T${input.workoutTime}:00`);
-  return Array.from({ length: input.weeks }).flatMap((_, weekIndex) =>
-    days.map((day, dayIndex) => {
-      const date = new Date(startsAt);
-      date.setDate(startsAt.getDate() + weekIndex * 7 + dayIndex);
-      return {
-        week: weekIndex + 1,
-        day: day.day,
-        title: day.title,
-        startsAt: date.toISOString(),
-        duration: input.sessionDuration,
-        focus: day.title,
-        exerciseNames: day.exercises.map((exercise) => exercise.name),
-      };
-    }),
-  );
-}
-
+/**
+ * Parse coach notes into a Program-shaped object plus a per-exercise review list.
+ * `program` is ready for Program.create(); `review` surfaces low-confidence items
+ * so the user can correct them before saving.
+ */
 export function parseCoachPlan(input: CoachPlanImportInput) {
   const lines = input.text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const days = parseDays(lines);
   const mainRest = Number(lines.find((line) => /حرکات اصلی/.test(line))?.match(/\d+/)?.[0] ?? 90);
   const accessoryRest = Number(lines.find((line) => /بقیه/.test(line))?.match(/\d+/)?.[0] ?? 60);
+
+  const review: ReviewItem[] = [];
   const exercises = days.flatMap((day) =>
-    day.exercises.map((exercise, index) => ({
-      name: exercise.name,
-      sets: exercise.sets,
-      reps: exercise.reps,
-      repRange: exercise.repRange,
-      restTime: index < 2 ? mainRest : accessoryRest,
-      instructions: `${day.title}. ${exercise.notes || 'Controlled form and full range of motion.'}`,
-      notes: exercise.notes,
-      muscleGroups: exercise.muscleGroups,
-      difficulty: 'Intermediate' as const,
-      equipment: [],
-      category: 'Strength' as const,
-      trackingType: /failure|ناتوانی/i.test(exercise.repRange) ? ('reps' as const) : ('reps' as const),
-    })),
+    day.exercises.map((exercise, index) => {
+      const restTime = index < 2 ? mainRest : accessoryRest;
+      review.push({
+        day: day.day,
+        dayTitle: day.title,
+        name: exercise.name,
+        sets: exercise.sets,
+        reps: exercise.reps,
+        repRange: exercise.repRange,
+        restTime,
+        muscleGroups: exercise.muscleGroups,
+        needsReview: exercise.needsReview,
+        reason: exercise.reviewReason,
+      });
+      return {
+        name: exercise.name,
+        sets: exercise.sets,
+        reps: exercise.reps,
+        repRange: exercise.repRange,
+        restTime,
+        instructions: `${day.title}. ${exercise.notes || 'Controlled form and full range of motion.'}`,
+        notes: exercise.notes,
+        muscleGroups: exercise.muscleGroups,
+        difficulty: 'Intermediate' as const,
+        equipment: [] as string[],
+        category: 'Strength' as const,
+        trackingType: 'reps' as const,
+      };
+    }),
   );
 
   const nutrition = parseNutrition(lines);
@@ -160,7 +175,7 @@ export function parseCoachPlan(input: CoachPlanImportInput) {
   const goalLines = extractListAfterHeading(lines, /📈|هدف/i);
   const title = days.length ? `${days.length}-Day Coach Strength Plan` : 'Imported Coach Plan';
 
-  return {
+  const program = {
     name: title,
     description: `Imported from coach notes with ${days.length} training days, scheduled for ${input.weeks} weeks.`,
     difficulty: 'Intermediate' as const,
@@ -176,6 +191,26 @@ export function parseCoachPlan(input: CoachPlanImportInput) {
     nutrition,
     supplements,
     longTermGoal: goalLines.join(' | '),
-    schedule: buildSchedule(days, input),
+    schedule: buildSchedule(
+      days.map((day) => ({
+        day: day.day,
+        title: day.title,
+        focus: day.title,
+        exerciseNames: day.exercises.map((exercise) => exercise.name),
+      })),
+      {
+        startDate: input.startDate,
+        workoutTime: input.workoutTime,
+        weeks: input.weeks,
+        sessionDuration: input.sessionDuration,
+        preferredDays: input.preferredDays,
+      },
+    ),
+  };
+
+  return {
+    program,
+    review,
+    flaggedCount: review.filter((item) => item.needsReview).length,
   };
 }

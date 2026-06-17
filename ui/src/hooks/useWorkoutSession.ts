@@ -1,40 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sessionsApi } from '../api';
-import { getPersistedProgramId } from '../lib/format';
-import { STORAGE_KEYS, readJSON, remove, writeJSON } from '../lib/storage';
-import type { Exercise, Program, SessionExercise } from '../types';
+import {
+  backendProgramId,
+  buildCompletion,
+  countCompleted,
+  createSession,
+  isSetDone as engineIsSetDone,
+  programKey,
+  restoreSession,
+  runCompletion,
+  summaryFromCompletion,
+  toggleSet as engineToggleSet,
+  type PersistedSession,
+  type SessionSummary,
+} from '../lib/sessionEngine';
+import { browserSessionStore, readActiveSession, writeActiveSession } from '../lib/sessionStore';
+import { createSessionApi } from '../lib/sessionSync';
+import type { Exercise, Program } from '../types';
 
-type CompletedSet = {
-  exerciseId?: string;
-  exerciseName: string;
-  setNumber: number;
-  reps: number;
-  restTime: number;
-  completedAt: string;
-};
-
-type PersistedSession = {
-  sessionId: string | null;
-  programId: string;
-  startedAt: number;
-  currentIndex: number;
-  completedSets: Record<string, CompletedSet>;
-};
-
-export type SessionSummary = {
-  durationSeconds: number;
-  completedSets: number;
-  totalSets: number;
-  caloriesBurned: number;
-};
-
-function setKey(exerciseIndex: number, setNumber: number) {
-  return `${exerciseIndex}:${setNumber}`;
-}
-
-function programKey(program: Program | null) {
-  return program ? getPersistedProgramId(program) ?? program._id ?? program.name : 'none';
-}
+export type { SessionSummary } from '../lib/sessionEngine';
+export type CompleteOutcome = { summary: SessionSummary; status: 'saved' | 'failed' };
 
 type Params = {
   program: Program | null;
@@ -46,158 +31,112 @@ type Params = {
 export function useWorkoutSession({ program, exercises, token, notify }: Params) {
   const pKey = programKey(program);
 
-  // Restore an in-progress session for this program after a refresh / re-entry.
-  // Lazy initializers run once on mount; the parent keys this hook's component
-  // by program id, so switching programs remounts and re-restores cleanly.
-  const [state, setState] = useState<PersistedSession | null>(() => {
-    const saved = readJSON<PersistedSession>(STORAGE_KEYS.session);
-    return saved && saved.programId === pKey ? saved : null;
-  });
-  const [currentIndex, setCurrentIndex] = useState(() => {
-    const saved = readJSON<PersistedSession>(STORAGE_KEYS.session);
-    return saved && saved.programId === pKey
-      ? Math.min(saved.currentIndex, Math.max(0, exercises.length - 1))
-      : 0;
-  });
+  // Lazy init restores any in-progress session for this program. The parent keys
+  // this hook's component by program id, so switching programs remounts cleanly.
+  const [state, setState] = useState<PersistedSession | null>(() =>
+    restoreSession(readActiveSession(), pKey, exercises.length),
+  );
   const [now, setNow] = useState(() => Date.now());
+  const startingRef = useRef(false);
 
   // Persist on every change so a refresh never loses progress.
   useEffect(() => {
-    if (state) writeJSON(STORAGE_KEYS.session, { ...state, currentIndex });
-  }, [state, currentIndex]);
+    if (state) writeActiveSession(state);
+  }, [state]);
 
-  // Tick the elapsed clock once per second while a session is active.
+  // Tick the elapsed clock while running.
   useEffect(() => {
-    if (!state) return;
+    if (!state || state.completion) return;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [state]);
 
-  const active = state !== null;
+  const currentIndex = state?.currentIndex ?? 0;
   const totalSets = useMemo(() => exercises.reduce((sum, ex) => sum + ex.sets, 0), [exercises]);
-  const completedCount = state ? Object.keys(state.completedSets).length : 0;
+  const completedCount = countCompleted(state);
   const progress = totalSets ? Math.round((completedCount / totalSets) * 100) : 0;
   const elapsedSeconds = state ? Math.floor((now - state.startedAt) / 1000) : 0;
 
-  const startingRef = useRef(false);
+  const isRunning = state !== null && !state.completion;
+  const isUnsaved = Boolean(state?.completion);
+  const pendingSummary = useMemo(
+    () => (state?.completion ? summaryFromCompletion(state, state.completion, totalSets) : null),
+    [state, totalSets],
+  );
 
   const start = useCallback(async () => {
-    if (active || startingRef.current) return;
+    if (state || startingRef.current) return;
     startingRef.current = true;
-    const base: PersistedSession = {
-      sessionId: null,
-      programId: pKey,
-      startedAt: Date.now(),
-      currentIndex: 0,
-      completedSets: {},
-    };
-    setCurrentIndex(0);
-    setState(base);
+    const created = createSession(pKey);
+    setState(created);
     setNow(Date.now());
 
-    const backendId = program ? getPersistedProgramId(program) : null;
-    if (token && backendId) {
+    const bId = backendProgramId(program);
+    if (token && bId && navigator.onLine) {
       try {
-        const { session } = await sessionsApi.start(token, backendId);
-        setState((current) => (current ? { ...current, sessionId: session._id } : current));
+        const { session } = await sessionsApi.start(token, bId);
+        setState((s) => (s ? { ...s, sessionId: session._id } : s));
       } catch {
-        notify('Offline mode — progress is saved on this device', 'info');
+        notify('Offline — progress is saved on this device', 'info');
       }
     }
     startingRef.current = false;
-  }, [active, pKey, program, token, notify]);
+  }, [state, pKey, program, token, notify]);
+
+  const toggleSet = useCallback((exIndex: number, exercise: Exercise, setNumber: number) => {
+    setState((s) => (s ? engineToggleSet(s, exIndex, exercise, setNumber) : s));
+  }, []);
 
   const isSetDone = useCallback(
-    (exerciseIndex: number, setNumber: number) =>
-      Boolean(state?.completedSets[setKey(exerciseIndex, setNumber)]),
+    (exIndex: number, setNumber: number) => engineIsSetDone(state, exIndex, setNumber),
     [state],
   );
 
-  const toggleSet = useCallback(
-    (exerciseIndex: number, exercise: Exercise, setNumber: number) => {
-      setState((current) => {
-        if (!current) return current;
-        const key = setKey(exerciseIndex, setNumber);
-        const completedSets = { ...current.completedSets };
-        if (completedSets[key]) {
-          delete completedSets[key];
-        } else {
-          completedSets[key] = {
-            exerciseId: exercise._id,
-            exerciseName: exercise.name,
-            setNumber,
-            reps: exercise.reps,
-            restTime: exercise.restTime,
-            completedAt: new Date().toISOString(),
-          };
-        }
-        return { ...current, completedSets };
-      });
-    },
-    [],
-  );
-
-  const goTo = useCallback(
-    (index: number) => setCurrentIndex(Math.min(Math.max(index, 0), Math.max(0, exercises.length - 1))),
+  const setCurrentIndex = useCallback(
+    (index: number) =>
+      setState((s) =>
+        s ? { ...s, currentIndex: Math.min(Math.max(index, 0), Math.max(0, exercises.length - 1)) } : s,
+      ),
     [exercises.length],
   );
 
-  const buildPayload = useCallback(
-    (sets: Record<string, CompletedSet>): SessionExercise[] => {
-      const byExercise = new Map<string, SessionExercise>();
-      for (const record of Object.values(sets)) {
-        const id = record.exerciseId ?? record.exerciseName;
-        if (!byExercise.has(id)) {
-          byExercise.set(id, { exerciseId: id, exerciseName: record.exerciseName, sets: [] });
-        }
-        byExercise.get(id)!.sets.push({
-          setNumber: record.setNumber,
-          repsCompleted: record.reps,
-          restTime: record.restTime,
-          completedAt: record.completedAt,
-        });
-      }
-      return [...byExercise.values()];
-    },
-    [],
-  );
+  const save = useCallback(async (): Promise<CompleteOutcome | null> => {
+    const snapshot = state;
+    if (!snapshot) return null;
 
-  const reset = useCallback(() => {
+    const { payload, summary } = snapshot.completion
+      ? { payload: snapshot.completion, summary: summaryFromCompletion(snapshot, snapshot.completion, totalSets) }
+      : buildCompletion(snapshot, { totalSets, totalCalories: program?.totalCalories ?? 0 });
+
+    const result = await runCompletion({
+      state: snapshot,
+      completion: payload,
+      backendProgramId: backendProgramId(program),
+      api: createSessionApi(token),
+      store: browserSessionStore,
+      online: navigator.onLine,
+    });
+
+    setState(result.state);
+    if (result.status === 'failed') {
+      notify('Could not save your workout. It is kept on this device — try again.', 'error');
+    }
+    return { summary, status: result.status };
+  }, [state, totalSets, program, token, notify]);
+
+  const discard = useCallback(() => {
     setState(null);
-    setCurrentIndex(0);
-    remove(STORAGE_KEYS.session);
+    browserSessionStore.clear();
   }, []);
 
-  const complete = useCallback(async (): Promise<SessionSummary | null> => {
-    if (!state) return null;
-    const durationSeconds = Math.floor((Date.now() - state.startedAt) / 1000);
-    const done = Object.keys(state.completedSets).length;
-    const caloriesBurned = totalSets
-      ? Math.round((program?.totalCalories ?? 0) * (done / totalSets))
-      : program?.totalCalories ?? 0;
-    const summary: SessionSummary = { durationSeconds, completedSets: done, totalSets, caloriesBurned };
-
-    if (token && state.sessionId) {
-      try {
-        await sessionsApi.complete(token, state.sessionId, {
-          exercises: buildPayload(state.completedSets),
-          totalDuration: durationSeconds,
-          caloriesBurned,
-          averageFormScore: 0,
-          endTime: new Date().toISOString(),
-        });
-      } catch (error) {
-        notify(error instanceof Error ? error.message : 'Could not save session', 'error');
-      }
-    }
-    reset();
-    return summary;
-  }, [state, totalSets, program, token, buildPayload, reset, notify]);
-
   return {
-    active,
+    state,
+    active: state !== null,
+    isRunning,
+    isUnsaved,
+    pendingSummary,
     currentIndex,
-    setCurrentIndex: goTo,
+    setCurrentIndex,
     totalSets,
     completedCount,
     progress,
@@ -205,7 +144,8 @@ export function useWorkoutSession({ program, exercises, token, notify }: Params)
     start,
     toggleSet,
     isSetDone,
-    complete,
-    reset,
+    complete: save,
+    retrySave: save,
+    discard,
   };
 }

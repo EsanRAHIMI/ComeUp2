@@ -18,6 +18,15 @@ export const programRoutes: FastifyPluginAsync = async (app) => {
     return reply.code(201).send({ program });
   });
 
+  // Preview a coach-plan import WITHOUT saving — returns the parsed program plus a
+  // per-exercise review list so the user can correct low-confidence items first.
+  app.post('/programs/import-coach-plan/preview', { preHandler: [app.authenticate] }, async (request) => {
+    const rawInput = parseBody(coachPlanImportSchema, request.body);
+    const input = { ...rawInput, weeks: rawInput.weeks ?? 12, sessionDuration: rawInput.sessionDuration ?? 75 };
+    const parsed = parseCoachPlan(input);
+    return { program: parsed.program, review: parsed.review, flaggedCount: parsed.flaggedCount };
+  });
+
   app.post('/programs/import-coach-plan', { preHandler: [app.authenticate] }, async (request, reply) => {
     const rawInput = parseBody(coachPlanImportSchema, request.body);
     const input = {
@@ -26,7 +35,29 @@ export const programRoutes: FastifyPluginAsync = async (app) => {
       sessionDuration: rawInput.sessionDuration ?? 75,
     };
     const parsed = parseCoachPlan(input);
-    const program = await Program.create({ ...parsed, ownerId: request.user.sub });
+    const program = await Program.create({ ...parsed.program, ownerId: request.user.sub });
+    return reply.code(201).send({ program, review: parsed.review, flaggedCount: parsed.flaggedCount });
+  });
+
+  // Duplicate an existing program as an inactive copy.
+  app.post('/programs/:id/duplicate', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const params = parseBody(z.object({ id: objectIdSchema }), request.params);
+    const source = await Program.findOne({ _id: params.id, ownerId: request.user.sub });
+    if (!source) return reply.code(404).send({ message: 'Program not found' });
+
+    const copy = source.toObject() as Record<string, unknown>;
+    delete copy._id;
+    delete copy.shareCode;
+    delete copy.createdAt;
+    delete copy.updatedAt;
+
+    const program = await Program.create({
+      ...copy,
+      name: `${source.name} (copy)`,
+      isActive: false,
+      isPublic: false,
+      ownerId: request.user.sub,
+    });
     return reply.code(201).send({ program });
   });
 

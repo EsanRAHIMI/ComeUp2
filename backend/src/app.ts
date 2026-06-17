@@ -9,8 +9,11 @@ import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
 import { exerciseMediaRoutes } from './routes/exerciseMedia.js';
 import { healthRoutes } from './routes/health.js';
+import { measurementRoutes } from './routes/measurements.js';
 import { profileRoutes } from './routes/profile.js';
+import { programChatRoutes } from './routes/programChat.js';
 import { programRoutes } from './routes/programs.js';
+import { reportRoutes } from './routes/reports.js';
 import { sessionRoutes } from './routes/sessions.js';
 
 export async function buildApp() {
@@ -27,6 +30,9 @@ export async function buildApp() {
   await app.register(exerciseMediaRoutes, { prefix: '/api/v1' });
   await app.register(profileRoutes, { prefix: '/api/v1' });
   await app.register(programRoutes, { prefix: '/api/v1' });
+  await app.register(programChatRoutes, { prefix: '/api/v1' });
+  await app.register(reportRoutes, { prefix: '/api/v1' });
+  await app.register(measurementRoutes, { prefix: '/api/v1' });
   await app.register(sessionRoutes, { prefix: '/api/v1' });
   await app.register(aiRoutes, { prefix: '/api/v1' });
 

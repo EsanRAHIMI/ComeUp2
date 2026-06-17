@@ -1,6 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import { AppHeader } from './components/AppHeader';
 import { BottomNav } from './components/BottomNav';
+import { ResumeBanner } from './components/ResumeBanner';
 import { Toast } from './components/Toast';
 import { useApp } from './hooks/useApp';
 import { RouterProvider, useRouter } from './hooks/useRouter';
@@ -55,6 +56,7 @@ function Shell() {
       <div className="app">
         <AppHeader />
         <main className="app__main">
+          <ResumeBanner />
           <CurrentView />
         </main>
         <BottomNav />

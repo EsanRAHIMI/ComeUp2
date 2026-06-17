@@ -57,6 +57,10 @@ services:
       PORT: ${AI_PORT:-4100}
       HOST: 0.0.0.0
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?Set AI_SERVICE_TOKEN}
+      # GPT key stays server-side in the private AI service only.
+      GPT_API_KEY: ${GPT_API_KEY:-}
+      GPT_MODEL: ${GPT_MODEL:-gpt-4o-mini}
+      GPT_BASE_URL: ${GPT_BASE_URL:-https://api.openai.com/v1}
     ports:
       - "${AI_PORT:-4100}:${AI_PORT:-4100}"
     healthcheck:

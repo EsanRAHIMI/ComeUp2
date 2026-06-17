@@ -10,6 +10,7 @@ const registerSchema = z.object({
   password: z.string().min(8).max(120),
   goal: z.enum(['Weight Loss', 'Muscle Gain', 'General Fitness', 'Strength']).optional(),
   fitnessLevel: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional(),
+  gender: z.enum(['male', 'female', 'other', 'undisclosed']).optional(),
 });
 
 const loginSchema = z.object({
@@ -25,6 +26,10 @@ function publicUser(user: any) {
     age: user.age,
     height: user.height,
     weight: user.weight,
+    gender: user.gender,
+    injuries: user.injuries ?? [],
+    availableEquipment: user.availableEquipment ?? [],
+    preferredDays: user.preferredDays ?? [],
     goal: user.goal,
     fitnessLevel: user.fitnessLevel,
     workoutDaysPerWeek: user.workoutDaysPerWeek,

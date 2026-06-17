@@ -29,8 +29,23 @@ Key endpoints:
 - `POST /api/v1/sessions/start`
 - `PATCH /api/v1/sessions/:id/complete`
 - `GET /api/v1/sessions`
-- `POST /api/v1/ai/workouts/generate`
+- `POST /api/v1/ai/workouts/generate` (rule-based "Quick Generate")
 - `POST /api/v1/ai/recommendations`
+
+GPT program builder — personalized, limited to 5 messages/user/week (quota enforced in Atlas, GPT key server-side only):
+
+- `GET /api/v1/ai/program-chat/quota`
+- `POST /api/v1/ai/program-chat/start`
+- `GET /api/v1/ai/program-chat/:id`
+- `POST /api/v1/ai/program-chat/:id/message`
+- `POST /api/v1/ai/program-chat/:id/convert-to-program`
+
+Program management, import review, reporting, metrics:
+
+- `POST /api/v1/programs/:id/duplicate`, `DELETE /api/v1/programs/:id`, `PATCH /api/v1/programs/:id`
+- `POST /api/v1/programs/import-coach-plan/preview` (review flagged exercises before saving)
+- `GET /api/v1/reports/weekly`, `GET /api/v1/reports/overview`
+- `GET|POST|DELETE /api/v1/measurements`
 
 ### AI
 
@@ -39,8 +54,11 @@ Runs on port `4100` by default. It is internal and protected by `AI_SERVICE_TOKE
 Key endpoints:
 
 - `GET /health`
-- `POST /workouts/generate`
+- `POST /workouts/generate` (rule-based)
 - `POST /recommendations`
+- `POST /program/generate` (GPT-powered, returns a structured program normalized to our schema)
+
+GPT runs only in this private service. Set `GPT_API_KEY` (plus optional `GPT_MODEL`, default `gpt-4o-mini`, and `GPT_BASE_URL`, default OpenAI) in `ai/.env`. The frontend never sees the key. If `GPT_API_KEY` is unset, the GPT path returns 503 and rule-based Quick Generate still works.
 
 ## Local Setup
 

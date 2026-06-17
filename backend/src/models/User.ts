@@ -8,6 +8,11 @@ const userSchema = new mongoose.Schema(
     age: { type: Number, min: 12, max: 100 },
     height: { type: Number, min: 80, max: 260 },
     weight: { type: Number, min: 25, max: 350 },
+    gender: { type: String, enum: ['male', 'female', 'other', 'undisclosed'], default: 'undisclosed' },
+    injuries: [{ type: String, trim: true }],
+    availableEquipment: [{ type: String, trim: true }],
+    // Preferred training weekdays, 0 (Sun) – 6 (Sat).
+    preferredDays: [{ type: Number, min: 0, max: 6 }],
     goal: {
       type: String,
       enum: ['Weight Loss', 'Muscle Gain', 'General Fitness', 'Strength'],

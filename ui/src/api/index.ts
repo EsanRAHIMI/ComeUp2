@@ -1,9 +1,16 @@
 import type {
+  AiConversation,
   ExerciseMedia,
   FitnessLevel,
+  GptDraftProgram,
+  GptQuota,
   Goal,
+  ImportReviewItem,
+  Measurement,
   Program,
+  ReportOverview,
   User,
+  WeeklyReport,
   WorkoutSession,
 } from '../types';
 import { apiRequest } from './client';
@@ -54,6 +61,29 @@ export const programsApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  importCoachPlanPreview: (
+    token: string,
+    body: { text: string; startDate: string; workoutTime: string; weeks: number; sessionDuration: number },
+  ) =>
+    apiRequest<{ program: Partial<Program>; review: ImportReviewItem[]; flaggedCount: number }>(
+      '/api/v1/programs/import-coach-plan/preview',
+      token,
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
+  update: (token: string, id: string, patch: Partial<Program>) =>
+    apiRequest<{ program: Program }>(`/api/v1/programs/${id}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    }),
+  duplicate: (token: string, id: string) =>
+    apiRequest<{ program: Program }>(`/api/v1/programs/${id}/duplicate`, token, { method: 'POST' }),
+  importByCode: (token: string, shareCode: string) =>
+    apiRequest<{ program: Program }>(`/api/v1/programs/import/${encodeURIComponent(shareCode)}`, token, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+  remove: (token: string, id: string) =>
+    apiRequest<void>(`/api/v1/programs/${id}`, token, { method: 'DELETE' }),
   generate: (
     token: string,
     body: {
@@ -62,6 +92,7 @@ export const programsApi = {
       duration: number;
       equipment: string[];
       focusAreas: string[];
+      daysPerWeek?: number;
     },
   ) =>
     apiRequest<{ program: Program }>('/api/v1/ai/workouts/generate', token, {
@@ -100,5 +131,46 @@ export const mediaApi = {
     apiRequest<{ media: ExerciseMedia }>('/api/v1/exercise-media', token, {
       method: 'PUT',
       body: JSON.stringify({ exerciseName, imageUrl }),
+    }),
+};
+
+export const profileApi = {
+  update: (token: string, patch: Partial<User>) =>
+    apiRequest<{ user: User }>('/api/v1/profile', token, { method: 'PATCH', body: JSON.stringify(patch) }),
+};
+
+export const chatApi = {
+  quota: (token: string) => apiRequest<{ quota: GptQuota }>('/api/v1/ai/program-chat/quota', token),
+  start: (token: string) =>
+    apiRequest<{ conversation: AiConversation; quota: GptQuota }>('/api/v1/ai/program-chat/start', token, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+  get: (token: string, id: string) =>
+    apiRequest<{ conversation: AiConversation; quota: GptQuota }>(`/api/v1/ai/program-chat/${id}`, token),
+  message: (token: string, id: string, content: string) =>
+    apiRequest<{ reply: string; draftProgram: GptDraftProgram; quota: GptQuota }>(
+      `/api/v1/ai/program-chat/${id}/message`,
+      token,
+      { method: 'POST', body: JSON.stringify({ content }) },
+    ),
+  convert: (token: string, id: string, body: { activate?: boolean; startDate?: string; workoutTime?: string; weeks?: number }) =>
+    apiRequest<{ program: Program }>(`/api/v1/ai/program-chat/${id}/convert-to-program`, token, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+};
+
+export const reportsApi = {
+  weekly: (token: string) => apiRequest<WeeklyReport>('/api/v1/reports/weekly', token),
+  overview: (token: string) => apiRequest<ReportOverview>('/api/v1/reports/overview', token),
+};
+
+export const measurementsApi = {
+  list: (token: string) => apiRequest<{ measurements: Measurement[] }>('/api/v1/measurements', token),
+  create: (token: string, body: Partial<Measurement>) =>
+    apiRequest<{ measurement: Measurement }>('/api/v1/measurements', token, {
+      method: 'POST',
+      body: JSON.stringify(body),
     }),
 };
