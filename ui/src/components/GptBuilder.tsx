@@ -1,8 +1,12 @@
 import { Bot, CheckCircle2, Loader2, Send, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, chatApi } from '../api';
+import { AiGeneratingPanel } from './AiGeneratingPanel';
+import { AiProgramResult } from './AiProgramResult';
+import { DraftPreview } from './DraftPreview';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
+import { profileContextFromUser } from '../lib/aiProfile';
 import type { ChatMessage, GptDraftProgram, GptQuota } from '../types';
 
 const SUGGESTIONS = [
@@ -15,7 +19,7 @@ const SUGGESTIONS = [
 ];
 
 export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { token, notify, refreshPrograms } = useApp();
+  const { token, user, notify, refreshPrograms } = useApp();
   const { navigate } = useRouter();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -33,7 +37,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, draft]);
+  }, [messages, draft, busy]);
 
   if (!open) return null;
 
@@ -56,15 +60,25 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
       setMessages((m) => [...m, { role: 'assistant', content: res.reply }]);
       setDraft(res.draftProgram);
       setQuota(res.quota);
+      if (res.activated && res.program) {
+        await refreshPrograms();
+        notify('Program saved and activated', 'success');
+        onClose();
+        navigate('dashboard');
+      }
     } catch (error) {
       const message =
         error instanceof ApiError && error.status === 429
           ? 'You have used all 5 GPT messages this week.'
           : error instanceof ApiError && error.status === 503
             ? 'GPT is not configured on the server yet.'
-            : error instanceof Error
-              ? error.message
-              : 'Generation failed';
+            : error instanceof ApiError && error.status === 504
+              ? 'GPT took too long — please try again.'
+              : error instanceof ApiError
+                ? error.message
+                : error instanceof Error
+                  ? error.message
+                  : 'Generation failed';
       notify(message, 'error');
       setMessages((m) => [...m, { role: 'assistant', content: `⚠️ ${message}` }]);
     } finally {
@@ -106,19 +120,28 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
           {messages.length === 0 ? (
             <div className="gpt-builder__intro">
               <Sparkles size={22} />
-              <p>Describe your goals or just say “build my program”. I’ll use your profile, then you can ask for changes.</p>
+              <p>Describe your goals or just say “build my program”. I’ll use your profile, then you can ask for changes. Say “save and activate” when you’re ready.</p>
             </div>
           ) : null}
 
           {messages.map((m, i) => (
-            <div key={i} className={`gpt-msg gpt-msg--${m.role}`}>
+            <div
+              key={i}
+              className={`gpt-msg gpt-msg--${m.role} ${m.role === 'assistant' && i === messages.length - 1 && !busy ? 'ai-result__reply' : ''}`}
+            >
               {m.content}
             </div>
           ))}
 
-          {busy ? <div className="gpt-msg gpt-msg--assistant"><Loader2 className="spin" size={16} /> Thinking…</div> : null}
+          {busy ? (
+            <AiGeneratingPanel active profile={profileContextFromUser(user)} />
+          ) : null}
 
-          {draft ? <DraftPreview draft={draft} /> : null}
+          {draft && !busy ? (
+            <AiProgramResult>
+              <DraftPreview draft={draft} />
+            </AiProgramResult>
+          ) : null}
         </div>
 
         <div className="gpt-builder__suggestions">
@@ -149,30 +172,6 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
           </button>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function DraftPreview({ draft }: { draft: GptDraftProgram }) {
-  return (
-    <div className="gpt-draft">
-      <div className="gpt-draft__head">
-        <strong>{draft.name}</strong>
-        <span>{draft.daysPerWeek} days/wk · {draft.sessionDuration} min · {draft.difficulty}</span>
-      </div>
-      {draft.days.map((day) => (
-        <div key={day.day} className="gpt-draft__day">
-          <p className="eyebrow">Day {day.day} · {day.title}</p>
-          <ul>
-            {day.exercises.map((ex, i) => (
-              <li key={`${ex.name}-${i}`}>
-                <span>{ex.name}</span>
-                <small>{ex.sets} × {ex.repRange || ex.reps} · {ex.restTime}s · {ex.muscleGroups.slice(0, 2).join(', ')}</small>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
     </div>
   );
 }

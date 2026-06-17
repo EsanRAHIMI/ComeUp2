@@ -120,7 +120,7 @@ export function ProgramsView() {
       ) : (
         <EmptyState
           title={term ? 'No matches' : 'No programs yet'}
-          description={term ? 'Try a different search.' : 'Create a GPT program, quick-generate one, or import your coach plan.'}
+          description={term ? 'Try a different search.' : 'Use Quick generate or GPT program builder — both use your profile and share 5 AI generations per week.'}
           actionLabel={term ? undefined : 'Create with GPT'}
           onAction={term ? undefined : () => setGptOpen(true)}
         />

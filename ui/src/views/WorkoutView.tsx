@@ -26,7 +26,8 @@ import type { Exercise, Program, ScheduleEntry } from '../types';
 type Overlay = { summary: SessionSummary; status: 'saved' | 'failed' };
 
 export function WorkoutView() {
-  const { activeProgram, generateProgram } = useApp();
+  const { activeProgram } = useApp();
+  const { navigate } = useRouter();
   const [nowMs] = useState(() => Date.now());
 
   const scheduledSession = nextScheduledSession(activeProgram, nowMs);
@@ -47,8 +48,8 @@ export function WorkoutView() {
         <EmptyState
           title="No workout loaded"
           description="Generate and activate a program, then come back to start a session."
-          actionLabel="Generate program"
-          onAction={() => void generateProgram()}
+          actionLabel="Create a program"
+          onAction={() => navigate('programs')}
         />
       </div>
     );

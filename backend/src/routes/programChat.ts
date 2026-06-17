@@ -1,50 +1,16 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { AiConversation } from '../models/AiConversation.js';
-import { Program } from '../models/Program.js';
 import { User } from '../models/User.js';
 import { AiServiceError, callAiService } from '../services/aiClient.js';
 import { consumeQuota, getQuota } from '../services/gptQuota.js';
-import { normalizeGptProgram } from '../services/programNormalizer.js';
+import { buildProfile, saveDraftAsProgram } from '../services/gptShared.js';
 import { objectIdSchema, parseBody } from '../utils/schemas.js';
 
 type GptReply = { reply: string; program: unknown };
 
-type ProfileSource = {
-  name?: string | null;
-  gender?: string | null;
-  age?: number | null;
-  height?: number | null;
-  weight?: number | null;
-  goal?: string | null;
-  fitnessLevel?: string | null;
-  workoutDaysPerWeek?: number | null;
-  injuries?: string[] | null;
-  availableEquipment?: string[] | null;
-  preferredDays?: number[] | null;
-  sessionDuration?: number | null;
-};
-
-function buildProfile(user: ProfileSource) {
-  return {
-    name: user.name ?? undefined,
-    gender: user.gender ?? undefined,
-    age: user.age ?? undefined,
-    height: user.height ?? undefined,
-    weight: user.weight ?? undefined,
-    goal: user.goal ?? undefined,
-    fitnessLevel: user.fitnessLevel ?? undefined,
-    workoutDaysPerWeek: user.workoutDaysPerWeek ?? undefined,
-    sessionDuration: user.sessionDuration ?? undefined,
-    injuries: user.injuries ?? [],
-    availableEquipment: user.availableEquipment ?? [],
-    preferredDays: user.preferredDays ?? [],
-  };
-}
-
-function todayDate() {
-  return new Date().toISOString().slice(0, 10);
-}
+const ACTIVATION_INTENT =
+  /\b(save\s+and\s+activate|activate(?:\s+it|\s+program)?|looks?\s+good|perfect|let'?s\s+go|start\s+(?:this\s+)?program|register\s+me)\b/i;
 
 export const programChatRoutes: FastifyPluginAsync = async (app) => {
   // Current weekly quota.
@@ -100,13 +66,15 @@ export const programChatRoutes: FastifyPluginAsync = async (app) => {
       });
     } catch (error) {
       if (error instanceof AiServiceError) {
-        return reply.code(error.status === 503 ? 503 : 502).send({ message: error.message });
+        const status = error.status === 503 || error.status === 504 ? error.status : 502;
+        return reply.code(status).send({ message: error.message });
       }
       request.log.error(error);
       return reply.code(502).send({ message: 'GPT generation failed' });
     }
 
     const now = new Date();
+    const hadDraft = Boolean(conversation.draftProgram);
     conversation.messages.push({ role: 'user', content: body.content, createdAt: now });
     conversation.messages.push({ role: 'assistant', content: result.reply, createdAt: now });
     conversation.draftProgram = result.program;
@@ -114,11 +82,22 @@ export const programChatRoutes: FastifyPluginAsync = async (app) => {
     await conversation.save();
 
     const { quota: updatedQuota } = await consumeQuota(request.user.sub);
+
+    let program = null;
+    if (hadDraft && ACTIVATION_INTENT.test(body.content)) {
+      program = await saveDraftAsProgram(request.user.sub, result.program, user, true);
+      conversation.status = 'saved';
+      conversation.generatedProgramId = program._id;
+      await conversation.save();
+    }
+
     return {
       reply: result.reply,
       draftProgram: result.program,
       messages: conversation.messages,
       quota: updatedQuota,
+      program,
+      activated: Boolean(program),
     };
   });
 
@@ -142,20 +121,17 @@ export const programChatRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const user = await User.findById(request.user.sub);
-    const programInput = normalizeGptProgram(conversation.draftProgram, {
-      startDate: body.startDate ?? todayDate(),
-      workoutTime: body.workoutTime ?? '18:00',
-      weeks: body.weeks ?? 8,
-      preferredDays: user?.preferredDays ?? undefined,
-    });
-
-    const program = await Program.create({ ...programInput, ownerId: request.user.sub });
-
-    if (body.activate) {
-      await Program.updateMany({ ownerId: request.user.sub }, { isActive: false });
-      program.isActive = true;
-      await program.save();
-    }
+    const program = await saveDraftAsProgram(
+      request.user.sub,
+      conversation.draftProgram,
+      user,
+      body.activate ?? false,
+      {
+        startDate: body.startDate,
+        workoutTime: body.workoutTime,
+        weeks: body.weeks,
+      },
+    );
 
     conversation.status = 'saved';
     conversation.generatedProgramId = program._id;

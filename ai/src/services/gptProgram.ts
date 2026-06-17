@@ -47,7 +47,7 @@ const gptExerciseSchema = z.object({
 });
 
 const gptDaySchema = z.object({
-  day: z.number().int().min(1),
+  day: z.number().int().min(1).max(7),
   title: z.string(),
   focus: z.string().optional().default(''),
   exercises: z.array(gptExerciseSchema).min(1),
@@ -81,39 +81,177 @@ const responseSchema = z.object({
   program: gptProgramSchema,
 });
 
+const WEEKDAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function toInt(value: unknown, fallback: number, min = 0, max = 9999): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.min(max, Math.max(min, Math.round(value)));
+  }
+  if (typeof value === 'string') {
+    const match = value.match(/\d+/);
+    if (match) return Math.min(max, Math.max(min, parseInt(match[0], 10)));
+  }
+  return fallback;
+}
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) return [value.trim()];
+  return [];
+}
+
+function normalizeDifficulty(value: unknown, fallback: 'Beginner' | 'Intermediate' | 'Advanced'): 'Beginner' | 'Intermediate' | 'Advanced' {
+  const raw = String(value ?? fallback).toLowerCase();
+  if (raw.startsWith('beg')) return 'Beginner';
+  if (raw.startsWith('adv')) return 'Advanced';
+  if (raw.startsWith('int')) return 'Intermediate';
+  return fallback;
+}
+
+function normalizeExercise(raw: unknown) {
+  const ex = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  return {
+    name: String(ex.name ?? 'Exercise').trim() || 'Exercise',
+    sets: toInt(ex.sets, 3, 1, 20),
+    reps: toInt(ex.reps, 10, 1, 300),
+    repRange: String(ex.repRange ?? ex.rep_range ?? ''),
+    restTime: toInt(ex.restTime ?? ex.rest_time ?? ex.rest, 90, 0, 900),
+    instructions: String(ex.instructions ?? ex.notes ?? ''),
+    muscleGroups: toStringArray(ex.muscleGroups ?? ex.muscle_groups).map((g) => g.toLowerCase()),
+    equipment: toStringArray(ex.equipment),
+  };
+}
+
+function normalizeDay(raw: unknown, index: number) {
+  const day = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const exercises = Array.isArray(day.exercises) ? day.exercises.map(normalizeExercise) : [];
+  return {
+    day: toInt(day.day, index + 1, 1, 7),
+    title: String(day.title ?? `Day ${index + 1}`).trim() || `Day ${index + 1}`,
+    focus: String(day.focus ?? day.title ?? ''),
+    exercises: exercises.length > 0 ? exercises : [normalizeExercise({ name: 'Bodyweight Squat', sets: 3, reps: 12, restTime: 60, muscleGroups: ['legs'] })],
+  };
+}
+
+/** Coerce loosely-typed GPT JSON into our strict schema before validation. */
+export function normalizeGptResponse(raw: unknown, profile: ProgramGenerateInput['profile']) {
+  const root = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const programRaw = (root.program && typeof root.program === 'object' ? root.program : root) as Record<string, unknown>;
+  const fallbackDifficulty = normalizeDifficulty(profile.fitnessLevel, 'Intermediate');
+  const days = Array.isArray(programRaw.days) ? programRaw.days.map(normalizeDay) : [];
+  const daysPerWeek = toInt(programRaw.daysPerWeek ?? programRaw.days_per_week, (profile.workoutDaysPerWeek ?? days.length) || 3, 1, 7);
+
+  return {
+    reply: String(root.reply ?? programRaw.reply ?? 'Your personalized program is ready.'),
+    program: {
+      name: String(programRaw.name ?? 'Personalized Program').trim() || 'Personalized Program',
+      description: String(programRaw.description ?? ''),
+      difficulty: normalizeDifficulty(programRaw.difficulty, fallbackDifficulty),
+      goal: String(programRaw.goal ?? profile.goal ?? ''),
+      daysPerWeek,
+      sessionDuration: toInt(programRaw.sessionDuration ?? programRaw.session_duration, profile.sessionDuration ?? 60, 20, 180),
+      days: days.length > 0 ? days.slice(0, daysPerWeek) : [normalizeDay({ day: 1, title: 'Full Body', exercises: [] }, 0)],
+      nutrition: {
+        calories: String((programRaw.nutrition as Record<string, unknown> | undefined)?.calories ?? ''),
+        protein: String((programRaw.nutrition as Record<string, unknown> | undefined)?.protein ?? ''),
+        mealRule: String((programRaw.nutrition as Record<string, unknown> | undefined)?.mealRule ?? ''),
+        notes: toStringArray((programRaw.nutrition as Record<string, unknown> | undefined)?.notes),
+      },
+      supplements: toStringArray(programRaw.supplements),
+      executionRules: toStringArray(programRaw.executionRules ?? programRaw.execution_rules),
+      longTermGoal: String(programRaw.longTermGoal ?? programRaw.long_term_goal ?? ''),
+    },
+  };
+}
+
+function preferredDaysHint(preferredDays: number[]) {
+  if (!preferredDays.length) return 'No preferred weekdays set — spread sessions evenly across the week.';
+  const labels = preferredDays.map((d) => `${d} (${WEEKDAY_LABELS[d] ?? 'day'})`).join(', ');
+  return `Preferred training weekdays (0=Sun … 6=Sat): ${labels}. Use these as the "day" field for each session when possible.`;
+}
+
 function systemPrompt(profile: ProgramGenerateInput['profile']) {
+  const daysTarget = profile.workoutDaysPerWeek ?? 3;
+  const sessionMinutes = profile.sessionDuration ?? 60;
+  const injuryNote =
+    profile.injuries?.length
+      ? `Injuries/limitations: ${profile.injuries.join(', ')}. Substitute or avoid aggravating movements.`
+      : 'No injuries reported.';
+  const equipmentNote =
+    profile.availableEquipment?.length
+      ? `Available equipment: ${profile.availableEquipment.join(', ')}. Only prescribe exercises they can perform.`
+      : 'No equipment listed — prefer bodyweight and minimal-equipment options unless the user asks otherwise.';
+
   return [
-    'You are an expert strength & conditioning coach building safe, personalized gym programs.',
-    'Always return STRICT JSON only (no markdown) matching exactly this TypeScript type:',
-    '{ "reply": string, "program": {',
-    '  "name": string, "description": string,',
-    '  "difficulty": "Beginner"|"Intermediate"|"Advanced", "goal": string,',
-    '  "daysPerWeek": number, "sessionDuration": number,',
-    '  "days": [{ "day": number, "title": string, "focus": string,',
-    '    "exercises": [{ "name": string, "sets": number, "reps": number, "repRange": string,',
-    '      "restTime": number, "instructions": string, "muscleGroups": string[], "equipment": string[] }] }],',
-    '  "nutrition": { "calories": string, "protein": string, "mealRule": string, "notes": string[] },',
-    '  "supplements": string[], "executionRules": string[], "longTermGoal": string } }',
+    'You are a professional, dedicated strength & conditioning coach. Build safe, effective, personalized gym programs.',
+    'Return STRICT JSON only (no markdown fences) matching this shape:',
+    '{ "reply": string, "program": { "name", "description", "difficulty", "goal", "daysPerWeek", "sessionDuration",',
+    '  "days": [{ "day", "title", "focus", "exercises": [{ "name", "sets", "reps", "repRange", "restTime", "instructions", "muscleGroups", "equipment" }] }],',
+    '  "nutrition": { "calories", "protein", "mealRule", "notes" }, "supplements", "executionRules", "longTermGoal" } }',
     '',
-    'Rules:',
-    '- "reply" is a short, friendly summary of what you built or changed (1-3 sentences).',
-    '- Respect the user profile: goal, fitness level, available equipment, injuries (program around them), and preferred training days.',
-    '- restTime is in seconds. muscleGroups use lowercase tokens like "chest","back","legs","glutes","hamstrings","quads","shoulders","biceps","triceps","core","calves","cardio".',
-    '- Keep each session within the requested duration. Never prescribe movements that aggravate a stated injury.',
-    '',
-    'User profile:',
-    JSON.stringify(profile),
+    'Coaching standards:',
+    `- Build exactly ${daysTarget} training days unless the user explicitly asks to change frequency.`,
+    `- Each session must fit within ${sessionMinutes} minutes including warm-up.`,
+    `- Match difficulty to fitness level: ${profile.fitnessLevel ?? 'Intermediate'}.`,
+    `- Primary goal: ${profile.goal ?? 'General Fitness'}.`,
+    `- ${injuryNote}`,
+    `- ${equipmentNote}`,
+    `- ${preferredDaysHint(profile.preferredDays ?? [])}`,
+    '- "reply": warm, professional summary (2-3 sentences) explaining what you built and why it fits the user.',
+    '- sets, reps, restTime MUST be JSON numbers (not strings). restTime is seconds.',
+    '- difficulty MUST be exactly "Beginner", "Intermediate", or "Advanced" (capitalized).',
+    '- muscleGroups: lowercase tokens like chest, back, legs, glutes, hamstrings, quads, shoulders, biceps, triceps, core, calves, cardio.',
+    '- Include practical nutrition guidance scaled to the user\'s goal, age, and weight when known.',
+    '- executionRules: 3-5 actionable coaching cues (warm-up, progression, deload, form focus).',
   ].join('\n');
 }
 
-export async function generateGptProgram(input: ProgramGenerateInput): Promise<z.infer<typeof responseSchema>> {
-  if (!env.GPT_API_KEY) {
-    throw new GptError('GPT is not configured on the server', 503);
-  }
+type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
-  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-    { role: 'system', content: systemPrompt(input.profile) },
-  ];
+async function callGpt(messages: ChatMessage[]): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90_000);
+  try {
+    const response = await fetch(`${env.GPT_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${env.GPT_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: env.GPT_MODEL,
+        temperature: 0.35,
+        max_tokens: 4096,
+        response_format: { type: 'json_object' },
+        messages,
+      }),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new GptError(`GPT provider error ${response.status}: ${detail.slice(0, 200)}`, 502);
+    }
+
+    const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new GptError('GPT returned an empty response', 502);
+    return content;
+  } catch (error) {
+    if (error instanceof GptError) throw error;
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new GptError('GPT request timed out — please try again', 504);
+    }
+    throw new GptError('Could not reach the GPT provider', 502);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function buildMessages(input: ProgramGenerateInput, repairHint?: string): ChatMessage[] {
+  const messages: ChatMessage[] = [{ role: 'system', content: systemPrompt(input.profile) }];
   if (input.currentDraft) {
     messages.push({
       role: 'assistant',
@@ -124,45 +262,45 @@ export async function generateGptProgram(input: ProgramGenerateInput): Promise<z
   if (messages.length === 1) {
     messages.push({ role: 'user', content: 'Create my first personalized program based on my profile.' });
   }
-
-  let response: Response;
-  try {
-    response = await fetch(`${env.GPT_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${env.GPT_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: env.GPT_MODEL,
-        temperature: 0.4,
-        response_format: { type: 'json_object' },
-        messages,
-      }),
+  if (repairHint) {
+    messages.push({
+      role: 'user',
+      content: repairHint,
     });
-  } catch {
-    throw new GptError('Could not reach the GPT provider', 502);
+  }
+  return messages;
+}
+
+const MAX_ATTEMPTS = 3;
+
+export async function generateGptProgram(input: ProgramGenerateInput): Promise<z.infer<typeof responseSchema>> {
+  if (!env.GPT_API_KEY) {
+    throw new GptError('GPT is not configured on the server', 503);
   }
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    throw new GptError(`GPT provider error ${response.status}: ${detail.slice(0, 200)}`, 502);
+  let lastIssues = '';
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    const repairHint =
+      attempt > 1
+        ? `Your previous JSON was invalid (${lastIssues}). Return corrected STRICT JSON only. sets, reps, restTime must be numbers; difficulty must be Beginner|Intermediate|Advanced.`
+        : undefined;
+
+    const content = await callGpt(buildMessages(input, repairHint));
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      lastIssues = 'invalid JSON';
+      continue;
+    }
+
+    const normalized = normalizeGptResponse(parsed, input.profile);
+    const result = responseSchema.safeParse(normalized);
+    if (result.success) return result.data;
+
+    lastIssues = result.error.issues.map((i) => i.path.join('.')).join(', ') || 'schema mismatch';
   }
 
-  const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new GptError('GPT returned an empty response', 502);
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    throw new GptError('GPT returned invalid JSON', 502);
-  }
-
-  const result = responseSchema.safeParse(parsed);
-  if (!result.success) {
-    throw new GptError('GPT response did not match the program schema', 502);
-  }
-  return result.data;
+  throw new GptError('GPT could not produce a valid program — please try again', 502);
 }

@@ -93,9 +93,15 @@ export const programsApi = {
       equipment: string[];
       focusAreas: string[];
       daysPerWeek?: number;
+      notes?: string;
     },
   ) =>
-    apiRequest<{ program: Program }>('/api/v1/ai/workouts/generate', token, {
+    apiRequest<{
+      reply: string;
+      draftProgram: GptDraftProgram;
+      conversationId: string;
+      quota: GptQuota;
+    }>('/api/v1/ai/workouts/generate', token, {
       method: 'POST',
       body: JSON.stringify(body),
     }),
@@ -144,12 +150,17 @@ export const chatApi = {
   start: (token: string) =>
     apiRequest<{ conversation: AiConversation; quota: GptQuota }>('/api/v1/ai/program-chat/start', token, {
       method: 'POST',
-      body: JSON.stringify({}),
     }),
   get: (token: string, id: string) =>
     apiRequest<{ conversation: AiConversation; quota: GptQuota }>(`/api/v1/ai/program-chat/${id}`, token),
   message: (token: string, id: string, content: string) =>
-    apiRequest<{ reply: string; draftProgram: GptDraftProgram; quota: GptQuota }>(
+    apiRequest<{
+      reply: string;
+      draftProgram: GptDraftProgram;
+      quota: GptQuota;
+      program?: Program;
+      activated?: boolean;
+    }>(
       `/api/v1/ai/program-chat/${id}/message`,
       token,
       { method: 'POST', body: JSON.stringify({ content }) },
