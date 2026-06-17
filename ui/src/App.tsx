@@ -7,6 +7,7 @@ import { useApp } from './hooks/useApp';
 import { RouterProvider, useRouter } from './hooks/useRouter';
 import { AppProvider } from './store/AppProvider';
 import { ThemeProvider } from './hooks/useTheme';
+import { AdminView } from './views/AdminView';
 import { AuthView } from './views/AuthView';
 import { DashboardView } from './views/DashboardView';
 import { HistoryView } from './views/HistoryView';
@@ -25,6 +26,8 @@ function CurrentView() {
       return <HistoryView />;
     case 'profile':
       return <ProfileView />;
+    case 'admin':
+      return <AdminView />;
     default:
       return <DashboardView />;
   }

@@ -1,9 +1,12 @@
 /** Normalize a User document into the safe public shape returned to clients. */
+import { isAdminEmail } from './admin.js';
+
 export function publicUser(user: any) {
   return {
     id: user._id.toString(),
     name: user.name,
     email: user.email,
+    isAdmin: isAdminEmail(user.email),
     age: user.age,
     height: user.height,
     weight: user.weight,

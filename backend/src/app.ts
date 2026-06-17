@@ -5,6 +5,7 @@ import Fastify from 'fastify';
 import { ZodError } from 'zod';
 import { corsOrigins } from './config/env.js';
 import { authPlugin } from './plugins/auth.js';
+import { adminRoutes } from './routes/admin.js';
 import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
 import { exerciseMediaRoutes } from './routes/exerciseMedia.js';
@@ -35,6 +36,7 @@ export async function buildApp() {
   await app.register(measurementRoutes, { prefix: '/api/v1' });
   await app.register(sessionRoutes, { prefix: '/api/v1' });
   await app.register(aiRoutes, { prefix: '/api/v1' });
+  await app.register(adminRoutes, { prefix: '/api/v1' });
 
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof ZodError) {

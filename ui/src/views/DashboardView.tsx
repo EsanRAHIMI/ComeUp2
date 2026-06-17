@@ -2,107 +2,184 @@ import {
   ArrowRight,
   Bot,
   CalendarDays,
+  Clock3,
   Dumbbell,
   Flame,
   PlayCircle,
+  RotateCcw,
   Target,
   Timer,
   TrendingUp,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { chatApi, reportsApi } from '../api';
+import { DailyMedals } from '../components/DailyMedals';
 import { GptBuilder } from '../components/GptBuilder';
+import { useActiveSession } from '../hooks/useActiveSession';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
-import { formatSessionDate, nextScheduledSession } from '../lib/format';
-import type { GptQuota, ReportOverview, ScheduleEntry, WeeklyReport } from '../types';
-
-function isSameDay(a: Date, b: Date) {
-  return a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
-}
+import { formatCountdown, formatCountdownLong, formatSessionDate, isSameLocalDay } from '../lib/format';
+import { programKey } from '../lib/sessionEngine';
+import type { DailyReport, GptQuota, ReportOverview, WeeklyReport } from '../types';
 
 export function DashboardView() {
   const { activeProgram, token } = useApp();
   const { navigate } = useRouter();
-  const [nowMs] = useState(() => Date.now());
+  const { isRunning, isUnsaved, session } = useActiveSession();
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const [weekly, setWeekly] = useState<WeeklyReport | null>(null);
   const [overview, setOverview] = useState<ReportOverview | null>(null);
+  const [daily, setDaily] = useState<DailyReport | null>(null);
   const [quota, setQuota] = useState<GptQuota | null>(null);
   const [builderOpen, setBuilderOpen] = useState(false);
 
-  useEffect(() => {
+  const refreshReports = useCallback(() => {
     if (!token) return;
-    let cancelled = false;
-    reportsApi.weekly(token).then((r) => !cancelled && setWeekly(r)).catch(() => undefined);
-    reportsApi.overview(token).then((r) => !cancelled && setOverview(r)).catch(() => undefined);
-    chatApi.quota(token).then((r) => !cancelled && setQuota(r.quota)).catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
+    reportsApi.weekly(token).then(setWeekly).catch(() => undefined);
+    reportsApi.overview(token).then(setOverview).catch(() => undefined);
+    reportsApi.daily(token).then(setDaily).catch(() => undefined);
+    chatApi.quota(token).then((r) => setQuota(r.quota)).catch(() => undefined);
   }, [token]);
 
-  const schedule = activeProgram?.schedule ?? [];
-  const todaySession =
-    schedule.find((s) => isSameDay(new Date(s.startsAt), new Date(nowMs))) ??
-    nextScheduledSession(activeProgram, nowMs);
-  const upcoming: ScheduleEntry[] = schedule
-    .filter((s) => new Date(s.startsAt).getTime() >= nowMs)
-    .slice(0, 3);
+  useEffect(() => {
+    refreshReports();
+  }, [refreshReports]);
 
-  const sessionExerciseCount = (() => {
-    if (!activeProgram) return 0;
-    if (!todaySession?.exerciseNames.length) return activeProgram.exercises.length;
-    const names = todaySession.exerciseNames.map((n) => n.toLowerCase());
-    const matched = activeProgram.exercises.filter((ex) => names.includes(ex.name.toLowerCase())).length;
-    return matched || activeProgram.exercises.length;
+  useEffect(() => {
+    const tick = window.setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => window.clearInterval(tick);
+  }, []);
+
+  const focusSession = daily?.focusSession;
+  const estimatedMinutes = daily?.estimatedMinutes ?? activeProgram?.duration ?? 0;
+  const exerciseCount = daily?.exerciseCount ?? activeProgram?.exercises.length ?? 0;
+
+  const secondsUntil = (() => {
+    if (daily?.completedToday) return null;
+    if (daily?.secondsUntilWorkout != null) return daily.secondsUntilWorkout;
+    if (!focusSession) return null;
+    const diff = Math.round((new Date(focusSession.startsAt).getTime() - nowMs) / 1000);
+    return diff > 0 ? diff : 0;
   })();
+
+  const canResumeToday = Boolean(
+    activeProgram &&
+      session &&
+      (isRunning || isUnsaved) &&
+      session.programId === programKey(activeProgram) &&
+      isSameLocalDay(new Date(session.startedAt), new Date()),
+  );
 
   return (
     <div className="view-stack">
-      {/* B. Today's workout */}
+      {activeProgram && daily?.medals?.length ? (
+        <DailyMedals medals={daily.medals} completedToday={daily.completedToday} />
+      ) : null}
+
       {activeProgram ? (
         <section className="home-today">
-          <p className="eyebrow">Today’s workout</p>
-          <h2>{todaySession?.title ?? activeProgram.name}</h2>
+          <p className="eyebrow">
+            {daily?.completedToday ? 'Today’s win' : focusSession?.isToday === false ? 'Next workout' : 'Today’s workout'}
+          </p>
+          <h2>{focusSession?.title ?? activeProgram.name}</h2>
+
+          {!daily?.completedToday && !canResumeToday && secondsUntil != null ? (
+            <div className="home-countdown">
+              <Clock3 size={18} />
+              <div>
+                <strong>{secondsUntil > 0 ? formatCountdown(secondsUntil) : 'Ready now'}</strong>
+                <small>
+                  {secondsUntil > 0 ? `${formatCountdownLong(secondsUntil)} until training` : 'Your scheduled session is here'}
+                  {focusSession ? ` · ${formatSessionDate(focusSession.startsAt)}` : ''}
+                </small>
+              </div>
+            </div>
+          ) : canResumeToday ? (
+            <div className="home-countdown home-countdown--resume">
+              <RotateCcw size={18} />
+              <div>
+                <strong>Workout in progress</strong>
+                <small>Pick up where you left off today</small>
+              </div>
+            </div>
+          ) : daily?.completedToday && daily.todayStats ? (
+            <div className="home-countdown home-countdown--done">
+              <Target size={18} />
+              <div>
+                <strong>Session complete</strong>
+                <small>
+                  {daily.todayStats.minutes} min · {daily.todayStats.sets} sets · {daily.todayStats.calories} cal burned
+                </small>
+              </div>
+            </div>
+          ) : null}
+
           <div className="home-today__meta">
             <span><Dumbbell size={15} /> {activeProgram.name}</span>
-            <span><Timer size={15} /> {todaySession?.duration ?? activeProgram.duration} min</span>
-            <span><PlayCircle size={15} /> {sessionExerciseCount} exercises</span>
+            <span><Timer size={15} /> ~{estimatedMinutes} min est.</span>
+            <span><PlayCircle size={15} /> {exerciseCount} exercises</span>
           </div>
-          {todaySession ? <small className="home-today__when">{formatSessionDate(todaySession.startsAt)}</small> : null}
-          <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => navigate('workout')}>
-            <PlayCircle size={20} /> Start workout
-          </button>
+          {canResumeToday ? (
+            <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => navigate('workout')}>
+              <RotateCcw size={20} /> Resume workout
+            </button>
+          ) : !daily?.completedToday ? (
+            <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => navigate('workout')}>
+              <PlayCircle size={20} /> {secondsUntil === 0 ? 'Start now' : 'Start workout'}
+            </button>
+          ) : (
+            <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('history')}>
+              View today in history <ArrowRight size={16} />
+            </button>
+          )}
         </section>
       ) : (
         <section className="home-today">
           <p className="eyebrow">Get started</p>
           <h2>No active program yet</h2>
-          <p>Create a personalized program with GPT, or import your coach plan.</p>
+          <p>Create a personalized program with AI Coach, or import your coach plan.</p>
           <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => setBuilderOpen(true)}>
             <Bot size={20} /> Create my program
           </button>
         </section>
       )}
 
-      {/* C. Weekly progress */}
-      <section>
-        <p className="eyebrow section-label">This week</p>
-        <div className="stat-grid">
-          <article className="stat"><TrendingUp size={16} /><strong>{weekly?.completedSessions ?? 0}</strong><span>Sessions</span></article>
-          <article className="stat"><Timer size={16} /><strong>{weekly?.totalMinutes ?? 0}</strong><span>Minutes</span></article>
-          <article className="stat"><Flame size={16} /><strong>{weekly?.totalCalories ?? 0}</strong><span>Calories</span></article>
-          <article className="stat"><CalendarDays size={16} /><strong>{overview?.streakDays ?? 0}</strong><span>Day streak</span></article>
+      <section className="week-stats">
+        <div className="week-stats__head">
+          <p className="eyebrow">This week</p>
+          {weekly && weekly.adherencePct !== null ? (
+            <span className="week-stats__badge">{weekly.adherencePct}% plan</span>
+          ) : null}
+        </div>
+        <div className="week-stats__mosaic">
+          <article className="week-stat">
+            <TrendingUp size={15} aria-hidden />
+            <strong>{weekly?.completedSessions ?? 0}</strong>
+            <span>Sessions</span>
+          </article>
+          <article className="week-stat">
+            <Timer size={15} aria-hidden />
+            <strong>{weekly?.totalMinutes ?? 0}</strong>
+            <span>Minutes</span>
+          </article>
+          <article className="week-stat">
+            <Flame size={15} aria-hidden />
+            <strong>{weekly?.totalCalories ?? 0}</strong>
+            <span>Calories</span>
+          </article>
+          <article className="week-stat week-stat--accent">
+            <CalendarDays size={15} aria-hidden />
+            <strong>{overview?.streakDays ?? daily?.streakDays ?? 0}</strong>
+            <span>Streak</span>
+          </article>
         </div>
         {weekly && weekly.adherencePct !== null ? (
-          <div className="adherence">
-            <div className="adherence__bar"><i style={{ width: `${weekly.adherencePct}%` }} /></div>
-            <small>{weekly.adherencePct}% of this week’s planned sessions done</small>
+          <div className="week-stats__progress" role="progressbar" aria-valuenow={weekly.adherencePct} aria-valuemin={0} aria-valuemax={100}>
+            <i style={{ width: `${weekly.adherencePct}%` }} />
           </div>
         ) : null}
       </section>
 
-      {/* D. Active program summary */}
       {activeProgram ? (
         <section className="card home-program">
           <div className="home-program__head">
@@ -123,31 +200,11 @@ export function DashboardView() {
         </section>
       ) : null}
 
-      {/* E. Next sessions */}
-      {upcoming.length ? (
-        <section>
-          <p className="eyebrow section-label">Next sessions</p>
-          <div className="next-list">
-            {upcoming.map((s) => (
-              <div key={`${s.week}-${s.day}-${s.startsAt}`} className="next-row">
-                <span className="next-row__tag">W{s.week} D{s.day}</span>
-                <div className="next-row__body">
-                  <strong>{s.title}</strong>
-                  <small>{formatSessionDate(s.startsAt)}</small>
-                </div>
-                <em>{s.duration} min</em>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {/* F. GPT program builder */}
       <section className="card gpt-cta">
         <div className="gpt-cta__icon"><Bot size={22} /></div>
         <div className="gpt-cta__text">
-          <strong>Create or improve my program with GPT</strong>
-          <small>{quota ? `${quota.remaining} of ${quota.limit} GPT corrections left this week` : 'Personalized to your profile'}</small>
+          <strong>Build your program with AI Coach</strong>
+          <small>{quota ? `${quota.remaining} of ${quota.limit} AI messages left this week` : 'Personalized to your profile'}</small>
         </div>
         <button type="button" className="btn btn--primary" onClick={() => setBuilderOpen(true)}>Open</button>
       </section>

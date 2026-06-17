@@ -11,6 +11,7 @@ import type {
   ReportOverview,
   User,
   WeeklyReport,
+  DailyReport,
   WorkoutSession,
 } from '../types';
 import { apiRequest } from './client';
@@ -175,6 +176,7 @@ export const chatApi = {
 export const reportsApi = {
   weekly: (token: string) => apiRequest<WeeklyReport>('/api/v1/reports/weekly', token),
   overview: (token: string) => apiRequest<ReportOverview>('/api/v1/reports/overview', token),
+  daily: (token: string) => apiRequest<DailyReport>('/api/v1/reports/daily', token),
 };
 
 export const measurementsApi = {
@@ -184,4 +186,101 @@ export const measurementsApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+};
+
+export type AdminOverview = {
+  users: number;
+  programs: number;
+  communityMedia: number;
+  personalMedia: number;
+  sessions: number;
+  completedSessions: number;
+  sessionsThisWeek: number;
+};
+
+export type AdminCatalogExercise = {
+  exerciseKey: string;
+  exerciseName: string;
+  muscleGroups: string[];
+  primaryGroup: string;
+  programCount: number;
+  hasImage: boolean;
+  imageUrl?: string;
+  mediaId?: string;
+  needsReview: boolean;
+};
+
+export type AdminExerciseMediaPayload = {
+  stats: {
+    totalExercises: number;
+    withImage: number;
+    withoutImage: number;
+    communityMedia: number;
+    personalOverrides: number;
+  };
+  groups: string[];
+  withImage: AdminCatalogExercise[];
+  withoutImage: AdminCatalogExercise[];
+  byGroup: Record<string, { withImage: AdminCatalogExercise[]; withoutImage: AdminCatalogExercise[] }>;
+  community: Array<{
+    id: string;
+    exerciseKey: string;
+    exerciseName: string;
+    imageUrl: string;
+    updatedAt?: string;
+  }>;
+  personal: Array<{
+    id: string;
+    exerciseKey: string;
+    exerciseName: string;
+    imageUrl: string;
+    owner?: { name?: string; email?: string };
+    updatedAt?: string;
+  }>;
+};
+
+export const adminApi = {
+  overview: (token: string) => apiRequest<AdminOverview>('/api/v1/admin/overview', token),
+  users: (token: string, q?: string) =>
+    apiRequest<{ users: User[] }>(`/api/v1/admin/users${q ? `?q=${encodeURIComponent(q)}` : ''}`, token),
+  createUser: (token: string, body: { name: string; email: string; password: string; goal?: Goal; fitnessLevel?: FitnessLevel }) =>
+    apiRequest<{ user: User }>('/api/v1/admin/users', token, { method: 'POST', body: JSON.stringify(body) }),
+  updateUser: (token: string, id: string, patch: Partial<User>) =>
+    apiRequest<{ user: User }>(`/api/v1/admin/users/${id}`, token, { method: 'PATCH', body: JSON.stringify(patch) }),
+  deleteUser: (token: string, id: string) =>
+    apiRequest<void>(`/api/v1/admin/users/${id}`, token, { method: 'DELETE' }),
+  programs: (token: string, ownerId?: string) =>
+    apiRequest<{ programs: Program[] }>(`/api/v1/admin/programs${ownerId ? `?ownerId=${ownerId}` : ''}`, token),
+  updateProgram: (token: string, id: string, patch: Partial<Program>) =>
+    apiRequest<{ program: Program }>(`/api/v1/admin/programs/${id}`, token, { method: 'PATCH', body: JSON.stringify(patch) }),
+  deleteProgram: (token: string, id: string) =>
+    apiRequest<void>(`/api/v1/admin/programs/${id}`, token, { method: 'DELETE' }),
+  exerciseMedia: (token: string) => apiRequest<AdminExerciseMediaPayload>('/api/v1/admin/exercise-media', token),
+  upsertCommunityMedia: (token: string, body: { exerciseName: string; imageUrl: string }) =>
+    apiRequest('/api/v1/admin/exercise-media/community', token, { method: 'POST', body: JSON.stringify(body) }),
+  updateCommunityMedia: (token: string, id: string, body: { exerciseName?: string; imageUrl?: string }) =>
+    apiRequest(`/api/v1/admin/exercise-media/community/${id}`, token, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteCommunityMedia: (token: string, id: string) =>
+    apiRequest<void>(`/api/v1/admin/exercise-media/community/${id}`, token, { method: 'DELETE' }),
+  deletePersonalMedia: (token: string, id: string) =>
+    apiRequest<void>(`/api/v1/admin/exercise-media/personal/${id}`, token, { method: 'DELETE' }),
+  sessions: (token: string, params?: { userId?: string; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.userId) qs.set('userId', params.userId);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const suffix = qs.toString() ? `?${qs}` : '';
+    return apiRequest<{
+      sessions: Array<{
+        id: string;
+        status: string;
+        startTime: string;
+        endTime?: string;
+        totalDuration: number;
+        caloriesBurned: number;
+        exerciseCount: number;
+        user?: { name?: string; email?: string };
+        program?: { name?: string };
+      }>;
+    }>(`/api/v1/admin/sessions${suffix}`, token);
+  },
 };

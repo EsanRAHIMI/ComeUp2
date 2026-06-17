@@ -15,19 +15,20 @@ import {
 import { useState } from 'react';
 import { EmptyState } from '../components/EmptyState';
 import { ExerciseImage } from '../components/ExerciseImage';
+import { ExerciseListRow } from '../components/ExerciseListRow';
+import { NoProgramGuide } from '../components/NoProgramGuide';
 import { RestTimer } from '../components/RestTimer';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
 import { useWorkoutSession, type SessionSummary } from '../hooks/useWorkoutSession';
 import { resolveExerciseImage } from '../lib/exerciseImages';
-import { formatClock, formatDuration, nextScheduledSession } from '../lib/format';
+import { formatClock, formatDuration, nextScheduledSession, resolveRestSeconds } from '../lib/format';
 import type { Exercise, Program, ScheduleEntry } from '../types';
 
 type Overlay = { summary: SessionSummary; status: 'saved' | 'failed' };
 
 export function WorkoutView() {
   const { activeProgram } = useApp();
-  const { navigate } = useRouter();
   const [nowMs] = useState(() => Date.now());
 
   const scheduledSession = nextScheduledSession(activeProgram, nowMs);
@@ -44,14 +45,15 @@ export function WorkoutView() {
 
   if (!activeProgram) {
     return (
-      <div className="view-stack">
-        <EmptyState
-          title="No workout loaded"
-          description="Generate and activate a program, then come back to start a session."
-          actionLabel="Create a program"
-          onAction={() => navigate('programs')}
-        />
-      </div>
+      <>
+        <NoProgramGuide open />
+        <div className="view-stack view-stack--dimmed" aria-hidden="true">
+          <EmptyState
+            title="No workout loaded"
+            description="Activate a program to start training."
+          />
+        </div>
+      </>
     );
   }
 
@@ -74,7 +76,7 @@ function SessionRunner({
   exercises: Exercise[];
   scheduledSession: ScheduleEntry | null;
 }) {
-  const { exerciseMedia, token, notify, saveExerciseImage } = useApp();
+  const { exerciseMedia, token, notify, saveExerciseImage, user } = useApp();
   const { navigate } = useRouter();
   const session = useWorkoutSession({ program, exercises, token, notify });
 
@@ -92,12 +94,16 @@ function SessionRunner({
   const setNumbers = Array.from({ length: current.sets }, (_, i) => i + 1);
   const currentDone = setNumbers.filter((n) => session.isSetDone(session.currentIndex, n)).length;
 
+  const autoRestTimer = user?.preferences?.autoRestTimer !== false;
+  const defaultRestSeconds = user?.preferences?.defaultRestSeconds ?? 60;
+
   function toggleSet(setNumber: number) {
     const wasDone = session.isSetDone(session.currentIndex, setNumber);
     session.toggleSet(session.currentIndex, current, setNumber);
     if (!wasDone) {
       navigator.vibrate?.(35);
-      if (current.restTime > 0) setRest((r) => ({ id: (r?.id ?? 0) + 1, seconds: current.restTime }));
+      const seconds = resolveRestSeconds(current, defaultRestSeconds, autoRestTimer);
+      if (seconds > 0) setRest((r) => ({ id: (r?.id ?? 0) + 1, seconds }));
     }
   }
 
@@ -132,7 +138,10 @@ function SessionRunner({
       summary={overlay.summary}
       status={overlay.status}
       saving={saving}
-      onClose={() => setOverlay(null)}
+      onClose={() => {
+        setOverlay(null);
+        navigate('dashboard');
+      }}
       onHistory={() => navigate('history')}
       onRetry={() => void retry()}
       onDiscard={discard}
@@ -259,14 +268,11 @@ function SessionRunner({
           <span><PlayCircle size={16} /> {exercises.length} exercises</span>
           <span><Flame size={16} /> {program.totalCalories} cal</span>
         </div>
-        <ol className="runner-intro__list">
+        <div className="exercise-list runner-intro__list">
           {exercises.map((ex, i) => (
-            <li key={`${ex.name}-${i}`}>
-              <strong>{ex.name}</strong>
-              <small>{ex.sets} × {ex.repRange || ex.reps} {ex.trackingType === 'time' ? 'sec' : 'reps'}</small>
-            </li>
+            <ExerciseListRow key={`${ex.name}-${i}`} exercise={ex} index={i} showMuscleGroups={false} />
           ))}
-        </ol>
+        </div>
         <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => void session.start()}>
           <PlayCircle size={20} />
           Start workout

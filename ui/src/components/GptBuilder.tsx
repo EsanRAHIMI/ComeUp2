@@ -69,11 +69,11 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
     } catch (error) {
       const message =
         error instanceof ApiError && error.status === 429
-          ? 'You have used all 5 GPT messages this week.'
+          ? 'You have used all 5 AI messages this week.'
           : error instanceof ApiError && error.status === 503
-            ? 'GPT is not configured on the server yet.'
+            ? 'AI Coach is not configured on the server yet.'
             : error instanceof ApiError && error.status === 504
-              ? 'GPT took too long — please try again.'
+              ? 'AI Coach took too long — please try again.'
               : error instanceof ApiError
                 ? error.message
                 : error instanceof Error
@@ -103,14 +103,14 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-label="GPT program builder">
+    <div className="modal-overlay" role="dialog" aria-label="AI Coach program builder">
       <div className="gpt-builder">
         <header className="gpt-builder__head">
           <div className="gpt-builder__title">
             <span className="card__head-icon"><Bot size={18} /></span>
             <div>
-              <strong>Personalized GPT program</strong>
-              {quota ? <small>{quota.remaining} of {quota.limit} GPT messages left this week</small> : null}
+              <strong>AI Coach</strong>
+              {quota ? <small>{quota.remaining} of {quota.limit} AI messages left this week</small> : null}
             </div>
           </div>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
@@ -157,7 +157,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void send(input); }}
-            placeholder={noQuota ? 'Weekly GPT limit reached' : 'Message GPT…'}
+            placeholder={noQuota ? 'Weekly AI limit reached' : 'Message your AI coach…'}
             disabled={busy || noQuota}
           />
           <button type="button" className="btn btn--primary" onClick={() => void send(input)} disabled={busy || noQuota || !input.trim()}>

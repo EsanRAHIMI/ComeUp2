@@ -324,7 +324,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         const { media } = await mediaApi.upsert(token, exercise.name, imageUrl);
         setExerciseMedia((current) => ({ ...current, [media.exerciseKey]: media.imageUrl }));
-        notify('Exercise image saved', 'success');
+        notify(
+          media.source === 'personal' ? 'Personal exercise image saved' : 'Image shared with all users for this exercise',
+          'success',
+        );
       } catch (error) {
         // optimistic local fallback
         setExerciseMedia((current) => ({ ...current, [exerciseKey(exercise.name)]: imageUrl }));

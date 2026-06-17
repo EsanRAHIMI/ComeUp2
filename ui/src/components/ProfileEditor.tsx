@@ -1,5 +1,5 @@
 import { Loader2, Save, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../hooks/useApp';
 import type { FitnessLevel, Gender, Goal, User } from '../types';
 
@@ -32,6 +32,26 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
   const [equipment, setEquipment] = useState<string[]>(user?.availableEquipment ?? []);
   const [preferredDays, setPreferredDays] = useState<number[]>(user?.preferredDays ?? []);
   const [injuries, setInjuries] = useState((user?.injuries ?? []).join(', '));
+  const [autoRestTimer, setAutoRestTimer] = useState(user?.preferences?.autoRestTimer !== false);
+  const [defaultRestSeconds, setDefaultRestSeconds] = useState(user?.preferences?.defaultRestSeconds ?? 60);
+
+  useEffect(() => {
+    if (!open || !user) return;
+    setName(user.name);
+    setGender(user.gender ?? 'undisclosed');
+    setAge(user.age?.toString() ?? '');
+    setHeight(user.height?.toString() ?? '');
+    setWeight(user.weight?.toString() ?? '');
+    setGoal(user.goal);
+    setLevel(user.fitnessLevel);
+    setDaysPerWeek(user.workoutDaysPerWeek);
+    setSessionDuration(user.sessionDuration ?? 60);
+    setEquipment(user.availableEquipment ?? []);
+    setPreferredDays(user.preferredDays ?? []);
+    setInjuries((user.injuries ?? []).join(', '));
+    setAutoRestTimer(user.preferences?.autoRestTimer !== false);
+    setDefaultRestSeconds(user.preferences?.defaultRestSeconds ?? 60);
+  }, [open, user]);
 
   if (!open) return null;
 
@@ -49,6 +69,10 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
       availableEquipment: equipment,
       preferredDays,
       injuries: injuries.split(',').map((s) => s.trim()).filter(Boolean),
+      preferences: {
+        autoRestTimer,
+        defaultRestSeconds,
+      },
     };
     const ok = await updateProfile(patch);
     if (ok) onClose();
@@ -114,6 +138,39 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
           <span>Injuries / limitations <small className="field__hint">(comma separated)</small></span>
           <input value={injuries} onChange={(e) => setInjuries(e.target.value)} placeholder="e.g. knee pain, lower back" />
         </label>
+
+        <div className="field profile-rest-settings">
+          <span>Rest timer defaults</span>
+          <div className="settings-row settings-row--inset">
+            <div>
+              <strong>Auto rest between sets</strong>
+              <small>Count down after each completed set</small>
+            </div>
+            <button
+              type="button"
+              className={`switch ${autoRestTimer ? 'is-on' : ''}`}
+              onClick={() => setAutoRestTimer((v) => !v)}
+              role="switch"
+              aria-checked={autoRestTimer}
+              aria-label="Auto rest timer"
+            >
+              <span />
+            </button>
+          </div>
+          <label className="field">
+            <span>Default rest (seconds)</span>
+            <input
+              type="number"
+              min={0}
+              max={900}
+              step={5}
+              value={defaultRestSeconds}
+              disabled={!autoRestTimer}
+              onChange={(e) => setDefaultRestSeconds(Number(e.target.value))}
+            />
+            <small className="field__hint">Used when an exercise has no custom rest time</small>
+          </label>
+        </div>
 
         <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => void save()} disabled={busy || name.trim().length < 2}>
           {busy ? <Loader2 className="spin" size={18} /> : <Save size={18} />}

@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema(
       formCorrection: { type: Boolean, default: true },
       notifications: { type: Boolean, default: true },
       autoRestTimer: { type: Boolean, default: true },
+      defaultRestSeconds: { type: Number, min: 0, max: 900, default: 60 },
       preferredCamera: { type: String, enum: ['front', 'back'], default: 'front' },
     },
   },

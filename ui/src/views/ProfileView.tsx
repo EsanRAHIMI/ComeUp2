@@ -1,9 +1,10 @@
-import { Bot, LogOut, Pencil } from 'lucide-react';
+import { Bot, LogOut, Pencil, Shield } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { API_BASE_URL, chatApi } from '../api';
 import { MeasurementsPanel } from '../components/MeasurementsPanel';
 import { ProfileEditor } from '../components/ProfileEditor';
 import { useApp } from '../hooks/useApp';
+import { useRouter } from '../hooks/useRouter';
 import { useTheme } from '../hooks/useTheme';
 import type { GptQuota } from '../types';
 
@@ -11,6 +12,7 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function ProfileView() {
   const { user, logout, token } = useApp();
+  const { navigate } = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [editOpen, setEditOpen] = useState(false);
   const [quota, setQuota] = useState<GptQuota | null>(null);
@@ -68,15 +70,31 @@ export function ProfileView() {
       <section className="card gpt-cta">
         <div className="gpt-cta__icon"><Bot size={22} /></div>
         <div className="gpt-cta__text">
-          <strong>GPT weekly allowance</strong>
+          <strong>AI weekly allowance</strong>
           <small>{quota ? `${quota.remaining} of ${quota.limit} messages left this week` : 'Loading…'}</small>
         </div>
       </section>
 
       <MeasurementsPanel />
 
+      {user.isAdmin ? (
+        <button type="button" className="btn btn--primary btn--block" onClick={() => navigate('admin')}>
+          <Shield size={18} /> Admin panel
+        </button>
+      ) : null}
+
       <section className="card settings-card">
         <p className="eyebrow">Settings</p>
+        <div className="settings-row">
+          <div>
+            <strong>Rest timer</strong>
+            <small>
+              {user.preferences?.autoRestTimer === false
+                ? 'Off'
+                : `${user.preferences?.defaultRestSeconds ?? 60}s default between sets`}
+            </small>
+          </div>
+        </div>
         <div className="settings-row">
           <div>
             <strong>Dark mode</strong>

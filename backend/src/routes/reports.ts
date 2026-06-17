@@ -12,12 +12,52 @@ type SessionLike = {
   status: string;
 };
 
+type ExerciseLike = { name: string; sets: number };
+
 function dayKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+function startOfLocalDay(date = new Date()) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function endOfLocalDay(date = new Date()) {
+  const d = startOfLocalDay(date);
+  d.setDate(d.getDate() + 1);
+  return d;
+}
+
+function isSameLocalDay(a: Date, b: Date) {
+  return dayKey(a) === dayKey(b);
+}
+
 function countSets(session: SessionLike) {
   return session.exercises.reduce((sum, ex) => sum + (ex.sets?.length ?? 0), 0);
+}
+
+function sessionExercises(program: any, exerciseNames: string[] | undefined): ExerciseLike[] {
+  const all = (program?.exercises ?? []) as ExerciseLike[];
+  if (!exerciseNames?.length) return all;
+  const names = exerciseNames.map((n) => n.toLowerCase());
+  const matched = all.filter((ex) => names.includes(ex.name.toLowerCase()));
+  return matched.length ? matched : all;
+}
+
+function plannedSetCount(exercises: ExerciseLike[]) {
+  return exercises.reduce((sum, ex) => sum + (ex.sets ?? 0), 0);
+}
+
+function estimateSessionMinutes(exercises: ExerciseLike[], fallback = 60) {
+  if (!exercises.length) return fallback;
+  const seconds = exercises.reduce((sum, ex) => {
+    const rest = 60;
+    const workPerSet = 45;
+    return sum + ex.sets * workPerSet + Math.max(0, ex.sets - 1) * rest;
+  }, 0);
+  return Math.max(15, Math.round(seconds / 60));
 }
 
 /** Current consecutive-day training streak ending today or yesterday. */
@@ -106,6 +146,102 @@ export const reportRoutes: FastifyPluginAsync = async (app) => {
       weeks: buckets,
       totalSessions: sessions.length,
       streakDays: computeStreak(dayKeys),
+    };
+  });
+
+  app.get('/reports/daily', { preHandler: [app.authenticate] }, async (request) => {
+    const now = new Date();
+    const todayStart = startOfLocalDay(now);
+    const todayEnd = endOfLocalDay(now);
+
+    const allCompleted = (await WorkoutSession.find({
+      userId: request.user.sub,
+      status: 'completed',
+    }).sort({ startTime: -1 })) as unknown as SessionLike[];
+
+    const dayKeys = new Set(allCompleted.map((s) => dayKey(new Date(s.startTime))));
+    const streakDays = computeStreak(dayKeys);
+
+    const todaySessions = allCompleted.filter((s) => {
+      const t = new Date(s.startTime);
+      return t >= todayStart && t < todayEnd;
+    });
+
+    const activeProgram = await Program.findOne({ ownerId: request.user.sub, isActive: true });
+    const schedule = activeProgram?.schedule ?? [];
+    const nowMs = now.getTime();
+
+    const todaySchedule =
+      schedule.find((s) => isSameLocalDay(new Date(s.startsAt), now)) ?? null;
+    const nextSchedule =
+      schedule.find((s) => new Date(s.startsAt).getTime() >= nowMs) ??
+      (schedule.length ? schedule[schedule.length - 1] : null);
+
+    const focusSchedule = todaySchedule ?? nextSchedule;
+    const sessionExs = activeProgram
+      ? sessionExercises(activeProgram, focusSchedule?.exerciseNames as string[] | undefined)
+      : [];
+    const plannedSets = plannedSetCount(sessionExs);
+    const estimatedMinutes = focusSchedule?.duration ?? estimateSessionMinutes(sessionExs, activeProgram?.duration ?? 60);
+
+    const todaySets = todaySessions.reduce((sum, s) => sum + countSets(s), 0);
+    const todayMinutes = Math.round(todaySessions.reduce((sum, s) => sum + (s.totalDuration ?? 0), 0) / 60);
+    const todayCalories = todaySessions.reduce((sum, s) => sum + (s.caloriesBurned ?? 0), 0);
+
+    const workoutDone = todaySessions.length > 0;
+    const setsDone = workoutDone && (plannedSets === 0 ? todaySets > 0 : todaySets >= plannedSets);
+    const streakAlive = workoutDone && streakDays >= 1;
+
+    let secondsUntilWorkout: number | null = null;
+    if (focusSchedule && !workoutDone) {
+      const startMs = new Date(focusSchedule.startsAt).getTime();
+      if (startMs > nowMs) secondsUntilWorkout = Math.round((startMs - nowMs) / 1000);
+      else if (todaySchedule) secondsUntilWorkout = 0;
+    }
+
+    return {
+      dayKey: dayKey(now),
+      completedToday: workoutDone,
+      streakDays,
+      secondsUntilWorkout,
+      estimatedMinutes,
+      plannedSets,
+      exerciseCount: sessionExs.length,
+      todayStats: workoutDone
+        ? { sessions: todaySessions.length, sets: todaySets, minutes: todayMinutes, calories: todayCalories }
+        : null,
+      medals: [
+        {
+          id: 'workout',
+          label: 'Workout',
+          subtitle: workoutDone ? 'Session complete' : 'Finish today’s training',
+          earned: workoutDone,
+        },
+        {
+          id: 'volume',
+          label: 'All sets',
+          subtitle: setsDone
+            ? `${todaySets}/${plannedSets || todaySets} sets`
+            : plannedSets
+              ? `${todaySets}/${plannedSets} sets`
+              : 'Hit your set target',
+          earned: setsDone,
+        },
+        {
+          id: 'streak',
+          label: 'Streak',
+          subtitle: streakAlive ? `${streakDays} day${streakDays === 1 ? '' : 's'}` : 'Keep the chain alive',
+          earned: streakAlive,
+        },
+      ],
+      focusSession: focusSchedule
+        ? {
+            title: focusSchedule.title,
+            startsAt: focusSchedule.startsAt,
+            duration: focusSchedule.duration,
+            isToday: Boolean(todaySchedule),
+          }
+        : null,
     };
   });
 };

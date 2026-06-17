@@ -4,10 +4,20 @@ export type Difficulty = FitnessLevel;
 
 export type Gender = 'male' | 'female' | 'other' | 'undisclosed';
 
+export type UserPreferences = {
+  voiceFeedback?: boolean;
+  formCorrection?: boolean;
+  notifications?: boolean;
+  autoRestTimer?: boolean;
+  defaultRestSeconds?: number;
+  preferredCamera?: 'front' | 'back';
+};
+
 export type User = {
   id: string;
   name: string;
   email: string;
+  isAdmin?: boolean;
   goal: Goal;
   fitnessLevel: FitnessLevel;
   workoutDaysPerWeek: number;
@@ -19,6 +29,7 @@ export type User = {
   availableEquipment?: string[];
   preferredDays?: number[];
   sessionDuration?: number;
+  preferences?: UserPreferences;
 };
 
 export type GptQuota = {
@@ -84,6 +95,31 @@ export type ReportOverview = {
   weeks: Array<{ weekStartDate: string; sessions: number; minutes: number; calories: number; sets: number }>;
   totalSessions: number;
   streakDays: number;
+};
+
+export type DailyMedal = {
+  id: 'workout' | 'volume' | 'streak';
+  label: string;
+  subtitle: string;
+  earned: boolean;
+};
+
+export type DailyReport = {
+  dayKey: string;
+  completedToday: boolean;
+  streakDays: number;
+  secondsUntilWorkout: number | null;
+  estimatedMinutes: number;
+  plannedSets: number;
+  exerciseCount: number;
+  todayStats: { sessions: number; sets: number; minutes: number; calories: number } | null;
+  medals: DailyMedal[];
+  focusSession: {
+    title: string;
+    startsAt: string;
+    duration: number;
+    isToday: boolean;
+  } | null;
 };
 
 export type ImportReviewItem = {
@@ -171,6 +207,7 @@ export type ExerciseMedia = {
   exerciseKey: string;
   exerciseName: string;
   imageUrl: string;
+  source?: 'personal' | 'community';
 };
 
 export type SessionSet = {
@@ -203,4 +240,4 @@ export type WorkoutSession = {
 };
 
 export type AuthMode = 'login' | 'register';
-export type ViewKey = 'dashboard' | 'programs' | 'workout' | 'history' | 'profile';
+export type ViewKey = 'dashboard' | 'programs' | 'workout' | 'history' | 'profile' | 'admin';

@@ -1,4 +1,5 @@
 import type { Exercise, Program } from '../types';
+import { ExerciseListRow } from './ExerciseListRow';
 
 type DayGroup = { day: number; title: string; exercises: Exercise[] };
 
@@ -26,16 +27,7 @@ export function ProgramDays({ program }: { program: Program }) {
           <p className="eyebrow">Day {day.day} · {day.title}</p>
           <div className="exercise-list">
             {day.exercises.map((ex, i) => (
-              <div className="exercise-row" key={`${ex.name}-${i}`}>
-                <span className="exercise-row__num">{i + 1}</span>
-                <div className="exercise-row__body">
-                  <strong>{ex.name}</strong>
-                  <small>
-                    {ex.sets} × {ex.repRange || ex.reps} {ex.trackingType === 'time' ? 'sec' : 'reps'} · {ex.restTime}s rest
-                  </small>
-                </div>
-                <em>{ex.muscleGroups.slice(0, 2).join(', ')}</em>
-              </div>
+              <ExerciseListRow key={`${ex.name}-${i}`} exercise={ex} index={i} />
             ))}
           </div>
         </div>

@@ -6,6 +6,8 @@ const exerciseMediaSchema = new mongoose.Schema(
     exerciseKey: { type: String, required: true, trim: true },
     exerciseName: { type: String, required: true, trim: true },
     imageUrl: { type: String, required: true, trim: true },
+    /** True when the user chose a different image than the shared community default. */
+    isOverride: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

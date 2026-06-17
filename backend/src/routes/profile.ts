@@ -23,6 +23,7 @@ const profileUpdateSchema = z.object({
       formCorrection: z.boolean().optional(),
       notifications: z.boolean().optional(),
       autoRestTimer: z.boolean().optional(),
+      defaultRestSeconds: z.number().int().min(0).max(900).optional(),
       preferredCamera: z.enum(['front', 'back']).optional(),
     })
     .optional(),

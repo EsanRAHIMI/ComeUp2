@@ -1,4 +1,4 @@
-import type { Program, ScheduleEntry } from '../types';
+import type { Exercise, Program, ScheduleEntry } from '../types';
 
 export function dateInputValue(date = new Date()) {
   return date.toISOString().slice(0, 10);
@@ -51,4 +51,63 @@ export function formatDuration(totalSeconds: number) {
 
 export function getPersistedProgramId(program: Program) {
   return typeof program._id === 'string' && /^[a-f\d]{24}$/i.test(program._id) ? program._id : null;
+}
+
+export function isSameLocalDay(a: Date, b: Date) {
+  return a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
+}
+
+export function sessionExercisesForSchedule(program: Program, session: ScheduleEntry | null): Exercise[] {
+  if (!session?.exerciseNames.length) return program.exercises;
+  const names = session.exerciseNames.map((n) => n.toLowerCase());
+  const matched = program.exercises.filter((ex) => names.includes(ex.name.toLowerCase()));
+  return matched.length ? matched : program.exercises;
+}
+
+export function estimateSessionMinutes(exercises: Exercise[], fallback = 60) {
+  if (!exercises.length) return fallback;
+  const seconds = exercises.reduce((sum, ex) => {
+    const workPerSet = ex.trackingType === 'time' ? ex.reps : 45;
+    const rest = ex.restTime > 0 ? ex.restTime : 60;
+    return sum + ex.sets * workPerSet + Math.max(0, ex.sets - 1) * rest;
+  }, 0);
+  return Math.max(15, Math.round(seconds / 60));
+}
+
+export function formatCountdown(totalSeconds: number) {
+  const safe = Math.max(0, Math.round(totalSeconds));
+  if (safe <= 0) return 'Now';
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes} min`;
+  return `${safe}s`;
+}
+
+export function formatCountdownLong(totalSeconds: number) {
+  const safe = Math.max(0, Math.round(totalSeconds));
+  if (safe <= 0) return 'Ready to start';
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const parts: string[] = [];
+  if (hours) parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
+  if (minutes) parts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
+  return parts.length ? parts.join(' ') : `${safe} seconds`;
+}
+
+export function resolveRestSeconds(exercise: Exercise, defaultRestSeconds = 60, autoRestTimer = true) {
+  if (!autoRestTimer) return 0;
+  return exercise.restTime > 0 ? exercise.restTime : defaultRestSeconds;
+}
+
+export function formatHeaderTime(date: Date) {
+  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(date);
+}
+
+export function formatHeaderWeekday(date: Date) {
+  return new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(date);
+}
+
+export function formatHeaderDate(date: Date) {
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 }

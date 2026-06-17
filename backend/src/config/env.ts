@@ -14,6 +14,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('*'),
   AI_SERVICE_URL: z.string().url().default('http://localhost:4100'),
   AI_SERVICE_TOKEN: z.string().min(16),
+  /** Comma-separated admin emails (case-insensitive). */
+  ADMIN_EMAILS: z.string().default(''),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -26,7 +28,11 @@ if (!parsedEnv.success) {
   process.exit(1);
 }
 
-export const env = parsedEnv.data;
+const adminEmails = parsedEnv.data.ADMIN_EMAILS.split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
+
+export const env = { ...parsedEnv.data, ADMIN_EMAILS: adminEmails };
 
 export const corsOrigins =
   env.CORS_ORIGIN === '*'
