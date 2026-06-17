@@ -4,6 +4,9 @@ COPY package*.json ./
 RUN npm ci
 
 FROM deps AS build
+# VITE_* vars are inlined at build time, so the API URL must be a build arg.
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 COPY . .
 RUN npm run build
 

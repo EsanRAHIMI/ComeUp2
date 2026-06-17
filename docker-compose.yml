@@ -2,20 +2,17 @@ services:
   ui:
     build:
       context: ./ui
-    environment:
-      NODE_ENV: production
-      PORT: ${UI_PORT:-3000}
+      args:
+        # VITE_* is inlined into the static bundle at build time.
+        VITE_API_URL: ${VITE_API_URL:-/api}
+    # The UI is served by Nginx on container port 80 (see ui/Dockerfile).
     ports:
-      - "${UI_PORT:-3000}:${UI_PORT:-3000}"
+      - "${UI_PORT:-3000}:80"
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "node -e \"fetch('http://127.0.0.1:' + (process.env.PORT || 3000)).then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\"",
-        ]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
