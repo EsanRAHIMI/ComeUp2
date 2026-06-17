@@ -21,6 +21,7 @@ export const programGenerateSchema = z.object({
     goal: z.string().optional(),
     fitnessLevel: z.string().optional(),
     workoutDaysPerWeek: z.number().optional(),
+    sessionDuration: z.number().optional(),
     injuries: z.array(z.string()).default([]),
     availableEquipment: z.array(z.string()).default([]),
     preferredDays: z.array(z.number()).default([]),

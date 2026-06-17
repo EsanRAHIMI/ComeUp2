@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
     availableEquipment: [{ type: String, trim: true }],
     // Preferred training weekdays, 0 (Sun) – 6 (Sat).
     preferredDays: [{ type: Number, min: 0, max: 6 }],
+    sessionDuration: { type: Number, min: 20, max: 180, default: 60 },
     goal: {
       type: String,
       enum: ['Weight Loss', 'Muscle Gain', 'General Fitness', 'Strength'],

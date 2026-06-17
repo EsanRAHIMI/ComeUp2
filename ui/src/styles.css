@@ -1860,6 +1860,179 @@ p {
   margin: 0 12px 12px;
 }
 
+/* ---------- Profile details ---------- */
+.profile-details {
+  display: grid;
+  gap: 12px;
+}
+.profile-details__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.profile-details__grid > div {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.profile-details__grid span,
+.profile-details__row span {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+.profile-details__grid strong {
+  text-transform: capitalize;
+}
+.profile-details__row {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.profile-details__row strong {
+  overflow-wrap: anywhere;
+  text-transform: capitalize;
+}
+
+/* ---------- Measurements ---------- */
+.measurements {
+  display: grid;
+  gap: 12px;
+}
+.measurements__latest {
+  display: grid;
+  gap: 6px;
+}
+.measurements__latest > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.measurements__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.measurements__chips span {
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  font-size: 12px;
+}
+.measurements__empty {
+  font-size: 13px;
+}
+.measurements__form {
+  display: grid;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.measurements__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.measurements__history {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.measurements__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+.measurements__row small {
+  color: var(--muted);
+}
+
+/* ---------- Program / profile editors ---------- */
+.editor-days {
+  display: grid;
+  gap: 8px;
+}
+.editor-day {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+.editor-day em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.editor-day input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  outline: none;
+}
+.editor-exercises {
+  display: grid;
+  gap: 12px;
+}
+.editor-exercise {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.editor-exercise input,
+.editor-exercise textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  font: inherit;
+}
+.editor-exercise textarea {
+  resize: vertical;
+}
+.editor-exercise__name {
+  font-weight: 700;
+}
+.editor-exercise__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.editor-exercise__grid label {
+  display: grid;
+  gap: 3px;
+}
+.editor-exercise__grid em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.editor-exercise__grid input {
+  min-height: 40px;
+  padding: 0 8px;
+}
+
 /* ===========================================================================
    Tablet / desktop enhancements
    =========================================================================== */

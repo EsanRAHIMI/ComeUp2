@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { User } from '../models/User.js';
+import { publicUser } from '../utils/publicUser.js';
 import { parseBody } from '../utils/schemas.js';
 
 const registerSchema = z.object({
@@ -17,27 +18,6 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
-
-function publicUser(user: any) {
-  return {
-    id: user._id.toString(),
-    name: user.name,
-    email: user.email,
-    age: user.age,
-    height: user.height,
-    weight: user.weight,
-    gender: user.gender,
-    injuries: user.injuries ?? [],
-    availableEquipment: user.availableEquipment ?? [],
-    preferredDays: user.preferredDays ?? [],
-    goal: user.goal,
-    fitnessLevel: user.fitnessLevel,
-    workoutDaysPerWeek: user.workoutDaysPerWeek,
-    preferences: user.preferences,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-  };
-}
 
 export const authRoutes: FastifyPluginAsync = async (app) => {
   app.post('/auth/register', async (request, reply) => {

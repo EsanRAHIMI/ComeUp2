@@ -18,6 +18,7 @@ export type User = {
   injuries?: string[];
   availableEquipment?: string[];
   preferredDays?: number[];
+  sessionDuration?: number;
 };
 
 export type GptQuota = {

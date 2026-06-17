@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { authApi, mediaApi, programsApi, ApiError } from '../api';
+import { authApi, mediaApi, profileApi, programsApi, ApiError } from '../api';
 import { exerciseKey } from '../lib/exerciseImages';
 import { getPersistedProgramId } from '../lib/format';
 import { syncActiveSession } from '../lib/sessionSync';
@@ -51,6 +51,8 @@ export type AppContextValue = {
   shareProgram: (program: Program) => Promise<void>;
   duplicateProgram: (program: Program) => Promise<void>;
   deleteProgram: (program: Program) => Promise<void>;
+  updateProgram: (id: string, patch: Partial<Program>) => Promise<boolean>;
+  updateProfile: (patch: Partial<User>) => Promise<boolean>;
   saveExerciseImage: (exercise: Exercise, imageUrl: string) => Promise<void>;
 };
 
@@ -330,6 +332,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [token, notify],
   );
 
+  const updateProgram = useCallback(
+    async (id: string, patch: Partial<Program>) => {
+      if (!token) return false;
+      setBusy(true);
+      try {
+        const { program } = await programsApi.update(token, id, patch);
+        setPrograms((current) => current.map((p) => (p._id === program._id ? program : p)));
+        notify('Program updated', 'success');
+        return true;
+      } catch (error) {
+        notify(error instanceof Error ? error.message : 'Could not save changes', 'error');
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, notify],
+  );
+
+  const updateProfile = useCallback(
+    async (patch: Partial<User>) => {
+      if (!token) return false;
+      setBusy(true);
+      try {
+        const { user: updated } = await profileApi.update(token, patch);
+        setUser(updated);
+        writeJSON(STORAGE_KEYS.user, updated);
+        notify('Profile saved', 'success');
+        return true;
+      } catch (error) {
+        notify(error instanceof Error ? error.message : 'Could not save profile', 'error');
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, notify],
+  );
+
   const saveExerciseImage = useCallback(
     async (exercise: Exercise, imageUrl: string) => {
       if (!token) return;
@@ -371,6 +412,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       shareProgram,
       duplicateProgram,
       deleteProgram,
+      updateProgram,
+      updateProfile,
       saveExerciseImage,
     }),
     [
@@ -392,6 +435,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       shareProgram,
       duplicateProgram,
       deleteProgram,
+      updateProgram,
+      updateProfile,
       saveExerciseImage,
     ],
   );

@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { User } from '../models/User.js';
+import { publicUser } from '../utils/publicUser.js';
 import { parseBody } from '../utils/schemas.js';
 
 const profileUpdateSchema = z.object({
@@ -12,6 +13,7 @@ const profileUpdateSchema = z.object({
   injuries: z.array(z.string().max(80)).max(20).optional(),
   availableEquipment: z.array(z.string().max(40)).max(30).optional(),
   preferredDays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
+  sessionDuration: z.number().int().min(20).max(180).optional(),
   goal: z.enum(['Weight Loss', 'Muscle Gain', 'General Fitness', 'Strength']).optional(),
   fitnessLevel: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional(),
   workoutDaysPerWeek: z.number().int().min(1).max(7).optional(),
@@ -31,6 +33,6 @@ export const profileRoutes: FastifyPluginAsync = async (app) => {
     const input = parseBody(profileUpdateSchema, request.body);
     const user = await User.findByIdAndUpdate(request.user.sub, input, { new: true });
     if (!user) return reply.code(404).send({ message: 'User not found' });
-    return { user };
+    return { user: publicUser(user) };
   });
 };

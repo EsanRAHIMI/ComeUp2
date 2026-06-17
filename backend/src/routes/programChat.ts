@@ -22,6 +22,7 @@ type ProfileSource = {
   injuries?: string[] | null;
   availableEquipment?: string[] | null;
   preferredDays?: number[] | null;
+  sessionDuration?: number | null;
 };
 
 function buildProfile(user: ProfileSource) {
@@ -34,6 +35,7 @@ function buildProfile(user: ProfileSource) {
     goal: user.goal ?? undefined,
     fitnessLevel: user.fitnessLevel ?? undefined,
     workoutDaysPerWeek: user.workoutDaysPerWeek ?? undefined,
+    sessionDuration: user.sessionDuration ?? undefined,
     injuries: user.injuries ?? [],
     availableEquipment: user.availableEquipment ?? [],
     preferredDays: user.preferredDays ?? [],

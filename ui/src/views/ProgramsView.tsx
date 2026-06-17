@@ -3,6 +3,7 @@ import {
   ChevronDown,
   Copy,
   Download,
+  Pencil,
   Search,
   Share2,
   Sparkles,
@@ -15,8 +16,10 @@ import { EmptyState } from '../components/EmptyState';
 import { GenerateForm } from '../components/GenerateForm';
 import { GptBuilder } from '../components/GptBuilder';
 import { ProgramDays } from '../components/ProgramDays';
+import { ProgramEditor } from '../components/ProgramEditor';
 import { useApp } from '../hooks/useApp';
 import { getPersistedProgramId } from '../lib/format';
+import type { Program } from '../types';
 
 export function ProgramsView() {
   const { programs, busy, activateProgram, shareProgram, duplicateProgram, deleteProgram } = useApp();
@@ -24,6 +27,17 @@ export function ProgramsView() {
   const [genOpen, setGenOpen] = useState(false);
   const [gptOpen, setGptOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Program | null>(null);
+
+  function confirmDelete(program: Program) {
+    if (program.isActive) {
+      if (!window.confirm(`"${program.name}" is your ACTIVE program. Are you sure you want to delete it?`)) return;
+      if (!window.confirm('This cannot be undone. Delete the active program?')) return;
+    } else if (!window.confirm(`Delete "${program.name}"? This cannot be undone.`)) {
+      return;
+    }
+    deleteProgram(program);
+  }
 
   const filtered = useMemo(() => {
     const q = term.trim().toLowerCase();
@@ -78,6 +92,9 @@ export function ProgramsView() {
                       <button type="button" className="btn btn--primary" onClick={() => activateProgram(program)} disabled={busy || program.isActive || !persisted}>
                         {program.isActive ? 'Active' : 'Activate'}
                       </button>
+                      <button type="button" className="btn btn--ghost" onClick={() => setEditing(program)} disabled={busy || !persisted}>
+                        <Pencil size={16} /> Edit
+                      </button>
                       <button type="button" className="btn btn--ghost" onClick={() => duplicateProgram(program)} disabled={busy || !persisted}>
                         <Copy size={16} /> Duplicate
                       </button>
@@ -87,7 +104,7 @@ export function ProgramsView() {
                       <button
                         type="button"
                         className="btn btn--ghost manage-card__delete"
-                        onClick={() => { if (window.confirm(`Delete "${program.name}"?`)) deleteProgram(program); }}
+                        onClick={() => confirmDelete(program)}
                         disabled={busy || !persisted}
                       >
                         <Trash2 size={16} /> Delete
@@ -111,6 +128,7 @@ export function ProgramsView() {
 
       <GenerateForm open={genOpen} onClose={() => setGenOpen(false)} />
       <GptBuilder open={gptOpen} onClose={() => setGptOpen(false)} />
+      {editing ? <ProgramEditor program={editing} open onClose={() => setEditing(null)} /> : null}
     </div>
   );
 }
