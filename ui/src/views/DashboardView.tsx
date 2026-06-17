@@ -12,7 +12,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { chatApi, reportsApi } from '../api';
+import { reportsApi } from '../api';
 import { DailyMedals } from '../components/DailyMedals';
 import { GptBuilder } from '../components/GptBuilder';
 import { useActiveSession } from '../hooks/useActiveSession';
@@ -20,7 +20,7 @@ import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
 import { formatCountdown, formatCountdownLong, formatSessionDate, isSameLocalDay } from '../lib/format';
 import { programKey } from '../lib/sessionEngine';
-import type { DailyReport, GptQuota, ReportOverview, WeeklyReport } from '../types';
+import type { DailyReport, ReportOverview, WeeklyReport } from '../types';
 
 export function DashboardView() {
   const { activeProgram, token } = useApp();
@@ -30,7 +30,6 @@ export function DashboardView() {
   const [weekly, setWeekly] = useState<WeeklyReport | null>(null);
   const [overview, setOverview] = useState<ReportOverview | null>(null);
   const [daily, setDaily] = useState<DailyReport | null>(null);
-  const [quota, setQuota] = useState<GptQuota | null>(null);
   const [builderOpen, setBuilderOpen] = useState(false);
 
   const refreshReports = useCallback(() => {
@@ -38,7 +37,6 @@ export function DashboardView() {
     reportsApi.weekly(token).then(setWeekly).catch(() => undefined);
     reportsApi.overview(token).then(setOverview).catch(() => undefined);
     reportsApi.daily(token).then(setDaily).catch(() => undefined);
-    chatApi.quota(token).then((r) => setQuota(r.quota)).catch(() => undefined);
   }, [token]);
 
   useEffect(() => {
@@ -72,6 +70,42 @@ export function DashboardView() {
 
   return (
     <div className="view-stack">
+      <section className="week-stats">
+        <div className="week-stats__head">
+          <p className="eyebrow">This week</p>
+          {weekly && weekly.adherencePct !== null ? (
+            <span className="week-stats__badge">{weekly.adherencePct}% plan</span>
+          ) : null}
+        </div>
+        <div className="week-stats__mosaic">
+          <article className="week-stat">
+            <TrendingUp size={15} aria-hidden />
+            <strong>{weekly?.completedSessions ?? 0}</strong>
+            <span>Sessions</span>
+          </article>
+          <article className="week-stat">
+            <Timer size={15} aria-hidden />
+            <strong>{weekly?.totalMinutes ?? 0}</strong>
+            <span>Minutes</span>
+          </article>
+          <article className="week-stat">
+            <Flame size={15} aria-hidden />
+            <strong>{weekly?.totalCalories ?? 0}</strong>
+            <span>Calories</span>
+          </article>
+          <article className="week-stat week-stat--accent">
+            <CalendarDays size={15} aria-hidden />
+            <strong>{overview?.streakDays ?? daily?.streakDays ?? 0}</strong>
+            <span>Streak</span>
+          </article>
+        </div>
+        {weekly && weekly.adherencePct !== null ? (
+          <div className="week-stats__progress" role="progressbar" aria-valuenow={weekly.adherencePct} aria-valuemin={0} aria-valuemax={100}>
+            <i style={{ width: `${weekly.adherencePct}%` }} />
+          </div>
+        ) : null}
+      </section>
+
       {activeProgram && daily?.medals?.length ? (
         <DailyMedals medals={daily.medals} completedToday={daily.completedToday} />
       ) : null}
@@ -144,42 +178,6 @@ export function DashboardView() {
         </section>
       )}
 
-      <section className="week-stats">
-        <div className="week-stats__head">
-          <p className="eyebrow">This week</p>
-          {weekly && weekly.adherencePct !== null ? (
-            <span className="week-stats__badge">{weekly.adherencePct}% plan</span>
-          ) : null}
-        </div>
-        <div className="week-stats__mosaic">
-          <article className="week-stat">
-            <TrendingUp size={15} aria-hidden />
-            <strong>{weekly?.completedSessions ?? 0}</strong>
-            <span>Sessions</span>
-          </article>
-          <article className="week-stat">
-            <Timer size={15} aria-hidden />
-            <strong>{weekly?.totalMinutes ?? 0}</strong>
-            <span>Minutes</span>
-          </article>
-          <article className="week-stat">
-            <Flame size={15} aria-hidden />
-            <strong>{weekly?.totalCalories ?? 0}</strong>
-            <span>Calories</span>
-          </article>
-          <article className="week-stat week-stat--accent">
-            <CalendarDays size={15} aria-hidden />
-            <strong>{overview?.streakDays ?? daily?.streakDays ?? 0}</strong>
-            <span>Streak</span>
-          </article>
-        </div>
-        {weekly && weekly.adherencePct !== null ? (
-          <div className="week-stats__progress" role="progressbar" aria-valuenow={weekly.adherencePct} aria-valuemin={0} aria-valuemax={100}>
-            <i style={{ width: `${weekly.adherencePct}%` }} />
-          </div>
-        ) : null}
-      </section>
-
       {activeProgram ? (
         <section className="card home-program">
           <div className="home-program__head">
@@ -199,15 +197,6 @@ export function DashboardView() {
           </button>
         </section>
       ) : null}
-
-      <section className="card gpt-cta">
-        <div className="gpt-cta__icon"><Bot size={22} /></div>
-        <div className="gpt-cta__text">
-          <strong>Build your program with AI Coach</strong>
-          <small>{quota ? `${quota.remaining} of ${quota.limit} AI messages left this week` : 'Personalized to your profile'}</small>
-        </div>
-        <button type="button" className="btn btn--primary" onClick={() => setBuilderOpen(true)}>Open</button>
-      </section>
 
       <GptBuilder open={builderOpen} onClose={() => setBuilderOpen(false)} />
     </div>

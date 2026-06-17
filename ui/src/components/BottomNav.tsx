@@ -1,4 +1,6 @@
 import { CalendarClock, Dumbbell, LayoutDashboard, Play, UserRound } from 'lucide-react';
+import { useDailyReport } from '../hooks/useDailyReport';
+import { useActiveSession } from '../hooks/useActiveSession';
 import { useRouter } from '../hooks/useRouter';
 import type { ViewKey } from '../types';
 
@@ -12,6 +14,9 @@ const TABS: { key: ViewKey; label: string; icon: typeof Dumbbell }[] = [
 
 export function BottomNav() {
   const { view, navigate } = useRouter();
+  const { isRunning } = useActiveSession();
+  const { workoutPendingToday } = useDailyReport();
+  const trainCallToAction = workoutPendingToday && !(view === 'workout' && isRunning);
 
   return (
     <div className="bottom-nav-shell" aria-hidden={false}>
@@ -23,7 +28,7 @@ export function BottomNav() {
             <button
               key={key}
               type="button"
-              className={`bottom-nav__tab ${active ? 'is-active' : ''} ${isTrain ? 'is-train' : ''}`}
+              className={`bottom-nav__tab ${active ? 'is-active' : ''} ${isTrain ? 'is-train' : ''} ${isTrain && trainCallToAction ? 'is-train-cta' : ''}`}
               aria-current={active ? 'page' : undefined}
               aria-label={label}
               onClick={() => navigate(key)}
@@ -31,8 +36,8 @@ export function BottomNav() {
               <span className="bottom-nav__selection">
                 <span className={`bottom-nav__icon-wrap ${isTrain ? 'bottom-nav__icon-wrap--train' : ''}`}>
                   <Icon
-                    size={isTrain ? 24 : 23}
-                    strokeWidth={active ? 2.45 : isTrain ? 2.25 : 1.75}
+                    size={22}
+                    strokeWidth={2}
                     fill={isTrain ? 'currentColor' : 'none'}
                     aria-hidden
                   />

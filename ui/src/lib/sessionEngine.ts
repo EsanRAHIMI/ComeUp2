@@ -73,6 +73,19 @@ export function isSetDone(state: PersistedSession | null, exIndex: number, setNu
   return Boolean(state?.completedSets[setKey(exIndex, setNumber)]);
 }
 
+/** First exercise that still has an incomplete set; used to highlight the live working set. */
+export function findProgressExerciseIndex(
+  exercises: Pick<Exercise, 'sets'>[],
+  isDone: (exIndex: number, setNumber: number) => boolean,
+): number {
+  for (let i = 0; i < exercises.length; i++) {
+    for (let n = 1; n <= exercises[i].sets; n++) {
+      if (!isDone(i, n)) return i;
+    }
+  }
+  return Math.max(0, exercises.length - 1);
+}
+
 export function toggleSet(
   state: PersistedSession,
   exIndex: number,

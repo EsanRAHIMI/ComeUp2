@@ -23,6 +23,7 @@ import { useRouter } from '../hooks/useRouter';
 import { useWorkoutSession, type SessionSummary } from '../hooks/useWorkoutSession';
 import { resolveExerciseImage } from '../lib/exerciseImages';
 import { formatClock, formatDuration, nextScheduledSession, resolveRestSeconds } from '../lib/format';
+import { findProgressExerciseIndex } from '../lib/sessionEngine';
 import type { Exercise, Program, ScheduleEntry } from '../types';
 
 type Overlay = { summary: SessionSummary; status: 'saved' | 'failed' };
@@ -94,6 +95,9 @@ function SessionRunner({
   const isTimed = current.trackingType === 'time';
   const setNumbers = Array.from({ length: current.sets }, (_, i) => i + 1);
   const currentDone = setNumbers.filter((n) => session.isSetDone(session.currentIndex, n)).length;
+  const activeSetNumber = setNumbers.find((n) => !session.isSetDone(session.currentIndex, n)) ?? null;
+  const progressExerciseIndex = findProgressExerciseIndex(exercises, session.isSetDone);
+  const isReviewingExercise = session.currentIndex !== progressExerciseIndex;
 
   const autoRestTimer = user?.preferences?.autoRestTimer !== false;
   const defaultRestSeconds = user?.preferences?.defaultRestSeconds ?? 60;
@@ -167,6 +171,7 @@ function SessionRunner({
   if (session.isRunning) {
     return (
       <div className="runner runner--live">
+        <div className="runner__body">
         <div className="runner__bar">
           <div className="runner__progress" style={{ width: `${session.progress}%` }} />
         </div>
@@ -235,22 +240,25 @@ function SessionRunner({
         <div className="runner__controls">
           <div className="runner__sets-panel">
             <div className="runner__sets-head">
-              <span>Mark each set complete</span>
+              <span>{isReviewingExercise ? 'Review logged sets' : 'Mark each set complete'}</span>
               <strong>
-                {current.repRange || current.reps} {isTimed ? 'seconds' : 'reps'} per set
+                {currentDone}/{current.sets} logged · {current.repRange || current.reps} {isTimed ? 'sec' : 'reps'}
               </strong>
             </div>
             <div className="set-row" role="group" aria-label="Sets">
               {setNumbers.map((n) => {
                 const done = session.isSetDone(session.currentIndex, n);
+                const isActive = !done && n === activeSetNumber && !isReviewingExercise;
+                const isPending = !done && !isActive;
                 const repLabel = `${current.repRange || current.reps}${isTimed ? 's' : ''}`;
                 return (
                   <button
                     key={n}
                     type="button"
-                    className={`set-chip ${done ? 'is-done' : ''}`}
+                    className={`set-chip ${done ? 'is-done' : ''} ${isActive ? 'is-active' : ''} ${isPending ? 'is-pending' : ''}`}
                     onClick={() => toggleSet(n)}
-                    aria-label={`Set ${n}, ${repLabel}${done ? ', completed' : ''}`}
+                    aria-current={isActive ? 'step' : undefined}
+                    aria-label={`Set ${n}, ${repLabel}${isActive ? ', current set' : ''}${done ? ', completed' : ''}${isPending ? ', not logged' : ''}`}
                   >
                     <span className="set-chip__num">{done ? <Check size={22} strokeWidth={2.5} /> : n}</span>
                     <small className="set-chip__reps">{repLabel}</small>
@@ -259,13 +267,17 @@ function SessionRunner({
               })}
             </div>
           </div>
-
-          {rest ? (
-            <div className="runner__rest-strip">
-              <RestTimer key={rest.id} seconds={rest.seconds} compact onDone={() => setRest(null)} />
-            </div>
-          ) : null}
         </div>
+        </div>
+
+        <div className="runner__dock">
+          <div className="runner__rest-slot" aria-hidden={!rest}>
+            {rest ? (
+              <div className="runner__rest-strip">
+                <RestTimer key={rest.id} seconds={rest.seconds} compact onDone={() => setRest(null)} />
+              </div>
+            ) : null}
+          </div>
 
         <footer className="runner__footer">
           <div className="runner__nav-bar">
@@ -293,6 +305,7 @@ function SessionRunner({
             Finish workout early
           </button>
         </footer>
+        </div>
 
         {summaryCard}
       </div>

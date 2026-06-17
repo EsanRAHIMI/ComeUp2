@@ -6,6 +6,7 @@ import {
   backendProgramId,
   buildCompletion,
   createSession,
+  findProgressExerciseIndex,
   isSetDone,
   programKey,
   restoreSession,
@@ -72,6 +73,34 @@ test('toggleSet marks then clears a set', () => {
   assert.equal(Object.keys(s.completedSets).length, 1);
   s = toggleSet(s, 0, ex, 1);
   assert.equal(isSetDone(s, 0, 1), false);
+});
+
+test('completed sets persist across exercise navigation', () => {
+  let s = createSession('p1', 0);
+  const exA = makeExercise({ name: 'Squat' });
+  const exB = makeExercise({ name: 'Press', _id: 'bbbbbbbbbbbbbbbbbbbbbbbb' });
+  s = toggleSet(s, 0, exA, 1, '2020-01-01T00:00:00.000Z');
+  s = toggleSet(s, 0, exA, 2, '2020-01-01T00:00:30.000Z');
+  s = { ...s, currentIndex: 1 };
+  assert.equal(isSetDone(s, 0, 1), true);
+  assert.equal(isSetDone(s, 0, 2), true);
+  assert.equal(isSetDone(s, 0, 3), false);
+  s = { ...s, currentIndex: 0 };
+  assert.equal(isSetDone(s, 0, 1), true);
+  assert.equal(isSetDone(s, 0, 3), false);
+});
+
+test('findProgressExerciseIndex finds the first exercise with open sets', () => {
+  let s = createSession('p1', 0);
+  const ex = makeExercise();
+  s = toggleSet(s, 0, ex, 1);
+  s = toggleSet(s, 0, ex, 2);
+  s = toggleSet(s, 0, ex, 3);
+  const exercises = [ex, makeExercise({ name: 'Press', _id: 'bbbbbbbbbbbbbbbbbbbbbbbb' })];
+  const done = (i: number, n: number) => isSetDone(s, i, n);
+  assert.equal(findProgressExerciseIndex(exercises, done), 1);
+  s = toggleSet(s, 1, exercises[1], 1);
+  assert.equal(findProgressExerciseIndex(exercises, (i, n) => isSetDone(s, i, n)), 1);
 });
 
 // --- refresh restore ---
