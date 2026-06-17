@@ -21,7 +21,11 @@ export async function buildApp() {
   const app = Fastify({ logger: true });
 
   await app.register(helmet);
-  await app.register(cors, { origin: corsOrigins, credentials: true });
+  await app.register(cors, {
+    origin: corsOrigins,
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
   await app.register(authPlugin);
 

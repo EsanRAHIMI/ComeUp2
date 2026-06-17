@@ -87,6 +87,7 @@ function SessionRunner({
   const [editingImage, setEditingImage] = useState(false);
   const [imageDraft, setImageDraft] = useState('');
   const [saving, setSaving] = useState(false);
+  const [successBurst, setSuccessBurst] = useState(false);
 
   const current = exercises[session.currentIndex] ?? exercises[0];
   const currentImage = resolveExerciseImage(current, exerciseMedia);
@@ -98,18 +99,32 @@ function SessionRunner({
   const defaultRestSeconds = user?.preferences?.defaultRestSeconds ?? 60;
 
   function toggleSet(setNumber: number) {
+    if (successBurst) return;
     const wasDone = session.isSetDone(session.currentIndex, setNumber);
     session.toggleSet(session.currentIndex, current, setNumber);
     if (!wasDone) {
       navigator.vibrate?.(35);
+      const completedAfterToggle = currentDone + 1;
+      const isLastSet = completedAfterToggle >= current.sets;
+      const hasNextExercise = session.currentIndex < exercises.length - 1;
       const seconds = resolveRestSeconds(current, defaultRestSeconds, autoRestTimer);
+      if (isLastSet && hasNextExercise) {
+        if (seconds > 0) setRest((r) => ({ id: (r?.id ?? 0) + 1, seconds }));
+        setSuccessBurst(true);
+        navigator.vibrate?.([40, 50, 100, 40, 140]);
+        window.setTimeout(() => {
+          setSuccessBurst(false);
+          move(1, { keepRest: true });
+        }, 4000);
+        return;
+      }
       if (seconds > 0) setRest((r) => ({ id: (r?.id ?? 0) + 1, seconds }));
     }
   }
 
-  function move(delta: number) {
+  function move(delta: number, opts?: { keepRest?: boolean }) {
     session.setCurrentIndex(session.currentIndex + delta);
-    setRest(null);
+    if (!opts?.keepRest) setRest(null);
     setEditingImage(false);
   }
 
@@ -151,17 +166,17 @@ function SessionRunner({
   // ---- Running: full-screen runner ----
   if (session.isRunning) {
     return (
-      <div className="runner">
+      <div className="runner runner--live">
         <div className="runner__bar">
           <div className="runner__progress" style={{ width: `${session.progress}%` }} />
         </div>
         <div className="runner__top">
-          <span><Timer size={15} /> {formatClock(session.elapsedSeconds)}</span>
-          <span>{session.completedCount}/{session.totalSets} sets</span>
-          <span>{session.progress}%</span>
+          <span><Timer size={14} /> {formatClock(session.elapsedSeconds)}</span>
+          <span>{session.currentIndex + 1}/{exercises.length}</span>
+          <span>{session.completedCount}/{session.totalSets}</span>
         </div>
 
-        <div className="runner__media">
+        <div className={`runner__hero ${successBurst ? 'is-celebrating' : ''}`}>
           <ExerciseImage exercise={current} src={currentImage} className="runner__img" />
           <button
             type="button"
@@ -171,22 +186,41 @@ function SessionRunner({
               setEditingImage((v) => !v);
             }}
             aria-label="Replace image"
+            disabled={successBurst}
           >
-            <ImagePlus size={16} />
+            <ImagePlus size={15} />
           </button>
-          <div className="runner__media-meta">
-            <span>Exercise {session.currentIndex + 1} / {exercises.length}</span>
+          {successBurst ? (
+            <div className="runner__success-popup" role="status" aria-live="polite">
+              <div className="runner__success-popup__glow" aria-hidden />
+              <div className="runner__success-popup__ring runner__success-popup__ring--1" aria-hidden />
+              <div className="runner__success-popup__ring runner__success-popup__ring--2" aria-hidden />
+              <div className="runner__success-popup__card">
+                <span className="runner__success-popup__icon">
+                  <CheckCircle2 size={52} strokeWidth={2.2} />
+                </span>
+                <strong>Set complete!</strong>
+                <span>Crushed it — next exercise loading</span>
+              </div>
+            </div>
+          ) : null}
+          <div className="runner__hero-meta">
             <h2>{current.name}</h2>
-            <small>{current.muscleGroups.slice(0, 3).join(' · ')}</small>
+            <p>
+              {current.repRange || current.reps} {isTimed ? 'sec' : 'reps'}
+              {' · '}
+              {current.sets} sets
+              {current.muscleGroups[0] ? ` · ${current.muscleGroups.slice(0, 2).join(', ')}` : ''}
+            </p>
           </div>
         </div>
 
         {editingImage ? (
-          <div className="image-editor">
-            <input value={imageDraft} onChange={(e) => setImageDraft(e.target.value)} placeholder="Paste image URL" />
+          <div className="image-editor image-editor--compact">
+            <input value={imageDraft} onChange={(e) => setImageDraft(e.target.value)} placeholder="Image URL" />
             <button
               type="button"
-              className="btn btn--primary"
+              className="btn btn--primary btn--sm"
               disabled={!/^https?:\/\/.+/i.test(imageDraft)}
               onClick={async () => {
                 await saveExerciseImage(current, imageDraft);
@@ -198,45 +232,67 @@ function SessionRunner({
           </div>
         ) : null}
 
-        {current.instructions ? <p className="runner__cue">{current.instructions}</p> : null}
+        <div className="runner__controls">
+          <div className="runner__sets-panel">
+            <div className="runner__sets-head">
+              <span>Mark each set complete</span>
+              <strong>
+                {current.repRange || current.reps} {isTimed ? 'seconds' : 'reps'} per set
+              </strong>
+            </div>
+            <div className="set-row" role="group" aria-label="Sets">
+              {setNumbers.map((n) => {
+                const done = session.isSetDone(session.currentIndex, n);
+                const repLabel = `${current.repRange || current.reps}${isTimed ? 's' : ''}`;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`set-chip ${done ? 'is-done' : ''}`}
+                    onClick={() => toggleSet(n)}
+                    aria-label={`Set ${n}, ${repLabel}${done ? ', completed' : ''}`}
+                  >
+                    <span className="set-chip__num">{done ? <Check size={22} strokeWidth={2.5} /> : n}</span>
+                    <small className="set-chip__reps">{repLabel}</small>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        <div className="set-grid">
-          {setNumbers.map((n) => {
-            const done = session.isSetDone(session.currentIndex, n);
-            return (
-              <button key={n} type="button" className={`set-tile ${done ? 'is-done' : ''}`} onClick={() => toggleSet(n)}>
-                <span className="set-tile__icon">{done ? <Check size={20} /> : n}</span>
-                <strong>Set {n}</strong>
-                <small>{current.repRange || current.reps} {isTimed ? 'sec' : 'reps'}</small>
+          {rest ? (
+            <div className="runner__rest-strip">
+              <RestTimer key={rest.id} seconds={rest.seconds} compact onDone={() => setRest(null)} />
+            </div>
+          ) : null}
+        </div>
+
+        <footer className="runner__footer">
+          <div className="runner__nav-bar">
+            <button type="button" className="runner__nav-btn" onClick={() => move(-1)} disabled={session.currentIndex === 0}>
+              <ChevronLeft size={20} />
+              <span>Prev</span>
+            </button>
+            <div className="runner__nav-center">
+              <strong>{currentDone}/{current.sets}</strong>
+              <span>sets done</span>
+            </div>
+            {session.currentIndex < exercises.length - 1 ? (
+              <button type="button" className="runner__nav-btn runner__nav-btn--primary" onClick={() => move(1)}>
+                <span>Next</span>
+                <ChevronRight size={20} />
               </button>
-            );
-          })}
-        </div>
-
-        {rest ? <RestTimer key={rest.id} seconds={rest.seconds} onDone={() => setRest(null)} /> : null}
-
-        <div className="runner__nav">
-          <button type="button" className="btn btn--ghost" onClick={() => move(-1)} disabled={session.currentIndex === 0}>
-            <ChevronLeft size={20} />
-            Prev
+            ) : (
+              <button type="button" className="runner__nav-btn runner__nav-btn--success" onClick={() => void finish()} disabled={saving}>
+                {saving ? <Loader2 className="spin" size={20} /> : <CheckCircle2 size={20} />}
+                <span>Finish</span>
+              </button>
+            )}
+          </div>
+          <button type="button" className="runner__finish-early" onClick={() => void finish()} disabled={saving}>
+            Finish workout early
           </button>
-          <span className="runner__nav-count">{currentDone}/{current.sets} done</span>
-          {session.currentIndex < exercises.length - 1 ? (
-            <button type="button" className="btn btn--primary" onClick={() => move(1)}>
-              Next
-              <ChevronRight size={20} />
-            </button>
-          ) : (
-            <button type="button" className="btn btn--success" onClick={() => void finish()} disabled={saving}>
-              {saving ? <Loader2 className="spin" size={20} /> : <CheckCircle2 size={20} />}
-              Finish
-            </button>
-          )}
-        </div>
-
-        <button type="button" className="btn btn--text runner__finish-early" onClick={() => void finish()} disabled={saving}>
-          Finish &amp; save now
-        </button>
+        </footer>
 
         {summaryCard}
       </div>

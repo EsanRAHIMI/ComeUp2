@@ -97,7 +97,8 @@ export function formatCountdownLong(totalSeconds: number) {
 
 export function resolveRestSeconds(exercise: Exercise, defaultRestSeconds = 60, autoRestTimer = true) {
   if (!autoRestTimer) return 0;
-  return exercise.restTime > 0 ? exercise.restTime : defaultRestSeconds;
+  // Profile setting is the single source of truth for rest duration.
+  return defaultRestSeconds;
 }
 
 export function formatHeaderTime(date: Date) {

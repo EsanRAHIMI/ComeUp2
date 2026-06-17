@@ -7,9 +7,18 @@ import { formatClock } from '../lib/format';
  * The parent gives this a unique `key` per set, so each rest is a fresh mount
  * — no reset effect needed.
  */
-export function RestTimer({ seconds, onDone }: { seconds: number; onDone?: () => void }) {
-  const total = Math.max(seconds, 1);
+export function RestTimer({
+  seconds,
+  onDone,
+  compact = false,
+}: {
+  seconds: number;
+  onDone?: () => void;
+  compact?: boolean;
+}) {
+  const baseTotal = Math.max(seconds, 1);
   const [remaining, setRemaining] = useState(seconds);
+  const [total, setTotal] = useState(baseTotal);
   const [paused, setPaused] = useState(false);
   const firedRef = useRef(false);
 
@@ -27,11 +36,11 @@ export function RestTimer({ seconds, onDone }: { seconds: number; onDone?: () =>
     }
   }, [remaining, onDone]);
 
-  const pct = Math.min(100, Math.round(((total - remaining) / total) * 100));
+  const pct = Math.max(0, Math.min(100, Math.round(((total - remaining) / total) * 100)));
   const done = remaining <= 0;
 
   return (
-    <div className={`rest-timer ${done ? 'rest-timer--done' : ''}`}>
+    <div className={`rest-timer ${compact ? 'rest-timer--compact' : ''} ${done ? 'rest-timer--done' : ''}`}>
       <div className="rest-timer__ring" style={{ '--pct': `${pct}%` } as CSSProperties}>
         <div className="rest-timer__inner">
           <strong>{formatClock(remaining)}</strong>
@@ -39,7 +48,18 @@ export function RestTimer({ seconds, onDone }: { seconds: number; onDone?: () =>
         </div>
       </div>
       <div className="rest-timer__controls">
-        <button type="button" className="btn btn--ghost" onClick={() => setRemaining((v) => v + 15)} aria-label="Add 15 seconds">
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={() => {
+            setRemaining((v) => {
+              const next = v + 15;
+              setTotal((t) => Math.max(t, next));
+              return next;
+            });
+          }}
+          aria-label="Add 15 seconds"
+        >
           <Plus size={16} /> 15s
         </button>
         <button
