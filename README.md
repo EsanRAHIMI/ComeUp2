@@ -78,7 +78,6 @@ cd backend && npm install && npm run build
 cd ../ai && npm install && npm run build
 cd ../ui && npm install && npm run build
 ```
-
 Run services:
 
 ```bash
