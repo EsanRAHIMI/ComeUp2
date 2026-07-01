@@ -16,6 +16,16 @@ const envSchema = z.object({
   AI_SERVICE_TOKEN: z.string().min(16),
   /** Comma-separated admin emails (case-insensitive). */
   ADMIN_EMAILS: z.string().default(''),
+  FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_SECURE: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true' || value === '1'),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

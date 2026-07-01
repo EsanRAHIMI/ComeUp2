@@ -9,6 +9,7 @@ import { WorkoutSession } from '../models/WorkoutSession.js';
 import { publicUser } from '../utils/publicUser.js';
 import { exerciseKey } from '../utils/exerciseKey.js';
 import { buildAdminExerciseCatalog } from '../services/adminExerciseCatalog.js';
+import { pickBestGif, searchExerciseMedia } from '../services/exerciseGifSearch.js';
 import { objectIdSchema, parseBody } from '../utils/schemas.js';
 
 const userPatchSchema = z.object({
@@ -162,6 +163,47 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.get('/admin/exercise-media', guard, async () => buildAdminExerciseCatalog());
+
+  app.get('/admin/exercise-media/find-gif', guard, async (request, reply) => {
+    const exerciseName = String((request.query as { exerciseName?: string }).exerciseName ?? '').trim();
+    if (!exerciseName) return reply.code(400).send({ message: 'exerciseName is required' });
+    const { candidates, hints } = await searchExerciseMedia(exerciseName);
+    if (!candidates.length) {
+      return reply.code(404).send({
+        message: hints.join(' ') || 'No verified exercise media found. Try a different name or paste a URL manually.',
+        candidates: [],
+        hints,
+      });
+    }
+    return { exerciseName, candidates, best: pickBestGif(candidates), hints };
+  });
+
+  app.post('/admin/exercise-media/community/auto-gif', guard, async (request, reply) => {
+    const input = parseBody(z.object({ exerciseName: z.string().min(1).max(160) }), request.body);
+    const { candidates, hints } = await searchExerciseMedia(input.exerciseName);
+    const best = pickBestGif(candidates);
+    if (!best) {
+      return reply.code(404).send({
+        message:
+          candidates.length > 0
+            ? 'No confident match for Auto. Open Find media to review options or paste a URL manually.'
+            : hints.join(' ') || 'No verified exercise media found. Try Find media or paste a URL manually.',
+        hints,
+      });
+    }
+    const key = exerciseKey(input.exerciseName);
+    const media = await CommunityExerciseMedia.findOneAndUpdate(
+      { exerciseKey: key },
+      {
+        exerciseKey: key,
+        exerciseName: input.exerciseName,
+        imageUrl: best.url,
+        contributedBy: request.user.sub,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+    return reply.code(201).send({ media, candidate: best });
+  });
 
   app.post('/admin/exercise-media/community', guard, async (request, reply) => {
     const input = parseBody(communityMediaSchema, request.body);

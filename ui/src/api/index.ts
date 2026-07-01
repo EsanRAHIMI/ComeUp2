@@ -39,6 +39,16 @@ export const authApi = {
       body: JSON.stringify(body),
     }),
   me: (token: string) => apiRequest<{ user: User }>('/api/v1/auth/me', token),
+  forgotPassword: (body: { email: string }) =>
+    apiRequest<{ message: string }>('/api/v1/auth/forgot-password', null, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  resetPassword: (body: { token: string; password: string }) =>
+    apiRequest<{ message: string }>('/api/v1/auth/reset-password', null, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 };
 
 export const programsApi = {
@@ -256,6 +266,18 @@ export const adminApi = {
   deleteProgram: (token: string, id: string) =>
     apiRequest<void>(`/api/v1/admin/programs/${id}`, token, { method: 'DELETE' }),
   exerciseMedia: (token: string) => apiRequest<AdminExerciseMediaPayload>('/api/v1/admin/exercise-media', token),
+  findExerciseGif: (token: string, exerciseName: string) =>
+    apiRequest<{
+      exerciseName: string;
+      candidates: Array<{ url: string; previewUrl: string; title: string; source: string; score: number }>;
+      best: { url: string; previewUrl: string; title: string; source: string; score: number } | null;
+    }>(`/api/v1/admin/exercise-media/find-gif?exerciseName=${encodeURIComponent(exerciseName)}`, token),
+  autoGifCommunityMedia: (token: string, exerciseName: string) =>
+    apiRequest<{ media: unknown; candidate: { url: string; title: string; source: string } }>(
+      '/api/v1/admin/exercise-media/community/auto-gif',
+      token,
+      { method: 'POST', body: JSON.stringify({ exerciseName }) },
+    ),
   upsertCommunityMedia: (token: string, body: { exerciseName: string; imageUrl: string }) =>
     apiRequest('/api/v1/admin/exercise-media/community', token, { method: 'POST', body: JSON.stringify(body) }),
   updateCommunityMedia: (token: string, id: string, body: { exerciseName?: string; imageUrl?: string }) =>

@@ -4,8 +4,14 @@ export const API_BASE_URL =
 export function buildApiUrl(path: string) {
   const baseUrl = new URL(API_BASE_URL, window.location.origin);
   const basePath = baseUrl.pathname.replace(/\/$/, '');
-  const requestPath = basePath.endsWith('/api') && path.startsWith('/api/') ? path.slice('/api'.length) : path;
+
+  const parsed = new URL(path, 'http://local');
+  const pathOnly = parsed.pathname;
+  const requestPath =
+    basePath.endsWith('/api') && pathOnly.startsWith('/api/') ? pathOnly.slice('/api'.length) : pathOnly;
+
   baseUrl.pathname = `${basePath}${requestPath}`.replace(/\/{2,}/g, '/');
+  baseUrl.search = parsed.search;
   return baseUrl.toString();
 }
 

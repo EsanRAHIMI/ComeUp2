@@ -1,5 +1,5 @@
-import { ImageOff, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ImageOff, Loader2, Pencil, Plus, Sparkles, Trash2, Wand2, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { adminApi, ApiError } from '../api';
 import { fallbackExerciseImage } from '../lib/exerciseImages';
 import type { Exercise } from '../types';
@@ -14,6 +14,24 @@ type EditState = {
   exerciseName: string;
   imageUrl: string;
   mediaId?: string;
+};
+
+type GifCandidate = {
+  url: string;
+  previewUrl: string;
+  title: string;
+  source: string;
+  score: number;
+  professional?: boolean;
+};
+
+type GifPickerState = {
+  exerciseName: string;
+  loading: boolean;
+  saving: boolean;
+  candidates: GifCandidate[];
+  selectedUrl: string | null;
+  error: string | null;
 };
 
 const GROUP_LABELS: Record<string, string> = {
@@ -34,6 +52,14 @@ const GROUP_LABELS: Record<string, string> = {
 
 function labelGroup(group: string) {
   return GROUP_LABELS[group] ?? group;
+}
+
+function labelGifSource(candidate: GifCandidate) {
+  if (candidate.source === 'fitnessprogramer') return 'FitnessProgramer GIF';
+  if (candidate.professional || candidate.source === 'workoutx') return 'Animation';
+  if (candidate.source === 'free-exercise-db') return 'Exercise photo';
+  if (candidate.source === 'wikimedia') return 'Reference';
+  return 'Web search';
 }
 
 function stubExercise(name: string, muscleGroups: string[]): Exercise {
@@ -60,11 +86,17 @@ type Props = {
 };
 
 export function AdminMediaPanel({ token, data, busy, onRefresh, notify }: Props) {
-  const [section, setSection] = useState<MediaSection>('gallery');
+  const [section, setSection] = useState<MediaSection>(data.withoutImage.length ? 'missing' : 'gallery');
   const [search, setSearch] = useState('');
   const [groupFilter, setGroupFilter] = useState<string>('all');
   const [edit, setEdit] = useState<EditState | null>(null);
+  const [gifPicker, setGifPicker] = useState<GifPickerState | null>(null);
   const [saving, setSaving] = useState(false);
+  const [findingKey, setFindingKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (data.withoutImage.length > 0) setSection('missing');
+  }, [data.withoutImage.length]);
 
   const filteredWithImage = useMemo(() => filterItems(data.withImage, search, groupFilter), [data.withImage, search, groupFilter]);
   const filteredWithoutImage = useMemo(
@@ -120,6 +152,70 @@ export function AdminMediaPanel({ token, data, busy, onRefresh, notify }: Props)
       await onRefresh();
     } catch (error) {
       notify(error instanceof ApiError ? error.message : 'Delete failed', 'error');
+    }
+  }
+
+  async function openGifPicker(exerciseName: string) {
+    setGifPicker({
+      exerciseName,
+      loading: true,
+      saving: false,
+      candidates: [],
+      selectedUrl: null,
+      error: null,
+    });
+    try {
+      const result = await adminApi.findExerciseGif(token, exerciseName);
+      setGifPicker({
+        exerciseName,
+        loading: false,
+        saving: false,
+        candidates: result.candidates,
+        selectedUrl: result.best?.url ?? result.candidates[0]?.url ?? null,
+        error: null,
+      });
+    } catch (error) {
+      setGifPicker({
+        exerciseName,
+        loading: false,
+        saving: false,
+        candidates: [],
+        selectedUrl: null,
+        error: error instanceof ApiError ? error.message : 'Media search failed',
+      });
+    }
+  }
+
+  async function autoFindAndSave(exerciseName: string, exerciseKey: string) {
+    setFindingKey(exerciseKey);
+    try {
+      const result = await adminApi.autoGifCommunityMedia(token, exerciseName);
+      notify(`Media saved for ${exerciseName}`, 'success');
+      setGifPicker(null);
+      await onRefresh();
+      void result;
+    } catch (error) {
+      notify(error instanceof ApiError ? error.message : 'Media search failed', 'error');
+    } finally {
+      setFindingKey(null);
+    }
+  }
+
+  async function savePickedGif() {
+    if (!gifPicker?.selectedUrl) return;
+    setGifPicker((s) => (s ? { ...s, saving: true } : s));
+    try {
+      await adminApi.upsertCommunityMedia(token, {
+        exerciseName: gifPicker.exerciseName,
+        imageUrl: gifPicker.selectedUrl,
+      });
+      notify('Media saved for all users', 'success');
+      setGifPicker(null);
+      if (edit?.exerciseName === gifPicker.exerciseName) setEdit(null);
+      await onRefresh();
+    } catch (error) {
+      notify(error instanceof ApiError ? error.message : 'Could not save media', 'error');
+      setGifPicker((s) => (s ? { ...s, saving: false } : s));
     }
   }
 
@@ -232,6 +328,14 @@ export function AdminMediaPanel({ token, data, busy, onRefresh, notify }: Props)
 
       {section === 'missing' ? (
         <div className="admin-media__content">
+          <div className="admin-media__hint card">
+            <Sparkles size={18} />
+            <p>
+              Exercises without media appear here. We search <strong>FitnessProgramer</strong> first for animated
+              GIFs, then other verified catalogs. <strong>Auto</strong> saves when confidence is high; use{' '}
+              <strong>Find media</strong> to review first.
+            </p>
+          </div>
           {groupedWithoutImage.length ? (
             groupedWithoutImage.map(([group, items]) => (
               <section key={group} className="admin-media__group card">
@@ -240,30 +344,51 @@ export function AdminMediaPanel({ token, data, busy, onRefresh, notify }: Props)
                   <span>{items.length} missing</span>
                 </header>
                 <div className="admin-media-missing-grid">
-                  {items.map((item) => (
-                    <article key={item.exerciseKey} className="admin-media-missing">
-                      <div className="admin-media-missing__icon">
-                        <ImageOff size={22} />
-                      </div>
-                      <div className="admin-media-missing__body">
-                        <strong>{item.exerciseName}</strong>
-                        <small>
-                          {labelGroup(item.primaryGroup)}
-                          {item.programCount ? ` · ${item.programCount} program(s)` : ''}
-                          {item.needsReview ? ' · needs review' : ''}
-                        </small>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn--ghost btn--sm"
-                        onClick={() =>
-                          setEdit({ mode: 'create', exerciseName: item.exerciseName, imageUrl: '' })
-                        }
-                      >
-                        <Plus size={14} /> Add
-                      </button>
-                    </article>
-                  ))}
+                  {items.map((item) => {
+                    const isFinding = findingKey === item.exerciseKey;
+                    return (
+                      <article key={item.exerciseKey} className="admin-media-missing">
+                        <div className="admin-media-missing__icon">
+                          <ImageOff size={22} />
+                        </div>
+                        <div className="admin-media-missing__body">
+                          <strong>{item.exerciseName}</strong>
+                          <small>
+                            {labelGroup(item.primaryGroup)}
+                            {item.programCount ? ` · ${item.programCount} program(s)` : ''}
+                            {item.needsReview ? ' · needs review' : ''}
+                          </small>
+                        </div>
+                        <div className="admin-media-missing__actions">
+                          <button
+                            type="button"
+                            className="btn btn--primary btn--sm"
+                            disabled={isFinding}
+                            onClick={() => void autoFindAndSave(item.exerciseName, item.exerciseKey)}
+                          >
+                            {isFinding ? <Loader2 className="spin" size={14} /> : <Wand2 size={14} />}
+                            Auto
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            onClick={() => void openGifPicker(item.exerciseName)}
+                          >
+                            <Sparkles size={14} /> Find media
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            onClick={() =>
+                              setEdit({ mode: 'create', exerciseName: item.exerciseName, imageUrl: '' })
+                            }
+                          >
+                            <Plus size={14} /> URL
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
             ))
@@ -326,13 +451,22 @@ export function AdminMediaPanel({ token, data, busy, onRefresh, notify }: Props)
               />
             </label>
             <label className="field">
-              <span>Image URL</span>
+              <span>Image / GIF URL</span>
               <input
                 value={edit.imageUrl}
                 onChange={(e) => setEdit((s) => (s ? { ...s, imageUrl: e.target.value } : s))}
-                placeholder="https://…"
+                placeholder="https://… (.gif, .webp, .jpg)"
               />
             </label>
+            {edit.mode === 'create' && edit.exerciseName ? (
+              <button
+                type="button"
+                className="btn btn--ghost btn--block"
+                onClick={() => void openGifPicker(edit.exerciseName)}
+              >
+                <Sparkles size={16} /> Search online
+              </button>
+            ) : null}
             {edit.imageUrl ? (
               <div className="admin-media-editor__preview">
                 <img
@@ -350,6 +484,67 @@ export function AdminMediaPanel({ token, data, busy, onRefresh, notify }: Props)
               {saving ? <Loader2 className="spin" size={18} /> : null}
               Save shared image
             </button>
+          </div>
+        </div>
+      ) : null}
+
+      {gifPicker ? (
+        <div className="modal-overlay" role="dialog" aria-label="Pick exercise media">
+          <div className="modal-card admin-gif-picker">
+            <div className="modal-card__head">
+              <div>
+                <h2>Find media</h2>
+                <p className="admin-gif-picker__sub">{gifPicker.exerciseName}</p>
+              </div>
+              <button type="button" className="icon-btn" onClick={() => setGifPicker(null)} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+
+            {gifPicker.loading ? (
+              <div className="admin-gif-picker__loading">
+                <Loader2 className="spin" size={24} />
+                <span>Searching verified exercise media…</span>
+              </div>
+            ) : null}
+
+            {!gifPicker.loading && gifPicker.error ? (
+              <div className="admin-gif-picker__empty">
+                <ImageOff size={28} />
+                <p>{gifPicker.error}</p>
+                <button type="button" className="btn btn--ghost" onClick={() => void openGifPicker(gifPicker.exerciseName)}>
+                  Try again
+                </button>
+              </div>
+            ) : null}
+
+            {!gifPicker.loading && !gifPicker.error && gifPicker.candidates.length ? (
+              <>
+                <div className="admin-gif-picker__grid">
+                  {gifPicker.candidates.map((candidate) => (
+                    <button
+                      key={candidate.url}
+                      type="button"
+                      className={`admin-gif-option ${gifPicker.selectedUrl === candidate.url ? 'is-selected' : ''}`}
+                      onClick={() => setGifPicker((s) => (s ? { ...s, selectedUrl: candidate.url } : s))}
+                    >
+                      <img src={candidate.previewUrl} alt={candidate.title} loading="lazy" />
+                      <span>{candidate.title}</span>
+                      <small>{labelGifSource(candidate)}</small>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--primary btn--block"
+                  disabled={!gifPicker.selectedUrl || gifPicker.saving}
+                  onClick={() => void savePickedGif()}
+                >
+                  {gifPicker.saving ? <Loader2 className="spin" size={18} /> : null}
+                  Save selected media for all users
+                </button>
+              </>
+            ) : null}
           </div>
         </div>
       ) : null}
