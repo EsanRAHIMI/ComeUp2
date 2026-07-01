@@ -1,5 +1,5 @@
 import mongoose, { InferSchemaType } from 'mongoose';
-import { MEAL_SLOT_IDS } from '../types/nutrition.js';
+import { MEAL_SLOT_IDS } from '@comeup/domain';
 
 const foodLineSchema = new mongoose.Schema(
   {
@@ -53,6 +53,17 @@ const nutritionPlanSchema = new mongoose.Schema(
 );
 
 nutritionPlanSchema.index({ userId: 1, isActive: 1 });
+nutritionPlanSchema.index(
+  { userId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isActive: true, isTemplate: false, userId: { $type: 'objectId' } },
+  },
+);
+nutritionPlanSchema.index(
+  { isTemplate: 1, isDefault: 1 },
+  { unique: true, partialFilterExpression: { isTemplate: true, isDefault: true } },
+);
 
 export type NutritionPlanDocument = InferSchemaType<typeof nutritionPlanSchema> & {
   _id: mongoose.Types.ObjectId;

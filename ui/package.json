@@ -8,13 +8,16 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "build:domain": "npm run build --prefix ../shared/domain",
+    "build": "npm run build:domain && tsc -b && vite build",
+    "typecheck": "npm run build:domain && tsc -b --noEmit",
     "preview": "serve -s dist -l ${PORT:-3000}",
     "start": "serve -s dist -l ${PORT:-3000}",
     "lint": "eslint .",
     "test": "node --experimental-strip-types --test 'src/**/*.test.ts'"
   },
   "dependencies": {
+    "@comeup/domain": "file:../shared/domain",
     "lucide-react": "^0.475.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
@@ -22,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@types/node": "^26.1.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",

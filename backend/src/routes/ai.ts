@@ -15,17 +15,31 @@ import { parseBody } from '../utils/schemas.js';
 type GptReply = { reply: string; program: unknown };
 
 async function callLegacyAiService(path: string, body: unknown) {
-  const response = await fetch(`${env.AI_SERVICE_URL}${path}`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${env.AI_SERVICE_TOKEN}`,
-    },
-    body: JSON.stringify(body),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120_000);
+
+  let response: Response;
+  try {
+    response = await fetch(`${env.AI_SERVICE_URL}${path}`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${env.AI_SERVICE_TOKEN}`,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new AiServiceError('AI request timed out — please try again', 504);
+    }
+    throw new AiServiceError('AI service unavailable', 502);
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
-    throw new Error(`AI service failed with ${response.status}`);
+    throw new AiServiceError(`AI service failed with ${response.status}`, response.status);
   }
 
   return response.json();

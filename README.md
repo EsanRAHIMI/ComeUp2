@@ -5,6 +5,7 @@ ComeUp is a gym workout companion with three deployable parts:
 - `ui`: Vite / React web app
 - `backend`: Fastify API for auth, MongoDB Atlas persistence, programs, sessions, progress, and AI proxy routes
 - `ai`: internal AI service for workout generation and recommendations
+- `shared/domain` (`@comeup/domain`): shared TypeScript domain types (nutrition, etc.) consumed by backend and ui
 
 ## Services
 
@@ -47,6 +48,16 @@ Program management, import review, reporting, metrics:
 - `GET /api/v1/reports/weekly`, `GET /api/v1/reports/overview`
 - `GET|POST|DELETE /api/v1/measurements`
 
+Nutrition (MongoDB Atlas — per-user meal plans, weigh logs, plate photos):
+
+- `GET /api/v1/nutrition/plan/active`
+- `GET|POST /api/v1/nutrition/logs`
+- `GET /api/v1/nutrition/logs/summary?from=&to=`
+- `GET|POST /api/v1/nutrition/photos`
+- `GET /api/v1/nutrition/media/:id` (authenticated photo download)
+- `POST /api/v1/nutrition/plates/generate` — AI plate image (via internal `ai` service; requires `GPT_API_KEY` or `IMAGE_GEN_API_KEY` on ai)
+- `GET /api/v1/nutrition/plates?date=`
+
 ### AI
 
 Runs on port `4100` by default. It is internal and protected by `AI_SERVICE_TOKEN`.
@@ -57,8 +68,11 @@ Key endpoints:
 - `POST /workouts/generate` (rule-based)
 - `POST /recommendations`
 - `POST /program/generate` (GPT-powered, returns a structured program normalized to our schema)
+- `POST /nutrition/plates/generate` — nutrition plate image from weighed items (requires `IMAGE_GEN_API_KEY` or `GPT_API_KEY`)
 
 GPT runs only in this private service. Set `GPT_API_KEY` (plus optional `GPT_MODEL`, default `gpt-4o-mini`, and `GPT_BASE_URL`, default OpenAI) in `ai/.env`. The frontend never sees the key. If `GPT_API_KEY` is unset, the GPT path returns 503 and rule-based Quick Generate still works.
+
+Nutrition plate images use the same OpenAI-compatible Images API. Set `IMAGE_GEN_API_KEY` (or reuse `GPT_API_KEY`) and optional `IMAGE_GEN_MODEL` (default `gpt-image-1`) in `ai/.env`.
 
 ## Local Setup
 
@@ -106,7 +120,7 @@ The hosted deployment uses three separate Dokploy services. Prefer the Dockerfil
 - Port: `80`
 - Optional env: `VITE_API_URL=https://gym.najahai.com/api`
 
-The UI is built once with Vite and served as static files by Nginx. This is faster and smaller than running a Node server for the web app.
+The UI is built once with Vite and served as static files by Nginx. When `VITE_API_URL=/api`, Nginx proxies `/api/*` to the backend service — no separate public backend URL is required for the web app.
 
 ### `backend` service
 
@@ -123,6 +137,7 @@ Configure these environment variables:
 - `AI_SERVICE_URL=https://gym.najahai.com/ai`
 - `AI_SERVICE_TOKEN`
 - `BIND_HOST=0.0.0.0`
+- `NUTRITION_UPLOAD_DIR` — persistent volume path for plate photo files (metadata lives in MongoDB). With `docker-compose`, mount `nutrition_uploads` at `/data/nutrition-uploads`.
 
 ### `ai` service
 

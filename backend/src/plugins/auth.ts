@@ -28,7 +28,7 @@ export const authPlugin = fp(async (app) => {
     try {
       await request.jwtVerify();
     } catch {
-      reply.code(401).send({ message: 'Unauthorized' });
+      return reply.code(401).send({ message: 'Unauthorized' });
     }
   });
 

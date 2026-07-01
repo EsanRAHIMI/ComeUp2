@@ -14,6 +14,9 @@ const envSchema = z.object({
   GPT_API_KEY: z.string().optional(),
   GPT_MODEL: z.string().default('gpt-4o-mini'),
   GPT_BASE_URL: z.string().url().default('https://api.openai.com/v1'),
+  /** Optional dedicated key for nutrition plate images; falls back to GPT_API_KEY. */
+  IMAGE_GEN_API_KEY: z.string().optional(),
+  IMAGE_GEN_MODEL: z.string().default('gpt-image-1'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

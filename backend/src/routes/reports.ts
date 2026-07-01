@@ -15,7 +15,10 @@ type SessionLike = {
 type ExerciseLike = { name: string; sets: number };
 
 function dayKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function startOfLocalDay(date = new Date()) {
@@ -64,11 +67,10 @@ function estimateSessionMinutes(exercises: ExerciseLike[], fallback = 60) {
 function computeStreak(days: Set<string>): number {
   let streak = 0;
   const cursor = new Date();
-  // Allow the streak to count if today has no session yet but yesterday did.
-  if (!days.has(dayKey(cursor))) cursor.setUTCDate(cursor.getUTCDate() - 1);
+  if (!days.has(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1);
   while (days.has(dayKey(cursor))) {
     streak += 1;
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
+    cursor.setDate(cursor.getDate() - 1);
   }
   return streak;
 }

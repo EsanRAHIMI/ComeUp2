@@ -11,6 +11,7 @@ import { AdminView } from './views/AdminView';
 import { AuthView } from './views/AuthView';
 import { DashboardView } from './views/DashboardView';
 import { HistoryView } from './views/HistoryView';
+import { NutritionView } from './views/NutritionView';
 import { ProfileView } from './views/ProfileView';
 import { ProgramsView } from './views/ProgramsView';
 import { WorkoutView } from './views/WorkoutView';
@@ -24,6 +25,8 @@ function CurrentView() {
       return <WorkoutView />;
     case 'history':
       return <HistoryView />;
+    case 'nutrition':
+      return <NutritionView />;
     case 'profile':
       return <ProfileView />;
     case 'admin':

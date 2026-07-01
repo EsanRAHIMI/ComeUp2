@@ -1,4 +1,4 @@
-import { CalendarClock, Dumbbell, LayoutDashboard, Play, UserRound } from 'lucide-react';
+import { CalendarClock, Dumbbell, LayoutDashboard, Play, Salad } from 'lucide-react';
 import { useDailyReport } from '../hooks/useDailyReport';
 import { useActiveSession } from '../hooks/useActiveSession';
 import { useRouter } from '../hooks/useRouter';
@@ -9,7 +9,7 @@ const TABS: { key: ViewKey; label: string; icon: typeof Dumbbell }[] = [
   { key: 'programs', label: 'Programs', icon: Dumbbell },
   { key: 'workout', label: 'Train', icon: Play },
   { key: 'history', label: 'History', icon: CalendarClock },
-  { key: 'profile', label: 'Profile', icon: UserRound },
+  { key: 'nutrition', label: 'Food', icon: Salad },
 ];
 
 export function BottomNav() {

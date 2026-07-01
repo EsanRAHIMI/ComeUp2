@@ -6,7 +6,19 @@ import { env } from '../config/env.js';
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 export function nutritionUploadRoot() {
-  return env.NUTRITION_UPLOAD_DIR;
+  return path.resolve(env.NUTRITION_UPLOAD_DIR);
+}
+
+function resolveNutritionPath(storageKey: string) {
+  if (!storageKey || storageKey.includes('..') || path.isAbsolute(storageKey)) {
+    throw new Error('Invalid storage key');
+  }
+  const root = nutritionUploadRoot();
+  const absolutePath = path.resolve(root, storageKey);
+  if (absolutePath !== root && !absolutePath.startsWith(`${root}${path.sep}`)) {
+    throw new Error('Invalid storage key');
+  }
+  return absolutePath;
 }
 
 export async function ensureNutritionUploadDirs() {
@@ -29,15 +41,34 @@ export async function saveNutritionPhoto(input: {
   await ensureNutritionUploadDirs();
   const ext = mimeToExt(input.mimeType);
   const storageKey = `photos/${input.userId}/${input.date}_${input.mealSlot}_${randomUUID()}.${ext}`;
-  const absolutePath = path.join(nutritionUploadRoot(), storageKey);
+  const absolutePath = resolveNutritionPath(storageKey);
+  await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+  await fs.writeFile(absolutePath, input.buffer);
+  return storageKey;
+}
+
+export async function saveGeneratedPlate(input: {
+  userId: string;
+  date: string;
+  mealSlot: string;
+  buffer: Buffer;
+}) {
+  await ensureNutritionUploadDirs();
+  const storageKey = `generated/${input.userId}/${input.date}_${input.mealSlot}_${randomUUID()}.png`;
+  const absolutePath = resolveNutritionPath(storageKey);
   await fs.mkdir(path.dirname(absolutePath), { recursive: true });
   await fs.writeFile(absolutePath, input.buffer);
   return storageKey;
 }
 
 export async function readNutritionFile(storageKey: string) {
-  const absolutePath = path.join(nutritionUploadRoot(), storageKey);
+  const absolutePath = resolveNutritionPath(storageKey);
   return fs.readFile(absolutePath);
+}
+
+export async function deleteNutritionFile(storageKey: string) {
+  const absolutePath = resolveNutritionPath(storageKey);
+  await fs.unlink(absolutePath);
 }
 
 function mimeToExt(mimeType: string) {

@@ -1,4 +1,4 @@
-import { Loader2, Moon, Sun } from 'lucide-react';
+import { ChevronLeft, Loader2, Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useApp } from '../hooks/useApp';
 import { useTheme } from '../hooks/useTheme';
@@ -11,14 +11,17 @@ const TITLES: Record<ViewKey, string> = {
   programs: 'Programs',
   workout: 'Train',
   history: 'History',
+  nutrition: 'Nutrition',
   profile: 'Profile',
   admin: 'Admin',
 };
 
+const SUB_VIEWS = new Set<ViewKey>(['profile', 'admin']);
+
 export function AppHeader() {
-  const { busy } = useApp();
+  const { busy, user } = useApp();
   const { theme, toggleTheme } = useTheme();
-  const { view } = useRouter();
+  const { view, navigate } = useRouter();
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -28,10 +31,23 @@ export function AppHeader() {
   }, [view]);
 
   const isHome = view === 'dashboard';
+  const isSubView = SUB_VIEWS.has(view);
+  const initials = user?.name?.trim().charAt(0).toUpperCase() || '?';
+
+  function goBack() {
+    navigate(view === 'admin' ? 'profile' : 'dashboard');
+  }
 
   return (
     <header className="app-header">
-      {isHome ? (
+      {isSubView ? (
+        <div className="app-header__brand app-header__brand--back">
+          <button type="button" className="icon-btn app-header__back" onClick={goBack} aria-label="Back">
+            <ChevronLeft size={22} strokeWidth={2.2} />
+          </button>
+          <h1>{TITLES[view]}</h1>
+        </div>
+      ) : isHome ? (
         <div className="app-header__datetime">
           <time className="app-header__clock" dateTime={now.toISOString()}>
             {formatHeaderTime(now)}
@@ -46,10 +62,23 @@ export function AppHeader() {
           <h1>{TITLES[view]}</h1>
         </div>
       )}
+
       <div className="app-header__actions">
         {busy ? <Loader2 className="spin" size={18} aria-label="Working" /> : null}
         <button type="button" className="icon-btn" onClick={toggleTheme} aria-label="Toggle theme">
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+        <button
+          type="button"
+          className={`app-header__user-btn ${view === 'profile' ? 'is-active' : ''}`}
+          onClick={() => navigate('profile')}
+          aria-label="Profile and settings"
+          aria-current={view === 'profile' ? 'page' : undefined}
+          title={user?.name ?? 'Profile'}
+        >
+          <span className="app-header__user-avatar" aria-hidden>
+            {initials}
+          </span>
         </button>
       </div>
     </header>

@@ -1,5 +1,5 @@
 import mongoose, { InferSchemaType } from 'mongoose';
-import { MEAL_SLOT_IDS } from '../types/nutrition.js';
+import { MEAL_SLOT_IDS } from '@comeup/domain';
 
 const nutritionPlatePhotoSchema = new mongoose.Schema(
   {

@@ -1,4 +1,4 @@
-import type { WeeklyPlanContent } from '../types/nutrition.js';
+import type { WeeklyPlanContent } from '@comeup/domain';
 
 /** Default weekly meal plan — seeded into MongoDB as the system template. */
 export const defaultMealPlanContent: WeeklyPlanContent = {

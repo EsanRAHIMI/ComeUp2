@@ -1,18 +1,30 @@
+import mongoose from 'mongoose';
 import { defaultMealPlanContent } from '../data/defaultMealPlan.js';
 import { NutritionPlan } from '../models/NutritionPlan.js';
+
+function isDuplicateKeyError(error: unknown) {
+  return error instanceof mongoose.mongo.MongoServerError && error.code === 11000;
+}
 
 export async function ensureDefaultNutritionTemplate() {
   const existing = await NutritionPlan.findOne({ isTemplate: true, isDefault: true });
   if (existing) return existing;
 
-  return NutritionPlan.create({
-    userId: null,
-    isTemplate: true,
-    isDefault: true,
-    isActive: false,
-    name: 'Default Weekly Plan',
-    ...defaultMealPlanContent,
-  });
+  try {
+    return await NutritionPlan.create({
+      userId: null,
+      isTemplate: true,
+      isDefault: true,
+      isActive: false,
+      name: 'Default Weekly Plan',
+      ...defaultMealPlanContent,
+    });
+  } catch (error) {
+    if (!isDuplicateKeyError(error)) throw error;
+    const template = await NutritionPlan.findOne({ isTemplate: true, isDefault: true });
+    if (!template) throw error;
+    return template;
+  }
 }
 
 export async function getActivePlanForUser(userId: string) {
@@ -26,18 +38,24 @@ export async function getActivePlanForUser(userId: string) {
     throw new Error('Default nutrition template is missing');
   }
 
-  plan = await NutritionPlan.create({
-    userId,
-    isTemplate: false,
-    isDefault: false,
-    isActive: true,
-    name: template.name,
-    slots: template.slots,
-    vegetableChoices: template.vegetableChoices,
-    dailyRules: template.dailyRules,
-    proteinRotation: template.proteinRotation,
-    cheatMeal: template.cheatMeal,
-  });
+  try {
+    plan = await NutritionPlan.create({
+      userId,
+      isTemplate: false,
+      isDefault: false,
+      isActive: true,
+      name: template.name,
+      slots: template.slots,
+      vegetableChoices: template.vegetableChoices,
+      dailyRules: template.dailyRules,
+      proteinRotation: template.proteinRotation,
+      cheatMeal: template.cheatMeal,
+    });
+  } catch (error) {
+    if (!isDuplicateKeyError(error)) throw error;
+    plan = await NutritionPlan.findOne({ userId, isActive: true });
+    if (!plan) throw error;
+  }
 
   return plan;
 }

@@ -1,7 +1,8 @@
 services:
   ui:
     build:
-      context: ./ui
+      context: .
+      dockerfile: ui/Dockerfile
       args:
         # VITE_* is inlined into the static bundle at build time.
         VITE_API_URL: ${VITE_API_URL:-/api}
@@ -21,7 +22,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       NODE_ENV: production
       PORT: ${BACKEND_PORT:-4000}
@@ -32,6 +34,9 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
       AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai:${AI_PORT:-4100}}
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?Set AI_SERVICE_TOKEN}
+      NUTRITION_UPLOAD_DIR: /data/nutrition-uploads
+    volumes:
+      - nutrition_uploads:/data/nutrition-uploads
     ports:
       - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
     depends_on:
@@ -51,18 +56,18 @@ services:
 
   ai:
     build:
-      context: ./ai
+      context: .
+      dockerfile: ai/Dockerfile
     environment:
       NODE_ENV: production
       PORT: ${AI_PORT:-4100}
       HOST: 0.0.0.0
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?Set AI_SERVICE_TOKEN}
-      # GPT key stays server-side in the private AI service only.
       GPT_API_KEY: ${GPT_API_KEY:-}
       GPT_MODEL: ${GPT_MODEL:-gpt-4o-mini}
       GPT_BASE_URL: ${GPT_BASE_URL:-https://api.openai.com/v1}
-    ports:
-      - "${AI_PORT:-4100}:${AI_PORT:-4100}"
+      IMAGE_GEN_API_KEY: ${IMAGE_GEN_API_KEY:-}
+      IMAGE_GEN_MODEL: ${IMAGE_GEN_MODEL:-gpt-image-1}
     healthcheck:
       test:
         [
@@ -74,3 +79,6 @@ services:
       retries: 3
       start_period: 15s
     restart: unless-stopped
+
+volumes:
+  nutrition_uploads:

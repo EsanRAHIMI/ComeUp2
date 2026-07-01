@@ -14,7 +14,8 @@ import type {
   DailyReport,
   WorkoutSession,
 } from '../types';
-import { apiRequest } from './client';
+import type { NutritionGeneratedPlate, NutritionPlan, NutritionPlatePhoto, NutritionWeighLog } from '@comeup/domain';
+import { apiRequest, apiUpload } from './client';
 
 export { API_BASE_URL, ApiError, buildApiUrl } from './client';
 
@@ -196,6 +197,52 @@ export const measurementsApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+};
+
+export const nutritionApi = {
+  activePlan: (token: string) =>
+    apiRequest<{ plan: NutritionPlan }>('/api/v1/nutrition/plan/active', token),
+  logs: (token: string, date: string) =>
+    apiRequest<{ logs: NutritionWeighLog[] }>(`/api/v1/nutrition/logs?date=${encodeURIComponent(date)}`, token),
+  createLog: (
+    token: string,
+    body: { date: string; mealSlot: NutritionWeighLog['mealSlot']; foodName: string; weightGrams: number; note?: string },
+  ) =>
+    apiRequest<{ log: NutritionWeighLog }>('/api/v1/nutrition/logs', token, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  deleteLog: (token: string, id: string) =>
+    apiRequest<{ ok: true }>(`/api/v1/nutrition/logs/${encodeURIComponent(id)}`, token, {
+      method: 'DELETE',
+    }),
+  logSummary: (token: string, from: string, to: string) =>
+    apiRequest<{ byDate: Record<string, unknown[]>; dailyTotals: Record<string, Record<string, number>> }>(
+      `/api/v1/nutrition/logs/summary?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      token,
+    ),
+  photos: (token: string, date?: string) =>
+    apiRequest<{ photos: NutritionPlatePhoto[] }>(
+      date
+        ? `/api/v1/nutrition/photos?date=${encodeURIComponent(date)}`
+        : '/api/v1/nutrition/photos',
+      token,
+    ),
+  uploadPhoto: (token: string, formData: FormData) =>
+    apiUpload<{ photo: NutritionPlatePhoto }>('/api/v1/nutrition/photos', token, formData),
+  plates: (token: string, date?: string) =>
+    apiRequest<{ plates: NutritionGeneratedPlate[] }>(
+      date
+        ? `/api/v1/nutrition/plates?date=${encodeURIComponent(date)}`
+        : '/api/v1/nutrition/plates',
+      token,
+    ),
+  generatePlate: (token: string, body: { date: string; mealSlot: NutritionWeighLog['mealSlot'] }) =>
+    apiRequest<{ plate: NutritionGeneratedPlate; prompt: string }>(
+      '/api/v1/nutrition/plates/generate',
+      token,
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
 };
 
 export type AdminOverview = {

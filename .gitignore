@@ -16,6 +16,9 @@ dist-ssr
 .env.*
 !.env.example
 .expo/
+backend/data/nutrition-uploads/
+shared/domain/dist/
+shared/domain/node_modules/
 
 # Editor directories and files
 .vscode/*

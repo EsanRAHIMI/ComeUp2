@@ -1,68 +1,14 @@
-# Nutrition Module
+# Nutrition Module (legacy reference)
 
-ماژول تغذیه — قابل اضافه شدن به اپ ورزشی Next.js موجودت.
+This folder was the original Next.js + SQLite prototype. **ComeUp now uses MongoDB Atlas for all nutrition data** via `backend/src/routes/nutrition.ts`.
 
-## این ماژول چی داره
+**Domain types** live in `shared/domain` (`@comeup/domain`) — do not duplicate types here.
 
-- **برنامه غذایی هفتگی**: کل برنامه‌ات به‌صورت داده ساخت‌یافته (`data/meal-plan.ts`) — هرجا خواستی تغییرش بده، همه‌جای اپ خودش آپدیت می‌شه.
-- **ثبت وزن با ترازو**: فرم ساده — ماده غذایی + وزن گرم رو وارد می‌کنی، تو SQLite لاگ می‌شه.
-- **آرشیو عکس بشقاب**: عکس واقعی بشقاب‌هات رو آپلود می‌کنی و ذخیره می‌شه (برای مرور بعدی و به‌عنوان مرجع تولید تصویر).
-- **تولید تصویر فرضی بشقاب**: بر اساس چیزی که همون روز برای اون وعده وزن کردی، یک prompt می‌سازه و از یک API تولید تصویر (پیش‌فرض: OpenAI images) عکس می‌سازه.
+Do not copy the SQLite routes or `better-sqlite3` setup into production. Use the integrated stack instead:
 
-## نصب
+- **Shared types:** `shared/domain/src/nutrition.ts`
+- **Backend models:** `backend/src/models/Nutrition*.ts`
+- **API:** `/api/v1/nutrition/*`
+- **UI:** `ui/src/views/NutritionView.tsx` + `ui/src/components/nutrition/*`
 
-```bash
-npm install better-sqlite3
-npm install -D @types/better-sqlite3
-```
-
-## کپی فایل‌ها
-
-این پوشه‌ها رو داخل پروژه Next.js موجودت کپی کن (مسیرها با App Router سازگارن):
-
-```
-your-app/
-  app/api/nutrition/...        ← از app/api/nutrition
-  components/nutrition/...     ← از components/nutrition
-  data/meal-plan.ts            ← از data
-  lib/nutrition-db.ts          ← از lib
-  types/nutrition.ts           ← از types
-```
-
-اگه مسیرهای import (`../../../../lib/nutrition-db`) با ساختار پروژه‌ات جور نیست، فقط alias مسیرها رو با `@/` در `tsconfig.json` تنظیم کن و importها رو کوتاه‌تر کن.
-
-## متغیرهای محیطی (.env)
-
-```
-NUTRITION_DB_PATH=./data/nutrition.db   # اختیاری — پیش‌فرض همینه
-IMAGE_GEN_API_KEY=sk-...                 # کلید API تولید تصویر (مثلاً OpenAI)
-```
-
-## اضافه کردن به اپ ورزشی‌ات
-
-جایی که تب‌ها یا route های اپ ورزشی رو تعریف کردی، یک تب/صفحه جدید اضافه کن:
-
-```tsx
-// app/nutrition/page.tsx
-import { NutritionModule } from "@/nutrition-module"; // یا مسیر واقعی بعد از کپی
-
-export default function NutritionPage() {
-  return <NutritionModule />;
-}
-```
-
-و یک لینک به `/nutrition` تو navigation موجودت اضافه کن.
-
-## نکته مهم درباره «آموزش دیدن روی عکس‌های خودم»
-
-فاین‌تیون کردن واقعی یک مدل روی چند ده عکس بشقاب شخصی از طریق API معمولی عملی نیست — نیاز به pipeline فاین‌تیونینگ و حجم داده‌ی خیلی بیشتری داره. چیزی که این ماژول واقعاً انجام می‌ده و در عمل خوب جواب می‌ده:
-
-هر بار که تصویر فرضی تولید می‌کنی، ۱ تا ۳ تا از آخرین عکس‌های واقعی بشقاب همون وعده رو به‌عنوان **تصویر مرجع** به مدل می‌ده تا سبک چیدمان (نوع بشقاب، زاویه، حجم) رو حفظ کنه — نه یادگیری دائمی، بلکه راهنمایی لحظه‌ای. هرچی عکس واقعی بیشتری آپلود کنی، مرجع‌های بهتری برای تولید هست.
-
-اگه به یک provider دیگه (Gemini, Stability, ...) نیاز داری، فقط تابع `generateImage()` تو `app/api/nutrition/generate-plate/route.ts` رو عوض کن — بقیه ماژول دست‌نخورده می‌مونه.
-
-## گسترش‌های بعدی که راحت اضافه می‌شن
-
-- محاسبه‌ی خودکار جمع روزانه در مقابل قوانین (`dailyRules`) — API `logs/route.ts` از قبل جمع روزانه هر ماده رو برمی‌گردونه، فقط باید در UI مقایسه با max‌ها رو نشون بدی.
-- یادآوری نوبت وعده (push notification) بر اساس `time` هر slot.
-- اتصال چک‌مارک "وعده cheat هفتگی استفاده شد یا نه".
+The structured meal plan seed lives in `backend/src/data/defaultMealPlan.ts`.

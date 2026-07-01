@@ -1,18 +1,27 @@
+FROM node:20-alpine AS domain-build
+WORKDIR /shared/domain
+COPY shared/domain/package*.json ./
+RUN npm ci
+COPY shared/domain/ ./
+RUN npm run build
+
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package*.json ./
+COPY ai/package*.json ./
+COPY --from=domain-build /shared/domain /shared/domain
 RUN npm ci
 
 FROM deps AS build
-COPY tsconfig.json ./
-COPY src ./src
+COPY ai/tsconfig.json ./
+COPY ai/src ./src
 RUN npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     BIND_HOST=0.0.0.0
-COPY package*.json ./
+COPY ai/package*.json ./
+COPY --from=domain-build /shared/domain /shared/domain
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
 USER node

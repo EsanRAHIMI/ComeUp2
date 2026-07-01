@@ -24,6 +24,15 @@ export class ApiError extends Error {
   }
 }
 
+function parseResponseBody(text: string): { message?: string } {
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as { message?: string };
+  } catch {
+    throw new ApiError('پاسخ سرور نامعتبر بود — لطفاً دوباره تلاش کنید.', 502);
+  }
+}
+
 export async function apiRequest<T>(path: string, token: string | null, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
   if (options.body !== undefined && !headers.has('content-type')) {
@@ -35,10 +44,24 @@ export async function apiRequest<T>(path: string, token: string | null, options:
 
   const response = await fetch(buildApiUrl(path), { ...options, headers });
   const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
+  const data = parseResponseBody(text);
 
   if (!response.ok) {
     throw new ApiError(data.message ?? 'Request failed', response.status);
+  }
+  return data as T;
+}
+
+export async function apiUpload<T>(path: string, token: string, formData: FormData): Promise<T> {
+  const response = await fetch(buildApiUrl(path), {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  const text = await response.text();
+  const data = parseResponseBody(text);
+  if (!response.ok) {
+    throw new ApiError(data.message ?? 'Upload failed', response.status);
   }
   return data as T;
 }

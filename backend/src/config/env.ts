@@ -26,6 +26,7 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
+  NUTRITION_UPLOAD_DIR: z.string().default('./data/nutrition-uploads'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

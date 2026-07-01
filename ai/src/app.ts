@@ -4,6 +4,7 @@ import Fastify from 'fastify';
 import { ZodError } from 'zod';
 import { env } from './config/env.js';
 import { healthRoutes } from './routes/health.js';
+import { nutritionRoutes } from './routes/nutrition.js';
 import { programRoutes } from './routes/program.js';
 import { recommendationRoutes } from './routes/recommendations.js';
 import { workoutRoutes } from './routes/workouts.js';
@@ -26,10 +27,12 @@ export async function buildApp() {
   await app.register(workoutRoutes);
   await app.register(recommendationRoutes);
   await app.register(programRoutes);
+  await app.register(nutritionRoutes);
   await app.register(healthRoutes, { prefix: '/ai' });
   await app.register(workoutRoutes, { prefix: '/ai' });
   await app.register(recommendationRoutes, { prefix: '/ai' });
   await app.register(programRoutes, { prefix: '/ai' });
+  await app.register(nutritionRoutes, { prefix: '/ai' });
 
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof ZodError) {

@@ -15,7 +15,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@comeup/domain": ["../shared/domain/src/index.ts"]
+    }
   },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"]

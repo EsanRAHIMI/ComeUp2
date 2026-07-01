@@ -12,7 +12,7 @@ import {
   Timer,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EmptyState } from '../components/EmptyState';
 import { ExerciseImage } from '../components/ExerciseImage';
 import { ExerciseListRow } from '../components/ExerciseListRow';
@@ -30,7 +30,12 @@ type Overlay = { summary: SessionSummary; status: 'saved' | 'failed' };
 
 export function WorkoutView() {
   const { activeProgram } = useApp();
-  const [nowMs] = useState(() => Date.now());
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const tick = window.setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => window.clearInterval(tick);
+  }, []);
 
   const scheduledSession = nextScheduledSession(activeProgram, nowMs);
 

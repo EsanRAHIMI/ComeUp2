@@ -1,7 +1,14 @@
 import type { Exercise, Program, ScheduleEntry } from '../types';
 
+export function localDayKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function dateInputValue(date = new Date()) {
-  return date.toISOString().slice(0, 10);
+  return localDayKey(date);
 }
 
 export function nextScheduledSession(program: Program | null, now: number): ScheduleEntry | null {
@@ -54,7 +61,7 @@ export function getPersistedProgramId(program: Program) {
 }
 
 export function isSameLocalDay(a: Date, b: Date) {
-  return a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
+  return localDayKey(a) === localDayKey(b);
 }
 
 export function sessionExercisesForSchedule(program: Program, session: ScheduleEntry | null): Exercise[] {

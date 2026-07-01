@@ -9,12 +9,18 @@ import {
   serializeNutritionPlan,
 } from '../services/nutritionPlanService.js';
 import {
+  generateNutritionPlate,
+  NutritionPlateError,
+  serializeGeneratedPlate,
+} from '../services/nutritionPlateGenerate.js';
+import {
+  deleteNutritionFile,
   guessMimeFromStorageKey,
   isAllowedNutritionMime,
   readNutritionFile,
   saveNutritionPhoto,
 } from '../services/nutritionStorage.js';
-import { MEAL_SLOT_IDS } from '../types/nutrition.js';
+import { MEAL_SLOT_IDS } from '@comeup/domain';
 import { objectIdSchema, parseBody } from '../utils/schemas.js';
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -23,7 +29,7 @@ const weighLogSchema = z.object({
   date: isoDateSchema,
   mealSlot: z.enum(MEAL_SLOT_IDS),
   foodName: z.string().min(1).max(200),
-  weightGrams: z.number().min(0).max(10_000),
+  weightGrams: z.number().min(1).max(10_000),
   note: z.string().max(500).optional(),
 });
 
@@ -71,9 +77,21 @@ export const nutritionRoutes: FastifyPluginAsync = async (app) => {
     });
   });
 
-  app.get('/nutrition/logs/summary', { preParkHandler: [app.authenticate] }, async (request, reply) => {
+  app.delete('/nutrition/logs/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const params = parseBody(z.object({ id: objectIdSchema }), request.params);
+    const deleted = await NutritionWeighLog.findOneAndDelete({
+      _id: params.id,
+      userId: request.user.sub,
+    });
+    if (!deleted) return reply.code(404).send({ message: 'Log not found' });
+    return { ok: true };
+  });
+
+  app.get('/nutrition/logs/summary', { preHandler: [app.authenticate] }, async (request) => {
     const query = parseBody(
-      z.object({ from: isoDateSchema, to: isoDateSchema }),
+      z
+        .object({ from: isoDateSchema, to: isoDateSchema })
+        .refine((value) => value.from <= value.to, { message: 'from must be on or before to' }),
       request.query,
     );
     const rows = await NutritionWeighLog.find({
@@ -166,14 +184,20 @@ export const nutritionRoutes: FastifyPluginAsync = async (app) => {
       mimeType,
     });
 
-    const photo = await NutritionPlatePhoto.create({
-      userId: request.user.sub,
-      date: parsed.data.date,
-      mealSlot: parsed.data.mealSlot,
-      storageKey,
-      mimeType,
-      caption: captionValue?.slice(0, 500) ?? '',
-    });
+    let photo;
+    try {
+      photo = await NutritionPlatePhoto.create({
+        userId: request.user.sub,
+        date: parsed.data.date,
+        mealSlot: parsed.data.mealSlot,
+        storageKey,
+        mimeType,
+        caption: captionValue?.slice(0, 500) ?? '',
+      });
+    } catch (error) {
+      await deleteNutritionFile(storageKey).catch(() => undefined);
+      throw error;
+    }
 
     return reply.code(201).send({
       photo: {
@@ -195,30 +219,52 @@ export const nutritionRoutes: FastifyPluginAsync = async (app) => {
       : { userId: request.user.sub };
     const plates = await NutritionGeneratedPlate.find(filter).sort({ createdAt: -1 }).limit(50);
     return {
-      plates: plates.map((plate) => ({
-        id: plate._id.toString(),
-        date: plate.date,
-        mealSlot: plate.mealSlot,
-        prompt: plate.prompt,
-        url: `/api/v1/nutrition/media/generated/${plate._id.toString()}`,
-        createdAt: plate.createdAt?.toISOString(),
-      })),
+      plates: plates.map((plate) => serializeGeneratedPlate(plate)),
     };
   });
 
-  app.post('/nutrition/plates/generate', { preHandler: [app.authenticate] }, async (_request, reply) => {
-    return reply.code(503).send({
-      message: 'AI plate generation will be wired through the ai service in a follow-up release.',
-    });
-  });
+  app.post(
+    '/nutrition/plates/generate',
+    {
+      preHandler: [app.authenticate],
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: '15 minutes',
+          hook: 'preHandler',
+          keyGenerator: (request) => request.user.sub,
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = parseBody(
+        z.object({ date: isoDateSchema, mealSlot: z.enum(MEAL_SLOT_IDS) }),
+        request.body,
+      );
+
+      try {
+        const plate = await generateNutritionPlate(request.user.sub, body.date, body.mealSlot);
+        return reply.code(201).send({ plate: serializeGeneratedPlate(plate), prompt: plate.prompt });
+      } catch (error) {
+        if (error instanceof NutritionPlateError) {
+          return reply.code(error.status).send({ message: error.message });
+        }
+        throw error;
+      }
+    },
+  );
 
   app.get('/nutrition/media/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
     const params = parseBody(z.object({ id: objectIdSchema }), request.params);
     const photo = await NutritionPlatePhoto.findOne({ _id: params.id, userId: request.user.sub });
     if (!photo) return reply.code(404).send({ message: 'Photo not found' });
 
-    const bytes = await readNutritionFile(photo.storageKey);
-    return reply.type(photo.mimeType).send(bytes);
+    try {
+      const bytes = await readNutritionFile(photo.storageKey);
+      return reply.type(photo.mimeType).send(bytes);
+    } catch {
+      return reply.code(404).send({ message: 'Photo file is missing' });
+    }
   });
 
   app.get(
@@ -232,8 +278,12 @@ export const nutritionRoutes: FastifyPluginAsync = async (app) => {
       });
       if (!plate) return reply.code(404).send({ message: 'Generated plate not found' });
 
-      const bytes = await readNutritionFile(plate.storageKey);
-      return reply.type(plate.mimeType || guessMimeFromStorageKey(plate.storageKey)).send(bytes);
+      try {
+        const bytes = await readNutritionFile(plate.storageKey);
+        return reply.type(plate.mimeType || guessMimeFromStorageKey(plate.storageKey)).send(bytes);
+      } catch {
+        return reply.code(404).send({ message: 'Generated plate file is missing' });
+      }
     },
   );
 };

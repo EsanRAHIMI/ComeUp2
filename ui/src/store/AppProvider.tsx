@@ -100,6 +100,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (error instanceof ApiError && error.status === 401) {
           clearSession();
           notify('Session expired. Please sign in again.', 'error');
+        } else {
+          notify(
+            error instanceof Error ? error.message : 'Could not load your account data — please retry.',
+            'error',
+          );
         }
       } finally {
         if (!cancelled) setReady(true);

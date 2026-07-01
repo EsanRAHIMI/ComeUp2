@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { ViewKey } from '../types';
 
-const VIEWS: ViewKey[] = ['dashboard', 'programs', 'workout', 'history', 'profile', 'admin'];
+const VIEWS: ViewKey[] = ['dashboard', 'programs', 'workout', 'history', 'nutrition', 'profile', 'admin'];
 
 export type ProgramsAction = 'gpt' | 'quick' | 'import' | 'coach';
 

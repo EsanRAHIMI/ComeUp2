@@ -240,4 +240,4 @@ export type WorkoutSession = {
 };
 
 export type AuthMode = 'login' | 'register' | 'forgot' | 'reset';
-export type ViewKey = 'dashboard' | 'programs' | 'workout' | 'history' | 'profile' | 'admin';
+export type ViewKey = 'dashboard' | 'programs' | 'workout' | 'history' | 'nutrition' | 'profile' | 'admin';
