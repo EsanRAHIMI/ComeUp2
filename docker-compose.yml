@@ -25,7 +25,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      NODE_ENV: production
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: ${BACKEND_PORT:-4000}
       HOST: 0.0.0.0
       MONGODB_URI: ${MONGODB_URI:?Set MONGODB_URI}
@@ -34,9 +34,11 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
       AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai:${AI_PORT:-4100}}
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?Set AI_SERVICE_TOKEN}
-      NUTRITION_UPLOAD_DIR: /data/nutrition-uploads
-    volumes:
-      - nutrition_uploads:/data/nutrition-uploads
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?Set AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?Set AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:?Set AWS_REGION}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:?Set AWS_S3_BUCKET}
+      AWS_S3_PREFIX: ${AWS_S3_PREFIX:-gym}
     ports:
       - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
     depends_on:
@@ -79,6 +81,3 @@ services:
       retries: 3
       start_period: 15s
     restart: unless-stopped
-
-volumes:
-  nutrition_uploads:

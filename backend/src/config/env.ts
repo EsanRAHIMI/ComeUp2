@@ -26,7 +26,41 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
-  NUTRITION_UPLOAD_DIR: z.string().default('./data/nutrition-uploads'),
+  /** Root folder for all ComeUp/Gym files inside AWS_S3_BUCKET (e.g. gym/nutrition/photos/...). */
+  AWS_S3_PREFIX: z.string().default('gym'),
+  /** Dev-only: ephemeral files in OS temp — never use on deploy/production. */
+  NUTRITION_LOCAL_STORAGE: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true' || value === '1'),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_REGION: z.string().optional(),
+  AWS_S3_BUCKET: z.string().optional(),
+  AWS_S3_PUBLIC_BASE_URL: z.string().url().optional(),
+}).superRefine((data, ctx) => {
+  const s3Ready = Boolean(
+    data.AWS_ACCESS_KEY_ID?.trim() &&
+      data.AWS_SECRET_ACCESS_KEY?.trim() &&
+      data.AWS_REGION?.trim() &&
+      data.AWS_S3_BUCKET?.trim(),
+  );
+
+  if (data.NODE_ENV === 'production' && !s3Ready) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Production requires AWS S3 for nutrition uploads',
+      path: ['AWS_S3_BUCKET'],
+    });
+  }
+
+  if (data.NUTRITION_LOCAL_STORAGE && data.NODE_ENV !== 'development') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'NUTRITION_LOCAL_STORAGE is allowed only in development',
+      path: ['NUTRITION_LOCAL_STORAGE'],
+    });
+  }
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

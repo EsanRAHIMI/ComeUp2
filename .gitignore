@@ -16,7 +16,8 @@ dist-ssr
 .env.*
 !.env.example
 .expo/
-backend/data/nutrition-uploads/
+data/nutrition-uploads/
+**/data/nutrition-uploads/
 shared/domain/dist/
 shared/domain/node_modules/
 

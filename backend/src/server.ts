@@ -2,13 +2,13 @@ import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { env } from './config/env.js';
 import { buildApp } from './app.js';
 import { ensureDefaultNutritionTemplate } from './services/nutritionPlanService.js';
-import { ensureNutritionUploadDirs } from './services/nutritionStorage.js';
+import { ensureNutritionStorageReady } from './services/nutritionStorage.js';
 
 const app = await buildApp();
 
 try {
   await connectDatabase();
-  await ensureNutritionUploadDirs();
+  await ensureNutritionStorageReady();
   await ensureDefaultNutritionTemplate();
   await app.listen({ port: env.PORT, host: env.BIND_HOST });
 } catch (error) {

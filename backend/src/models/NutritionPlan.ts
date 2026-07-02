@@ -38,7 +38,7 @@ const dailyRuleSchema = new mongoose.Schema(
 
 const nutritionPlanSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     isTemplate: { type: Boolean, default: false, index: true },
     isDefault: { type: Boolean, default: false, index: true },
     isActive: { type: Boolean, default: false, index: true },

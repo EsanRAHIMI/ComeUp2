@@ -137,7 +137,11 @@ Configure these environment variables:
 - `AI_SERVICE_URL=https://gym.najahai.com/ai`
 - `AI_SERVICE_TOKEN`
 - `BIND_HOST=0.0.0.0`
-- `NUTRITION_UPLOAD_DIR` — persistent volume path for plate photo files (metadata lives in MongoDB). With `docker-compose`, mount `nutrition_uploads` at `/data/nutrition-uploads`.
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET` — **required**; nutrition photos and generated plates are stored only in S3 (nothing on the host disk)
+- `AWS_S3_PREFIX=gym` — root folder inside the bucket; nutrition files go under `gym/nutrition/photos/` and `gym/nutrition/generated/`
+- `AWS_S3_PUBLIC_BASE_URL` — optional CloudFront base URL for other public assets; nutrition images are served privately through `/api/v1/nutrition/media/:id` with auth
+
+Do not set `NUTRITION_LOCAL_STORAGE` in Dokploy. That flag is dev-only and writes to ephemeral OS temp, not S3.
 
 ### `ai` service
 
