@@ -3,6 +3,7 @@ import {
   Bot,
   CalendarDays,
   Clock3,
+  Droplets,
   Dumbbell,
   Flame,
   Moon,
@@ -272,15 +273,33 @@ export function DashboardView() {
                 : 'Your meal plan'}
             </h3>
           </div>
-          <span className="card__head-icon" aria-hidden><Utensils size={20} /></span>
+          {nutrition?.score != null ? (
+            <span className={`home-nutrition__score home-nutrition__score--${nutrition.score >= 80 ? 'good' : nutrition.score >= 60 ? 'ok' : 'low'}`}>
+              {nutrition.score}
+            </span>
+          ) : (
+            <span className="card__head-icon" aria-hidden><Utensils size={20} /></span>
+          )}
         </div>
         {nutrition ? (
-          <div className="home-nutrition__meta">
-            {nutrition.nextSlot?.time ? <span><Clock3 size={14} /> {nutrition.nextSlot.time}</span> : null}
-            <span>
-              <Target size={14} /> {loggedCount}/{nutrition.slotCount} meals logged today
-            </span>
-          </div>
+          <>
+            <div className="home-nutrition__meta">
+              {nutrition.nextSlot?.time ? <span><Clock3 size={14} /> {nutrition.nextSlot.time}</span> : null}
+              <span>
+                <Target size={14} /> {loggedCount}/{nutrition.slotCount} meals logged today
+              </span>
+              {nutrition.water ? (
+                <span>
+                  <Droplets size={14} /> {nutrition.water.ml}/{nutrition.water.targetMl} ml
+                </span>
+              ) : null}
+            </div>
+            {nutrition.water ? (
+              <div className="nut-water-bar" role="progressbar" aria-valuenow={nutrition.water.pct} aria-valuemin={0} aria-valuemax={100}>
+                <i style={{ width: `${nutrition.water.pct}%` }} />
+              </div>
+            ) : null}
+          </>
         ) : (
           <p className="home-nutrition__empty">Open Food to see today’s plan and log your meals.</p>
         )}

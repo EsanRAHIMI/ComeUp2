@@ -4717,3 +4717,352 @@ p {
 .cal-chip--shifted { background: color-mix(in srgb, var(--warning, #f59e0b) 16%, var(--surface-2)); color: var(--warning, #f59e0b); }
 .cal-chip--missed { background: color-mix(in srgb, var(--danger) 14%, var(--surface-2)); color: var(--danger); }
 .cal-chip--upcoming { background: var(--surface-2); color: var(--muted); }
+
+/* --- Food: Phase 6 nutrition dashboard --- */
+.nut-today {
+  display: grid;
+  gap: 14px;
+}
+.nut-summary {
+  display: grid;
+  gap: 12px;
+}
+.nut-summary__score {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.nut-score-ring {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  background: var(--surface-2);
+}
+.nut-score-ring strong {
+  font-size: 20px;
+  line-height: 1;
+}
+.nut-score-ring span {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+.nut-score-ring--good { border-color: var(--success); }
+.nut-score-ring--ok { border-color: var(--warning, #f59e0b); }
+.nut-score-ring--low { border-color: var(--danger); }
+.nut-summary__text h3 {
+  margin: 0 0 3px;
+  font-size: 17px;
+}
+.nut-summary__text small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.nut-summary__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.nut-summary__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nut-summary__item svg { color: var(--accent); }
+.nut-summary__item--good { color: var(--success); }
+.nut-summary__item--good svg { color: var(--success); }
+.nut-water-bar {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.nut-water-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 60%, var(--success)));
+  transition: width 0.3s ease;
+}
+
+.nut-target {
+  display: grid;
+  gap: 12px;
+}
+.nut-target--empty {
+  justify-items: start;
+  gap: 10px;
+}
+.nut-target--empty h3 { margin: 0; }
+.nut-target--empty p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.nut-target__head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0;
+  font-size: 16px;
+}
+.nut-conf {
+  font-size: 10px;
+  padding: 3px 8px;
+}
+.nut-conf--high { background: color-mix(in srgb, var(--success) 16%, var(--surface-2)); color: var(--success); }
+.nut-conf--medium { background: var(--accent-soft); color: var(--accent); }
+.nut-conf--low { background: color-mix(in srgb, var(--warning, #f59e0b) 14%, var(--surface-2)); color: var(--warning, #f59e0b); }
+.nut-target__macros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 8px;
+}
+.nut-target__macros > div {
+  display: grid;
+  gap: 2px;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  text-align: center;
+}
+.nut-target__macros span {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+.nut-target__macros strong { font-size: 14px; }
+.nut-target__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.nut-target__edit {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.nut-target__hint {
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nut-meals {
+  display: grid;
+  gap: 10px;
+}
+.nut-meals__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.nut-meals__list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nut-meal {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.nut-meal--good { border-color: color-mix(in srgb, var(--success) 35%, var(--border)); }
+.nut-meal--warn { border-color: color-mix(in srgb, var(--warning, #f59e0b) 35%, var(--border)); }
+.nut-meal--bad { border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
+.nut-meal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.nut-meal__title strong {
+  display: block;
+  font-size: 14px;
+}
+.nut-meal__title small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.nut-status { font-size: 10px; padding: 3px 8px; flex-shrink: 0; }
+.nut-status--good { background: color-mix(in srgb, var(--success) 18%, var(--surface)); color: var(--success); }
+.nut-status--warn { background: color-mix(in srgb, var(--warning, #f59e0b) 16%, var(--surface)); color: var(--warning, #f59e0b); }
+.nut-status--bad { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); color: var(--danger); }
+.nut-status--muted { background: var(--surface); color: var(--muted); }
+.nut-meal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nut-quick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.nut-quick:hover { border-color: var(--accent); }
+.nut-quick.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+.nut-quick:disabled { opacity: 0.6; cursor: default; }
+.nut-quick--detail { margin-left: auto; color: var(--muted); }
+.nut-meal__detail {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border);
+}
+
+.nut-habits {
+  display: grid;
+  gap: 12px;
+}
+.nut-habits__water {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.nut-habits__water-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nut-habits__water-info svg { color: var(--accent); }
+.nut-habits__water-info strong { display: block; font-size: 16px; }
+.nut-habits__water-info small { color: var(--muted); font-size: 11px; }
+.nut-habits__water-actions {
+  display: flex;
+  gap: 6px;
+}
+.nut-habits__water-actions .btn { padding: 7px 12px; font-size: 13px; }
+.nut-habits__supps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nut-supp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.nut-supp.is-on {
+  background: color-mix(in srgb, var(--success) 14%, var(--surface));
+  border-color: var(--success);
+  color: var(--success);
+  font-weight: 700;
+}
+.nut-habits__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.nut-explain {
+  display: grid;
+  gap: 10px;
+}
+.nut-explain__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.nut-explain__list {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+.nut-explain__list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nut-explain__list--pos li svg { color: var(--success); flex-shrink: 0; }
+.nut-explain__list--neg li svg { color: var(--danger); flex-shrink: 0; }
+.nut-explain__next {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+.nut-notes ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.home-nutrition__score {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 800;
+  flex-shrink: 0;
+  border: 2.5px solid var(--border);
+  background: var(--surface-2);
+}
+.home-nutrition__score--good { border-color: var(--success); color: var(--success); }
+.home-nutrition__score--ok { border-color: var(--warning, #f59e0b); color: var(--warning, #f59e0b); }
+.home-nutrition__score--low { border-color: var(--danger); color: var(--danger); }

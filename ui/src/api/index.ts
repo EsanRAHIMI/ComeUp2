@@ -1,6 +1,11 @@
 import type {
   AiConversation,
   CalendarReport,
+  HabitEntry,
+  MealLogEntry,
+  MealLogStatus,
+  NutritionScoreResponse,
+  NutritionTargetInfo,
   ExerciseMedia,
   FitnessLevel,
   GptDraftProgram,
@@ -266,6 +271,74 @@ export const nutritionApi = {
       '/api/v1/nutrition/plates/generate',
       token,
       { method: 'POST', body: JSON.stringify(body) },
+    ),
+  // --- Phase 6: goal-based nutrition system ---
+  target: (token: string) =>
+    apiRequest<{ target: NutritionTargetInfo | null }>('/api/v1/nutrition/target', token),
+  generateTarget: (token: string) =>
+    apiRequest<{ target: NutritionTargetInfo }>('/api/v1/nutrition/target/generate', token, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+  patchTarget: (token: string, body: Partial<NutritionTargetInfo>) =>
+    apiRequest<{ target: NutritionTargetInfo }>('/api/v1/nutrition/target', token, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  acceptTarget: (token: string) =>
+    apiRequest<{ target: NutritionTargetInfo }>('/api/v1/nutrition/target/accept', token, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+  mealLogs: (token: string, date: string) =>
+    apiRequest<{ logs: MealLogEntry[] }>(
+      `/api/v1/nutrition/meal-logs?date=${encodeURIComponent(date)}`,
+      token,
+    ),
+  upsertMealLog: (
+    token: string,
+    body: {
+      date: string;
+      mealSlot: string;
+      status: MealLogStatus;
+      proteinG?: number;
+      carbsG?: number;
+      fatG?: number;
+      grams?: number;
+      note?: string;
+    },
+  ) =>
+    apiRequest<{ log: MealLogEntry }>('/api/v1/nutrition/meal-logs', token, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  deleteMealLog: (token: string, id: string) =>
+    apiRequest<{ ok: true }>(`/api/v1/nutrition/meal-logs/${encodeURIComponent(id)}`, token, {
+      method: 'DELETE',
+    }),
+  habits: (token: string, date: string) =>
+    apiRequest<{ habit: HabitEntry | null }>(
+      `/api/v1/nutrition/habits?date=${encodeURIComponent(date)}`,
+      token,
+    ),
+  putHabits: (
+    token: string,
+    body: {
+      date: string;
+      waterMl?: number;
+      supplementsTaken?: string[];
+      drinks?: Array<{ name: string; amountMl?: number; note?: string }>;
+      note?: string;
+    },
+  ) =>
+    apiRequest<{ habit: HabitEntry }>('/api/v1/nutrition/habits', token, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  score: (token: string, from: string, to: string) =>
+    apiRequest<NutritionScoreResponse>(
+      `/api/v1/nutrition/score?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      token,
     ),
 };
 

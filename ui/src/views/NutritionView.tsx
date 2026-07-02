@@ -1,17 +1,19 @@
-import { CalendarDays, Camera, ClipboardList, Loader2, RefreshCw, Scale } from 'lucide-react';
+import { CalendarDays, Camera, ClipboardList, Loader2, RefreshCw, Scale, Sun } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { nutritionApi } from '../api';
 import { EmptyState } from '../components/EmptyState';
 import { MealPlanPanel } from '../components/nutrition/MealPlanPanel';
+import { NutritionToday } from '../components/nutrition/NutritionToday';
 import { PlatePhotoArchive } from '../components/nutrition/PlatePhotoArchive';
 import { WeighInLogger } from '../components/nutrition/WeighInLogger';
 import { useApp } from '../hooks/useApp';
 import { dateInputValue } from '../lib/format';
 import type { NutritionPlan } from '@comeup/domain';
 
-type Tab = 'plan' | 'log' | 'photos';
+type Tab = 'today' | 'plan' | 'log' | 'photos';
 
 const TABS: Array<{ id: Tab; label: string; icon: typeof Scale }> = [
+  { id: 'today', label: 'Today', icon: Sun },
   { id: 'plan', label: 'برنامه', icon: ClipboardList },
   { id: 'log', label: 'ثبت وعده', icon: Scale },
   { id: 'photos', label: 'عکس بشقاب', icon: Camera },
@@ -20,70 +22,45 @@ const TABS: Array<{ id: Tab; label: string; icon: typeof Scale }> = [
 export function NutritionView() {
   const { token, notify } = useApp();
   const [date, setDate] = useState(() => dateInputValue());
-  const [tab, setTab] = useState<Tab>('log');
+  const [tab, setTab] = useState<Tab>('today');
   const [plan, setPlan] = useState<NutritionPlan | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
+  const [planLoaded, setPlanLoaded] = useState(false);
 
+  // The legacy plan is only needed for the plan/log/photos tabs — load lazily
+  // so the Today dashboard renders instantly.
   const loadPlan = useCallback(async () => {
     if (!token) return;
-    setLoading(true);
-    setLoadError(null);
+    setPlanLoading(true);
+    setPlanError(null);
     try {
       const result = await nutritionApi.activePlan(token);
       setPlan(result.plan);
+      setPlanLoaded(true);
     } catch (error) {
       setPlan(null);
       const message = error instanceof Error ? error.message : 'بارگذاری برنامه غذایی انجام نشد';
-      setLoadError(message);
+      setPlanError(message);
       notify(message, 'error');
     } finally {
-      setLoading(false);
+      setPlanLoading(false);
     }
   }, [token, notify]);
 
   useEffect(() => {
-    void loadPlan();
-  }, [loadPlan]);
+    if (tab !== 'today' && !planLoaded && !planLoading) void loadPlan();
+  }, [tab, planLoaded, planLoading, loadPlan]);
 
-  if (loading) {
-    return (
-      <div className="view-stack">
-        <div className="loading-row">
-          <Loader2 className="spin" size={22} />
-          <span>در حال بارگذاری برنامه غذایی…</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (loadError || !plan) {
-    return (
-      <div className="view-stack">
-        <section className="card nutrition-error-card">
-          <EmptyState
-            title="برنامه غذایی بارگذاری نشد"
-            description={
-              loadError ??
-              'برنامه پیش‌فرض هنوز آماده نیست. لطفاً دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.'
-            }
-          />
-          <button type="button" className="btn btn--ghost btn--block" onClick={() => void loadPlan()}>
-            <RefreshCw size={16} />
-            تلاش مجدد
-          </button>
-        </section>
-      </div>
-    );
-  }
+  const legacyNeedsPlan = tab === 'plan';
 
   return (
-    <div className="view-stack nutrition-view" dir="rtl">
+    <div className="view-stack nutrition-view">
       <section className="card">
         <div className="card__head">
           <div>
-            <p className="eyebrow">پیگیری تغذیه</p>
-            <h3>برنامه و ثبت وعده</h3>
+            <p className="eyebrow">Nutrition</p>
+            <h3>Your daily food companion</h3>
           </div>
           <span className="card__head-icon" aria-hidden>
             <CalendarDays size={20} />
@@ -91,13 +68,13 @@ export function NutritionView() {
         </div>
 
         {(tab === 'log' || tab === 'photos') && (
-          <label className="field nutrition-view__date">
+          <label className="field nutrition-view__date" dir="rtl">
             <span>تاریخ</span>
             <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
           </label>
         )}
 
-        <div className="chip-toggle nutrition-view__tabs" role="tablist" aria-label="بخش‌های تغذیه">
+        <div className="chip-toggle nutrition-view__tabs" role="tablist" aria-label="Nutrition sections">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -116,9 +93,43 @@ export function NutritionView() {
         </div>
       </section>
 
-      {tab === 'plan' ? <MealPlanPanel plan={plan} /> : null}
-      {tab === 'log' ? <WeighInLogger date={date} /> : null}
-      {tab === 'photos' ? <PlatePhotoArchive date={date} /> : null}
+      {tab === 'today' ? <NutritionToday /> : null}
+
+      {tab !== 'today' && planLoading ? (
+        <div className="loading-row">
+          <Loader2 className="spin" size={22} />
+          <span>در حال بارگذاری برنامه غذایی…</span>
+        </div>
+      ) : null}
+
+      {legacyNeedsPlan && !planLoading && (planError || !plan) ? (
+        <section className="card nutrition-error-card" dir="rtl">
+          <EmptyState
+            title="برنامه غذایی بارگذاری نشد"
+            description={planError ?? 'برنامه پیش‌فرض هنوز آماده نیست. لطفاً دوباره تلاش کنید.'}
+          />
+          <button type="button" className="btn btn--ghost btn--block" onClick={() => void loadPlan()}>
+            <RefreshCw size={16} />
+            تلاش مجدد
+          </button>
+        </section>
+      ) : null}
+
+      {tab === 'plan' && plan && !planLoading ? (
+        <div dir="rtl">
+          <MealPlanPanel plan={plan} />
+        </div>
+      ) : null}
+      {tab === 'log' && !planLoading ? (
+        <div dir="rtl">
+          <WeighInLogger date={date} />
+        </div>
+      ) : null}
+      {tab === 'photos' && !planLoading ? (
+        <div dir="rtl">
+          <PlatePhotoArchive date={date} />
+        </div>
+      ) : null}
     </div>
   );
 }
