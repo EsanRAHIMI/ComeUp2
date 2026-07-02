@@ -23,6 +23,7 @@ import { useRouter } from '../hooks/useRouter';
 import { useWorkoutSession, type SessionSummary } from '../hooks/useWorkoutSession';
 import { resolveExerciseImage } from '../lib/exerciseImages';
 import { formatClock, formatDuration, nextScheduledSession, resolveRestSeconds } from '../lib/format';
+import { unlockRestAudio } from '../lib/restSound';
 import { findProgressExerciseIndex } from '../lib/sessionEngine';
 import type { Exercise, Program, ScheduleEntry } from '../types';
 
@@ -106,9 +107,13 @@ function SessionRunner({
 
   const autoRestTimer = user?.preferences?.autoRestTimer !== false;
   const defaultRestSeconds = user?.preferences?.defaultRestSeconds ?? 60;
+  const restSoundEnabled = user?.preferences?.restCountdownSound !== false;
 
   function toggleSet(setNumber: number) {
     if (successBurst) return;
+    // User gesture: create/resume the shared AudioContext so the upcoming
+    // rest countdown is allowed to beep (no-op if sound is off or blocked).
+    if (restSoundEnabled) unlockRestAudio();
     const wasDone = session.isSetDone(session.currentIndex, setNumber);
     session.toggleSet(session.currentIndex, current, setNumber);
     if (!wasDone) {
@@ -279,7 +284,7 @@ function SessionRunner({
           <div className="runner__rest-slot" aria-hidden={!rest}>
             {rest ? (
               <div className="runner__rest-strip">
-                <RestTimer key={rest.id} seconds={rest.seconds} compact onDone={() => setRest(null)} />
+                <RestTimer key={rest.id} seconds={rest.seconds} compact soundEnabled={restSoundEnabled} onDone={() => setRest(null)} />
               </div>
             ) : null}
           </div>

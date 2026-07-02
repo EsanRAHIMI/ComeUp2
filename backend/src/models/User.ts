@@ -21,6 +21,33 @@ const userSchema = new mongoose.Schema(
       enum: ['Weight Loss', 'Muscle Gain', 'General Fitness', 'Strength'],
       default: 'General Fitness',
     },
+    // --- Phase 3 additions: all optional, additive, no migration needed ---
+    targetWeight: { type: Number, min: 25, max: 350 },
+    goalDeadline: { type: Date },
+    muscleFocus: [{ type: String, trim: true }],
+    physicalLimitations: [{ type: String, trim: true }],
+    nutritionPreference: {
+      type: String,
+      enum: ['no_preference', 'high_protein', 'low_carb', 'vegetarian', 'vegan', 'keto'],
+    },
+    supplements: [{ type: String, trim: true }],
+    waterTargetMl: { type: Number, min: 250, max: 10_000 },
+    walkingTarget: {
+      type: new mongoose.Schema(
+        {
+          metric: { type: String, enum: ['steps', 'minutes', 'distanceKm'], required: true },
+          value: { type: Number, min: 1, max: 100_000, required: true },
+        },
+        { _id: false },
+      ),
+      default: undefined,
+    },
+    /**
+     * What happens when a scheduled workout is missed. Derived logic only
+     * (services/dayStatus.ts) — stored Program.schedule dates are never mutated.
+     * Existing users have no value stored; readers must fall back to 'shift'.
+     */
+    missedWorkoutBehavior: { type: String, enum: ['shift', 'skip'], default: 'shift' },
     fitnessLevel: {
       type: String,
       enum: ['Beginner', 'Intermediate', 'Advanced'],
@@ -34,6 +61,8 @@ const userSchema = new mongoose.Schema(
       autoRestTimer: { type: Boolean, default: true },
       defaultRestSeconds: { type: Number, min: 0, max: 900, default: 60 },
       preferredCamera: { type: String, enum: ['front', 'back'], default: 'front' },
+      /** Three soft beeps in the final 3 s of rest (Train page). */
+      restCountdownSound: { type: Boolean, default: true },
     },
   },
   { timestamps: true },

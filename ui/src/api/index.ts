@@ -187,7 +187,18 @@ export const chatApi = {
 export const reportsApi = {
   weekly: (token: string) => apiRequest<WeeklyReport>('/api/v1/reports/weekly', token),
   overview: (token: string) => apiRequest<ReportOverview>('/api/v1/reports/overview', token),
-  daily: (token: string) => apiRequest<DailyReport>('/api/v1/reports/daily', token),
+  daily: (token: string) => {
+    // Send the client-local date + tz offset so "today" matches the user's clock.
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const params = new URLSearchParams({
+      date: `${y}-${m}-${d}`,
+      tzOffset: String(now.getTimezoneOffset()),
+    });
+    return apiRequest<DailyReport>(`/api/v1/reports/daily?${params.toString()}`, token);
+  },
 };
 
 export const measurementsApi = {

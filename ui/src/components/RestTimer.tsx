@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Pause, Play, Plus, SkipForward } from 'lucide-react';
 import { formatClock } from '../lib/format';
+import { createRestBeepGate, playRestBeep, shouldPlayRestBeep } from '../lib/restSound';
 
 /**
  * Prominent rest countdown for the workout runner.
@@ -11,16 +12,20 @@ export function RestTimer({
   seconds,
   onDone,
   compact = false,
+  soundEnabled = false,
 }: {
   seconds: number;
   onDone?: () => void;
   compact?: boolean;
+  /** Three soft beeps at 3/2/1 s remaining (preferences.restCountdownSound). */
+  soundEnabled?: boolean;
 }) {
   const baseTotal = Math.max(seconds, 1);
   const [remaining, setRemaining] = useState(seconds);
   const [total, setTotal] = useState(baseTotal);
   const [paused, setPaused] = useState(false);
   const firedRef = useRef(false);
+  const beepGateRef = useRef(createRestBeepGate());
 
   useEffect(() => {
     if (paused || remaining <= 0) return;
@@ -35,6 +40,15 @@ export function RestTimer({
       onDone?.();
     }
   }, [remaining, onDone]);
+
+  // Soft countdown beeps at 3/2/1 s. The gate dedupes rerenders; audio calls
+  // never throw, so the timer is unaffected if sound is blocked.
+  useEffect(() => {
+    const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
+    if (shouldPlayRestBeep(remaining, { enabled: soundEnabled, hidden, paused, gate: beepGateRef.current })) {
+      playRestBeep();
+    }
+  }, [remaining, paused, soundEnabled]);
 
   const pct = Math.max(0, Math.min(100, Math.round(((total - remaining) / total) * 100)));
   const done = remaining <= 0;

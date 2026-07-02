@@ -4426,3 +4426,149 @@ p {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* --- Home: Phase 2 cards (nutrition, goal, profile prompt, rest/shifted) --- */
+.home-countdown--rest {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+.home-countdown--rest svg {
+  color: var(--muted);
+}
+.home-countdown--shifted {
+  border-color: color-mix(in srgb, var(--warning, #f59e0b) 34%, var(--border));
+  background: color-mix(in srgb, var(--warning, #f59e0b) 10%, var(--surface-2));
+}
+.home-countdown--shifted svg {
+  color: var(--warning, #f59e0b);
+}
+
+.profile-prompt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.profile-prompt__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.profile-prompt__text {
+  flex: 1;
+  min-width: 0;
+}
+.profile-prompt__text strong {
+  display: block;
+  font-size: 14px;
+}
+.profile-prompt__text small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.profile-prompt__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.profile-prompt__actions .btn {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+.profile-prompt__close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.profile-prompt__close:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.home-nutrition,
+.home-goal {
+  display: grid;
+  gap: 12px;
+}
+.home-nutrition__head,
+.home-goal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.home-nutrition__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.home-nutrition__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.home-nutrition__meta svg {
+  color: var(--accent);
+}
+.home-nutrition__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.home-goal__facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.home-goal__facts > div {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.home-goal__facts span {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+.home-goal__facts strong {
+  font-size: 14px;
+}
+.home-goal__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* --- Profile editor: Phase 3 section headers --- */
+.modal-section-title {
+  margin: 14px 0 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.modal-card .modal-section-title:first-of-type {
+  margin-top: 4px;
+  padding-top: 0;
+  border-top: none;
+}

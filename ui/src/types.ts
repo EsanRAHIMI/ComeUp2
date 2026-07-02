@@ -11,7 +11,21 @@ export type UserPreferences = {
   autoRestTimer?: boolean;
   defaultRestSeconds?: number;
   preferredCamera?: 'front' | 'back';
+  /** Three soft beeps in the final 3 s of rest. */
+  restCountdownSound?: boolean;
 };
+
+export type NutritionPreference =
+  | 'no_preference'
+  | 'high_protein'
+  | 'low_carb'
+  | 'vegetarian'
+  | 'vegan'
+  | 'keto';
+
+export type WalkingTargetMetric = 'steps' | 'minutes' | 'distanceKm';
+
+export type MissedWorkoutBehavior = 'shift' | 'skip';
 
 export type User = {
   id: string;
@@ -30,6 +44,16 @@ export type User = {
   preferredDays?: number[];
   sessionDuration?: number;
   preferences?: UserPreferences;
+  // Phase 3 — all optional; `null` in a PATCH clears the stored value.
+  targetWeight?: number | null;
+  goalDeadline?: string | null;
+  muscleFocus?: string[];
+  physicalLimitations?: string[];
+  nutritionPreference?: NutritionPreference;
+  supplements?: string[];
+  waterTargetMl?: number | null;
+  walkingTarget?: { metric: WalkingTargetMetric; value: number } | null;
+  missedWorkoutBehavior?: MissedWorkoutBehavior;
 };
 
 export type GptQuota = {
@@ -104,6 +128,15 @@ export type DailyMedal = {
   earned: boolean;
 };
 
+export type TodayStatus = 'completed' | 'pending' | 'shifted' | 'rest' | 'none';
+
+export type DailyNutritionSnapshot = {
+  date: string;
+  slotCount: number;
+  loggedSlotIds: string[];
+  nextSlot: { id: string; title: string; time: string } | null;
+};
+
 export type DailyReport = {
   dayKey: string;
   completedToday: boolean;
@@ -120,6 +153,16 @@ export type DailyReport = {
     duration: number;
     isToday: boolean;
   } | null;
+  /** Schedule-derived status for the client-local day (shift/skip aware). */
+  todayStatus?: TodayStatus;
+  nextWorkout?: {
+    title: string;
+    startsAt: string;
+    duration: number;
+    isToday: boolean;
+    shifted: boolean;
+  } | null;
+  nutrition?: DailyNutritionSnapshot | null;
 };
 
 export type ImportReviewItem = {

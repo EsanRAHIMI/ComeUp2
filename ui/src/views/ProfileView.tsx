@@ -52,6 +52,8 @@ export function ProfileView() {
           <div><span>Age</span><strong>{user.age ?? '—'}</strong></div>
           <div><span>Height</span><strong>{user.height ? `${user.height} cm` : '—'}</strong></div>
           <div><span>Weight</span><strong>{user.weight ? `${user.weight} kg` : '—'}</strong></div>
+          <div><span>Target weight</span><strong>{user.targetWeight ? `${user.targetWeight} kg` : '—'}</strong></div>
+          <div><span>Goal deadline</span><strong>{user.goalDeadline ?? '—'}</strong></div>
         </div>
         <div className="profile-details__row">
           <span>Equipment</span>
@@ -62,8 +64,38 @@ export function ProfileView() {
           <strong>{user.preferredDays?.length ? user.preferredDays.map((d) => WEEKDAYS[d]).join(', ') : 'Not set'}</strong>
         </div>
         <div className="profile-details__row">
+          <span>Muscle focus</span>
+          <strong>{user.muscleFocus?.length ? user.muscleFocus.join(', ') : 'Not set'}</strong>
+        </div>
+        <div className="profile-details__row">
           <span>Injuries</span>
           <strong>{user.injuries?.length ? user.injuries.join(', ') : 'None'}</strong>
+        </div>
+        <div className="profile-details__row">
+          <span>Limitations</span>
+          <strong>{user.physicalLimitations?.length ? user.physicalLimitations.join(', ') : 'None'}</strong>
+        </div>
+        <div className="profile-details__row">
+          <span>Nutrition</span>
+          <strong>{user.nutritionPreference ? user.nutritionPreference.replace(/_/g, ' ') : 'No preference'}</strong>
+        </div>
+        <div className="profile-details__row">
+          <span>Supplements</span>
+          <strong>{user.supplements?.length ? user.supplements.join(', ') : 'None'}</strong>
+        </div>
+        <div className="profile-details__row">
+          <span>Water target</span>
+          <strong>{user.waterTargetMl ? `${user.waterTargetMl} ml/day` : 'Not set'}</strong>
+        </div>
+        <div className="profile-details__row">
+          <span>Walking target</span>
+          <strong>
+            {user.walkingTarget
+              ? `${user.walkingTarget.value} ${
+                  user.walkingTarget.metric === 'distanceKm' ? 'km' : user.walkingTarget.metric
+                }/day`
+              : 'Not set'}
+          </strong>
         </div>
       </section>
 
@@ -92,6 +124,22 @@ export function ProfileView() {
               {user.preferences?.autoRestTimer === false
                 ? 'Off'
                 : `${user.preferences?.defaultRestSeconds ?? 60}s default between sets`}
+            </small>
+          </div>
+        </div>
+        <div className="settings-row">
+          <div>
+            <strong>Rest countdown sound</strong>
+            <small>{user.preferences?.restCountdownSound === false ? 'Off' : 'Three soft beeps before the next set'}</small>
+          </div>
+        </div>
+        <div className="settings-row">
+          <div>
+            <strong>Missed workouts</strong>
+            <small>
+              {user.missedWorkoutBehavior === 'skip'
+                ? 'Skip to the next scheduled day'
+                : 'Shift forward — program continues in order'}
             </small>
           </div>
         </div>

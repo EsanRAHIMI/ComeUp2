@@ -3,6 +3,7 @@ export const STORAGE_KEYS = {
   user: 'comeup_user',
   theme: 'comeup_theme',
   session: 'comeup_active_session',
+  profilePromptDismissed: 'comeup_profile_prompt_dismissed',
 } as const;
 
 export function readJSON<T>(key: string): T | null {

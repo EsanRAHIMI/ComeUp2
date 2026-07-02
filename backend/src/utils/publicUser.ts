@@ -18,6 +18,18 @@ export function publicUser(user: any) {
     goal: user.goal,
     fitnessLevel: user.fitnessLevel,
     workoutDaysPerWeek: user.workoutDaysPerWeek,
+    // Phase 3 additions — absent on older documents, so they serialize as undefined.
+    targetWeight: user.targetWeight,
+    goalDeadline: user.goalDeadline ? user.goalDeadline.toISOString().slice(0, 10) : undefined,
+    muscleFocus: user.muscleFocus ?? [],
+    physicalLimitations: user.physicalLimitations ?? [],
+    nutritionPreference: user.nutritionPreference,
+    supplements: user.supplements ?? [],
+    waterTargetMl: user.waterTargetMl,
+    walkingTarget: user.walkingTarget
+      ? { metric: user.walkingTarget.metric, value: user.walkingTarget.value }
+      : undefined,
+    missedWorkoutBehavior: user.missedWorkoutBehavior ?? 'shift',
     preferences: user.preferences,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,

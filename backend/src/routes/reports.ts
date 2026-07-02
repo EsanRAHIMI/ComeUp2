@@ -1,7 +1,20 @@
 import type { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
+import { NutritionWeighLog } from '../models/NutritionWeighLog.js';
 import { Program } from '../models/Program.js';
+import { User } from '../models/User.js';
 import { WorkoutSession } from '../models/WorkoutSession.js';
+import { computeDayStatuses, dayKeyFrom } from '../services/dayStatus.js';
 import { startOfWeek } from '../services/gptQuota.js';
+import { getActivePlanForUser } from '../services/nutritionPlanService.js';
+import { parseBody } from '../utils/schemas.js';
+
+const dailyQuerySchema = z.object({
+  /** Client-local calendar date (YYYY-MM-DD). Falls back to server-local today. */
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  /** Client Date.prototype.getTimezoneOffset() value, minutes (Tehran = -210). */
+  tzOffset: z.coerce.number().int().min(-840).max(840).optional(),
+});
 
 type SessionLike = {
   startTime: Date;
@@ -152,9 +165,13 @@ export const reportRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.get('/reports/daily', { preHandler: [app.authenticate] }, async (request) => {
+    const query = parseBody(dailyQuerySchema, request.query ?? {});
     const now = new Date();
     const todayStart = startOfLocalDay(now);
     const todayEnd = endOfLocalDay(now);
+    // Client-local "today" for the new schedule-status fields; legacy fields
+    // below keep their original server-local behavior for compatibility.
+    const clientTodayKey = query.date ?? dayKeyFrom(now, query.tzOffset);
 
     const allCompleted = (await WorkoutSession.find({
       userId: request.user.sub,
@@ -201,7 +218,62 @@ export const reportRoutes: FastifyPluginAsync = async (app) => {
       else if (todaySchedule) secondsUntilWorkout = 0;
     }
 
+    // --- Schedule-derived status (shift/skip aware, client-local day keys) ---
+    const reportUser = await User.findById(request.user.sub).select('missedWorkoutBehavior');
+    const behavior: 'shift' | 'skip' =
+      reportUser?.missedWorkoutBehavior === 'skip' ? 'skip' : 'shift';
+    const orderedSchedule = [...schedule].sort(
+      (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+    );
+    const dayStatus = computeDayStatuses({
+      entryDayKeys: orderedSchedule.map((s) => dayKeyFrom(new Date(s.startsAt), query.tzOffset)),
+      completedDayKeys: allCompleted.map((s) => dayKeyFrom(new Date(s.startTime), query.tzOffset)),
+      todayKey: clientTodayKey,
+      behavior,
+    });
+    const nextEntry = dayStatus.nextIndex !== null ? orderedSchedule[dayStatus.nextIndex] : null;
+    const nextEntryKey = nextEntry ? dayKeyFrom(new Date(nextEntry.startsAt), query.tzOffset) : null;
+    const todayStatus = activeProgram
+      ? dayStatus.todayStatus === 'none' && workoutDone
+        ? 'completed'
+        : dayStatus.todayStatus
+      : 'none';
+
+    // --- Nutrition snapshot for the Home card (never fails the report) ---
+    let nutrition: {
+      date: string;
+      slotCount: number;
+      loggedSlotIds: string[];
+      nextSlot: { id: string; title: string; time: string } | null;
+    } | null = null;
+    try {
+      const plan = await getActivePlanForUser(request.user.sub);
+      const logs = await NutritionWeighLog.find({ userId: request.user.sub, date: clientTodayKey });
+      const loggedSlotIds: string[] = [...new Set(logs.map((log) => String(log.mealSlot)))];
+      const slots = (plan.slots ?? []) as Array<{ id: string; title: string; time: string }>;
+      const next = slots.find((slot) => !loggedSlotIds.includes(slot.id)) ?? null;
+      nutrition = {
+        date: clientTodayKey,
+        slotCount: slots.length,
+        loggedSlotIds,
+        nextSlot: next ? { id: next.id, title: next.title, time: next.time } : null,
+      };
+    } catch (error) {
+      request.log.warn({ err: error }, 'daily report: nutrition snapshot unavailable');
+    }
+
     return {
+      todayStatus,
+      nextWorkout: nextEntry
+        ? {
+            title: nextEntry.title || activeProgram?.name || 'Workout',
+            startsAt: nextEntry.startsAt,
+            duration: nextEntry.duration,
+            isToday: nextEntryKey === clientTodayKey,
+            shifted: Boolean(nextEntryKey && nextEntryKey < clientTodayKey),
+          }
+        : null,
+      nutrition,
       dayKey: dayKey(now),
       completedToday: workoutDone,
       streakDays,
