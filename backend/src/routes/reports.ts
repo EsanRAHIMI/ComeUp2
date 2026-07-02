@@ -1,13 +1,26 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { HabitLog } from '../models/HabitLog.js';
+import { MealLog } from '../models/MealLog.js';
+import { NutritionTarget } from '../models/NutritionTarget.js';
 import { NutritionWeighLog } from '../models/NutritionWeighLog.js';
 import { Program } from '../models/Program.js';
 import { User } from '../models/User.js';
 import { WorkoutSession } from '../models/WorkoutSession.js';
+import { scoreDay, type ScoreTargetInput } from '../services/nutritionScore.js';
+import { buildCalendarMonth, isMonthKey } from '../services/calendarReport.js';
 import { computeDayStatuses, dayKeyFrom } from '../services/dayStatus.js';
 import { startOfWeek } from '../services/gptQuota.js';
 import { getActivePlanForUser } from '../services/nutritionPlanService.js';
 import { parseBody } from '../utils/schemas.js';
+
+const calendarQuerySchema = z.object({
+  month: z.string().refine(isMonthKey, { message: 'month must be YYYY-MM' }),
+  /** Client-local calendar date (YYYY-MM-DD). Falls back to server-local today. */
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  /** Client Date.prototype.getTimezoneOffset() value, minutes (Tehran = -210). */
+  tzOffset: z.coerce.number().int().min(-840).max(840).optional(),
+});
 
 const dailyQuerySchema = z.object({
   /** Client-local calendar date (YYYY-MM-DD). Falls back to server-local today. */
@@ -26,6 +39,20 @@ type SessionLike = {
 };
 
 type ExerciseLike = { name: string; sets: number };
+
+/** Map a NutritionTarget document into the pure scoring input shape. */
+function targetDocToScoreInput(doc: any): ScoreTargetInput {
+  return {
+    goal: doc.goalSnapshot?.goal ?? 'General Fitness',
+    mealSlots: (doc.mealSlots ?? []).map((s: any) => ({
+      mealSlot: s.mealSlot,
+      label: s.label,
+      proteinGRange: { min: s.proteinGRange?.min ?? 0, max: s.proteinGRange?.max ?? 0 },
+    })),
+    waterTargetMl: doc.waterTargetMl,
+    supplementPlan: (doc.supplementPlan ?? []).map((s: any) => ({ name: s.name })),
+  };
+}
 
 function dayKey(date: Date) {
   const year = date.getFullYear();
@@ -164,6 +191,77 @@ export const reportRoutes: FastifyPluginAsync = async (app) => {
     };
   });
 
+  // Monthly calendar for the History page. Derived-only: schedule dates are
+  // never mutated; statuses come from services/dayStatus + calendarReport.
+  app.get('/reports/calendar', { preHandler: [app.authenticate] }, async (request) => {
+    const query = parseBody(calendarQuerySchema, request.query ?? {});
+    const todayKey = query.date ?? dayKeyFrom(new Date(), query.tzOffset);
+
+    const calendarUser = await User.findById(request.user.sub).select('missedWorkoutBehavior');
+    // Legacy users without the Phase 3 field fall back to 'shift'.
+    const behavior: 'shift' | 'skip' =
+      calendarUser?.missedWorkoutBehavior === 'skip' ? 'skip' : 'shift';
+
+    const activeProgram = await Program.findOne({ ownerId: request.user.sub, isActive: true });
+    const orderedSchedule = [...(activeProgram?.schedule ?? [])].sort(
+      (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+    );
+    const entries = orderedSchedule.map((s) => ({
+      dayKey: dayKeyFrom(new Date(s.startsAt), query.tzOffset),
+      title: s.title || activeProgram?.name || 'Workout',
+    }));
+
+    // Full history is required so shift-behavior consumption is correct.
+    const sessions = await WorkoutSession.find({
+      userId: request.user.sub,
+      status: 'completed',
+    }).select('startTime totalDuration caloriesBurned exercises.sets');
+    const completed = sessions.map((s) => ({
+      dayKey: dayKeyFrom(new Date(s.startTime), query.tzOffset),
+      sets: s.exercises.reduce((sum, ex) => sum + (ex.sets?.length ?? 0), 0),
+      durationSec: s.totalDuration ?? 0,
+      calories: s.caloriesBurned ?? 0,
+    }));
+
+    // Nutrition markers are best-effort — never fail the calendar.
+    // Phase 6: MealLog confirmations and legacy weigh logs both count; a slot
+    // logged either way is "logged" (union per day).
+    let nutritionByDay: Record<string, number> | undefined;
+    let nutritionSlotCount: number | undefined;
+    try {
+      const monthRange = { $gte: `${query.month}-01`, $lte: `${query.month}-31` };
+      const [acceptedTarget, weighLogs, mealLogs] = await Promise.all([
+        NutritionTarget.findOne({ userId: request.user.sub, status: 'accepted' }).select('mealSlots'),
+        NutritionWeighLog.find({ userId: request.user.sub, date: monthRange }).select('date mealSlot'),
+        MealLog.find({ userId: request.user.sub, date: monthRange }).select('date mealSlot'),
+      ]);
+      nutritionSlotCount = acceptedTarget
+        ? (acceptedTarget.mealSlots ?? []).length
+        : (((await getActivePlanForUser(request.user.sub)).slots ?? []) as unknown[]).length;
+
+      const slotsByDay = new Map<string, Set<string>>();
+      for (const log of [...weighLogs, ...mealLogs]) {
+        (slotsByDay.get(log.date) ?? slotsByDay.set(log.date, new Set()).get(log.date))!.add(
+          String(log.mealSlot),
+        );
+      }
+      nutritionByDay = {};
+      for (const [date, slots] of slotsByDay) nutritionByDay[date] = slots.size;
+    } catch (error) {
+      request.log.warn({ err: error }, 'calendar report: nutrition markers unavailable');
+    }
+
+    return buildCalendarMonth({
+      month: query.month,
+      todayKey,
+      behavior,
+      entries,
+      completed,
+      nutritionByDay,
+      nutritionSlotCount,
+    });
+  });
+
   app.get('/reports/daily', { preHandler: [app.authenticate] }, async (request) => {
     const query = parseBody(dailyQuerySchema, request.query ?? {});
     const now = new Date();
@@ -240,24 +338,69 @@ export const reportRoutes: FastifyPluginAsync = async (app) => {
       : 'none';
 
     // --- Nutrition snapshot for the Home card (never fails the report) ---
+    // Prefers the Phase 6 target/meal-log system; falls back to the legacy
+    // meal plan + weigh logs so older data and users keep working.
     let nutrition: {
       date: string;
       slotCount: number;
       loggedSlotIds: string[];
       nextSlot: { id: string; title: string; time: string } | null;
+      score?: number | null;
+      scoreConfidence?: 'low' | 'medium' | 'high';
+      water?: { ml: number; targetMl: number; pct: number };
     } | null = null;
     try {
-      const plan = await getActivePlanForUser(request.user.sub);
-      const logs = await NutritionWeighLog.find({ userId: request.user.sub, date: clientTodayKey });
-      const loggedSlotIds: string[] = [...new Set(logs.map((log) => String(log.mealSlot)))];
-      const slots = (plan.slots ?? []) as Array<{ id: string; title: string; time: string }>;
+      const [acceptedTarget, mealLogs, weighLogs, habit] = await Promise.all([
+        NutritionTarget.findOne({ userId: request.user.sub, status: 'accepted' }),
+        MealLog.find({ userId: request.user.sub, date: clientTodayKey }),
+        NutritionWeighLog.find({ userId: request.user.sub, date: clientTodayKey }),
+        HabitLog.findOne({ userId: request.user.sub, date: clientTodayKey }),
+      ]);
+
+      const loggedSlotIds: string[] = [
+        ...new Set([
+          ...mealLogs.map((log) => String(log.mealSlot)),
+          ...weighLogs.map((log) => String(log.mealSlot)),
+        ]),
+      ];
+
+      let slots: Array<{ id: string; title: string; time: string }>;
+      if (acceptedTarget) {
+        slots = (acceptedTarget.mealSlots ?? []).map((s: any) => ({
+          id: String(s.mealSlot),
+          title: String(s.label),
+          time: String(s.timingNote ?? ''),
+        }));
+      } else {
+        const plan = await getActivePlanForUser(request.user.sub);
+        slots = (plan.slots ?? []) as Array<{ id: string; title: string; time: string }>;
+      }
       const next = slots.find((slot) => !loggedSlotIds.includes(slot.id)) ?? null;
+
       nutrition = {
         date: clientTodayKey,
         slotCount: slots.length,
         loggedSlotIds,
         nextSlot: next ? { id: next.id, title: next.title, time: next.time } : null,
       };
+
+      if (acceptedTarget) {
+        const dayScore = scoreDay({
+          date: clientTodayKey,
+          target: targetDocToScoreInput(acceptedTarget),
+          mealLogs: mealLogs.map((l) => ({
+            mealSlot: String(l.mealSlot),
+            status: l.status as 'done' | 'heavier' | 'lighter' | 'off_plan' | 'skipped',
+            proteinG: l.proteinG ?? undefined,
+          })),
+          habit: habit
+            ? { waterMl: habit.waterMl ?? 0, supplementsTaken: habit.supplementsTaken ?? [] }
+            : null,
+        });
+        nutrition.score = dayScore.score;
+        nutrition.scoreConfidence = dayScore.confidence;
+        nutrition.water = dayScore.waterStatus;
+      }
     } catch (error) {
       request.log.warn({ err: error }, 'daily report: nutrition snapshot unavailable');
     }

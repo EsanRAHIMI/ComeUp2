@@ -1,5 +1,6 @@
 import type {
   AiConversation,
+  CalendarReport,
   ExerciseMedia,
   FitnessLevel,
   GptDraftProgram,
@@ -198,6 +199,18 @@ export const reportsApi = {
       tzOffset: String(now.getTimezoneOffset()),
     });
     return apiRequest<DailyReport>(`/api/v1/reports/daily?${params.toString()}`, token);
+  },
+  calendar: (token: string, month: string) => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const params = new URLSearchParams({
+      month,
+      date: `${y}-${m}-${d}`,
+      tzOffset: String(now.getTimezoneOffset()),
+    });
+    return apiRequest<CalendarReport>(`/api/v1/reports/calendar?${params.toString()}`, token);
   },
 };
 

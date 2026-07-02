@@ -135,6 +135,112 @@ export type DailyNutritionSnapshot = {
   slotCount: number;
   loggedSlotIds: string[];
   nextSlot: { id: string; title: string; time: string } | null;
+  /** Present once the user has an accepted nutrition target (Phase 6). */
+  score?: number | null;
+  scoreConfidence?: 'low' | 'medium' | 'high';
+  water?: { ml: number; targetMl: number; pct: number };
+};
+
+// --- Phase 6: goal-based nutrition system ---
+
+export type GramRange = { min: number; max: number };
+
+export type NutritionConfidence = 'low' | 'medium' | 'high';
+
+export type TargetMealSlot = {
+  mealSlot: string;
+  label: string;
+  proteinGRange: GramRange;
+  carbsGRange: GramRange;
+  fatGRange: GramRange;
+  caloriesEstimate?: number | null;
+  timingNote?: string;
+  guidanceNote?: string;
+};
+
+export type NutritionTargetInfo = {
+  id: string;
+  status: 'proposed' | 'accepted';
+  source: 'rules' | 'ai';
+  goalSnapshot: {
+    goal: string;
+    currentWeight?: number;
+    targetWeight?: number;
+    height?: number;
+    age?: number;
+    gender?: string;
+    workoutDaysPerWeek?: number;
+    nutritionPreference?: string;
+    waterTargetMl?: number;
+    supplements?: string[];
+  };
+  dailyCaloriesEstimate: number | null;
+  dailyProteinG: number;
+  dailyCarbsG: number;
+  dailyFatG: number;
+  waterTargetMl: number;
+  mealSlots: TargetMealSlot[];
+  supplementPlan: Array<{ name: string; timingNote?: string }>;
+  timingNotes: string[];
+  missingInputs: string[];
+  confidence: NutritionConfidence;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type MealLogStatus = 'done' | 'heavier' | 'lighter' | 'off_plan' | 'skipped';
+
+export type MealLogEntry = {
+  id: string;
+  date: string;
+  mealSlot: string;
+  status: MealLogStatus;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  grams: number | null;
+  note: string;
+  loggedAt?: string;
+};
+
+export type HabitEntry = {
+  id: string;
+  date: string;
+  waterMl: number;
+  supplementsTaken: string[];
+  drinks: Array<{ name: string; amountMl?: number; note?: string }>;
+  note: string;
+};
+
+export type NutritionDayScore = {
+  date: string;
+  score: number | null;
+  confidence: NutritionConfidence;
+  mealBreakdown: Array<{
+    mealSlot: string;
+    label: string;
+    status: MealLogStatus | 'unlogged';
+    points: number | null;
+    detailed: boolean;
+  }>;
+  waterStatus: { ml: number; targetMl: number; pct: number };
+  supplementStatus: { taken: number; planned: number };
+  positiveLabels: string[];
+  negativeLabels: string[];
+  nextAction: string;
+  explanation: string;
+};
+
+export type NutritionScoreResponse = {
+  days: NutritionDayScore[];
+  summary: {
+    averageScore: number | null;
+    daysWithData: number;
+    totalDays: number;
+    bestDay: { date: string; score: number } | null;
+    worstDay: { date: string; score: number } | null;
+  } | null;
+  reason: string | null;
 };
 
 export type DailyReport = {
@@ -163,6 +269,22 @@ export type DailyReport = {
     shifted: boolean;
   } | null;
   nutrition?: DailyNutritionSnapshot | null;
+};
+
+export type CalendarWorkoutStatus = 'completed' | 'pending' | 'missed' | 'shifted' | 'upcoming';
+
+export type CalendarDayData = {
+  workout?: { status: CalendarWorkoutStatus; title: string };
+  sessions?: number;
+  stats?: { sets: number; minutes: number; calories: number };
+  nutrition?: { loggedSlots: number; slotCount: number };
+};
+
+export type CalendarReport = {
+  month: string;
+  todayKey: string;
+  behavior: 'shift' | 'skip';
+  days: Record<string, CalendarDayData>;
 };
 
 export type ImportReviewItem = {
