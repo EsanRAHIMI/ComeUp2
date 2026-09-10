@@ -58,9 +58,9 @@ export function AiGeneratingPanel({ active, profile, compact = false }: Props) {
         </div>
         <div className="ai-gen__hero-text">
           <p className="ai-gen__eyebrow">
-            <Sparkles size={14} /> AI coach is working
+            <Sparkles size={14} /> مربی هوش مصنوعی در حال کار است
           </p>
-          <strong>Building your personalized program</strong>
+          <strong>در حال ساخت برنامه شخصی‌سازی‌شده تو</strong>
           <small>Usually takes 15–45 seconds · {formatElapsed(elapsedSec)}</small>
         </div>
       </div>

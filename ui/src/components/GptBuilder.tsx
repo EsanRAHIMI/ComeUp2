@@ -62,7 +62,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
       setQuota(res.quota);
       if (res.activated && res.program) {
         await refreshPrograms();
-        notify('Program saved and activated', 'success');
+        notify('برنامه ذخیره و فعال شد', 'success');
         onClose();
         navigate('dashboard');
       }
@@ -92,7 +92,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
     try {
       await chatApi.convert(token, conversationId, { activate: true });
       await refreshPrograms();
-      notify('Program saved and activated', 'success');
+      notify('برنامه ذخیره و فعال شد', 'success');
       onClose();
       navigate('dashboard');
     } catch (error) {
@@ -109,7 +109,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
           <div className="gpt-builder__title">
             <span className="card__head-icon"><Bot size={18} /></span>
             <div>
-              <strong>AI Coach</strong>
+              <strong>مربی هوش مصنوعی</strong>
               {quota ? <small>{quota.remaining} of {quota.limit} AI messages left this week</small> : null}
             </div>
           </div>

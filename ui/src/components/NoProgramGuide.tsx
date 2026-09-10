@@ -12,20 +12,20 @@ const OPTIONS: Option[] = [
   {
     action: 'gpt',
     icon: Bot,
-    title: 'AI Coach',
-    description: 'Chat with your AI coach, describe your goals, and get a fully personalized plan.',
+    title: 'مربی هوش مصنوعی',
+    description: 'با مربی هوش مصنوعی چت کن، اهدافت را بگو و یک برنامه کاملاً شخصی بگیر.',
   },
   {
     action: 'quick',
     icon: Sparkles,
-    title: 'Quick generate',
-    description: 'Build a professional AI program in one step using your profile and a few choices.',
+    title: 'ساخت سریع',
+    description: 'با پروفایل و چند انتخاب، در یک مرحله برنامه حرفه‌ای بساز.',
   },
   {
     action: 'import',
     icon: Download,
-    title: 'Import a share code',
-    description: 'Paste a program code from your coach or friends and add it to your library.',
+    title: 'وارد کردن کد اشتراک',
+    description: 'کد برنامه مربی یا دوستانت را بچسبان و به کتابخانه اضافه کن.',
   },
 ];
 
@@ -39,11 +39,11 @@ export function NoProgramGuide({ open }: { open: boolean }) {
   }
 
   return (
-    <div className="modal-overlay no-program-guide" role="dialog" aria-label="Get a training program">
+    <div className="modal-overlay no-program-guide" role="dialog" aria-label="دریافت برنامه تمرینی">
       <div className="no-program-guide__card">
         <div className="no-program-guide__head">
-          <h2>No active program yet</h2>
-          <p>Pick how you want to get started — we&apos;ll take you straight there.</p>
+          <h2>هنوز برنامه فعالی نداری</h2>
+          <p>نحوه شروع را انتخاب کن — مستقیم همان‌جا می‌رویم.</p>
         </div>
 
         <ul className="no-program-guide__list">
@@ -64,10 +64,10 @@ export function NoProgramGuide({ open }: { open: boolean }) {
 
         <button type="button" className="btn btn--primary btn--block btn--lg no-program-guide__profile" onClick={() => navigate('profile')}>
           <UserRound size={18} />
-          Complete your profile for better AI programs
+          پروفایل را کامل کن تا برنامه‌های هوش مصنوعی بهتر شوند
         </button>
         <p className="no-program-guide__hint">
-          Add your goal, fitness level, equipment, and injuries in Profile so the AI coach can build a more accurate plan.
+          هدف، سطح آمادگی، تجهیزات و آسیب‌ها را در پروفایل اضافه کن تا مربی هوش مصنوعی برنامه دقیق‌تری بسازد.
         </p>
       </div>
     </div>

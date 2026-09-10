@@ -28,7 +28,7 @@ const AI_OPTIONS: Option[] = [
   {
     id: 'ai-coach',
     icon: Bot,
-    title: 'AI Coach',
+    title: 'مربی هوش مصنوعی',
     tagline: 'Chat about your goals and get a fully personalized plan.',
     action: 'Start chat',
     badge: 'Recommended',
@@ -36,7 +36,7 @@ const AI_OPTIONS: Option[] = [
   {
     id: 'quick',
     icon: Sparkles,
-    title: 'Quick generate',
+    title: 'ساخت سریع',
     tagline: 'One-step AI program built from your profile.',
     action: 'Generate',
   },
@@ -96,9 +96,9 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
   return (
     <section className="program-create-hub card" aria-label="Create a program">
       <header className="program-create-hub__head">
-        <div className="program-create-hub__step-pill">Step 1 · Choose one</div>
-        <h2>How do you want to get your program?</h2>
-        <p className="program-create-hub__sub">Tap one option below. You can switch anytime before saving.</p>
+        <div className="program-create-hub__step-pill">گام ۱ · یکی را انتخاب کن</div>
+        <h2>چطور می‌خواهی برنامه‌ات را بگیری؟</h2>
+        <p className="program-create-hub__sub">یکی از گزینه‌های زیر را بزن. قبل از ذخیره می‌توانی عوض کنی.</p>
       </header>
 
       <div className="program-create-hub__groups">
@@ -112,7 +112,7 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
         />
 
         <div className="program-create-hub__divider" role="separator">
-          <span>or import</span>
+          <span>یا وارد کن</span>
         </div>
 
         <OptionGroup
@@ -128,8 +128,8 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
       {panel === 'share' ? (
         <div className={`program-create-hub__panel ${highlightShare ? 'is-highlight' : ''}`} id="share-code-import">
           <div className="program-create-hub__panel-label">
-            <span className="program-create-hub__panel-step">Step 2</span>
-            <strong>Enter your share code</strong>
+            <span className="program-create-hub__panel-step">گام ۲</span>
+            <strong>کد اشتراک را وارد کن</strong>
           </div>
           <ShareCodeImport inputRef={shareInputRef} />
         </div>
@@ -142,7 +142,7 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
       ) : null}
 
       {!panel ? (
-        <p className="program-create-hub__footer-hint">Select an import option above to continue here, or start with AI Coach.</p>
+        <p className="program-create-hub__footer-hint">گزینه وارد کردن را بالا انتخاب کن، یا با مربی هوش مصنوعی شروع کن.</p>
       ) : null}
     </section>
   );

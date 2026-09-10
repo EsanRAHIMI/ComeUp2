@@ -102,7 +102,7 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
     try {
       await chatApi.convert(token, conversationId, { activate: true });
       await refreshPrograms();
-      notify('Program saved and activated', 'success');
+      notify('برنامه ذخیره و فعال شد', 'success');
       onClose();
       navigate('dashboard');
     } catch (error) {
@@ -113,11 +113,11 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-label="Quick generate program">
+    <div className="modal-overlay" role="dialog" aria-label="ساخت سریع program">
       <div className="modal-card modal-card--wide">
         <div className="modal-card__head">
           <div>
-            <h2>Quick generate</h2>
+            <h2>ساخت سریع</h2>
             {quota ? (
               <small className="modal-card__sub">
                 {quota.remaining} of {quota.limit} AI generations left this week
@@ -150,13 +150,13 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
 
             <div className="field-row">
               <label className="field">
-                <span>Goal</span>
+                <span>هدف</span>
                 <select value={goal} onChange={(e) => setGoal(e.target.value as Goal)}>
                   {GOALS.map((g) => <option key={g}>{g}</option>)}
                 </select>
               </label>
               <label className="field">
-                <span>Level</span>
+                <span>سطح</span>
                 <select value={level} onChange={(e) => setLevel(e.target.value as FitnessLevel)}>
                   {LEVELS.map((l) => <option key={l}>{l}</option>)}
                 </select>
@@ -165,17 +165,17 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
 
             <div className="field-row">
               <label className="field">
-                <span>Session (min)</span>
+                <span>جلسه (دقیقه)</span>
                 <input type="number" min={20} max={180} step={5} value={duration} onChange={(e) => setDuration(Number(e.target.value))} />
               </label>
               <label className="field">
-                <span>Days / week</span>
+                <span>روز در هفته</span>
                 <input type="number" min={1} max={7} value={daysPerWeek} onChange={(e) => setDaysPerWeek(Number(e.target.value))} />
               </label>
             </div>
 
             <div className="field">
-              <span>Equipment</span>
+              <span>تجهیزات</span>
               <div className="chip-toggle">
                 {EQUIPMENT.map((item) => (
                   <button
@@ -191,7 +191,7 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
             </div>
 
             <div className="field">
-              <span>Focus areas <small className="field__hint">(optional)</small></span>
+              <span>نواحی تمرکز <small className="field__hint">(optional)</small></span>
               <div className="chip-toggle">
                 {FOCUS.map((item) => (
                   <button
@@ -207,11 +207,11 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
             </div>
 
             <label className="field">
-              <span>Extra notes <small className="field__hint">(optional)</small></span>
+              <span>یادداشت اضافه <small className="field__hint">(optional)</small></span>
               <input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g. avoid overhead press, more glute work…"
+                placeholder="مثلاً پرس بالای سر نکن، تمرکز بیشتر روی باسن…"
                 maxLength={500}
               />
             </label>
@@ -227,7 +227,7 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
             <DraftPreview draft={draft} />
             <div className="modal-card__actions">
               <button type="button" className="btn btn--ghost" onClick={resetPreview} disabled={confirming}>
-                Adjust &amp; regenerate
+                تنظیم و تولید مجدد
               </button>
               <button type="button" className="btn btn--success btn--lg" onClick={() => void confirm()} disabled={confirming}>
                 {confirming ? <Loader2 className="spin" size={18} /> : <CheckCircle2 size={18} />}

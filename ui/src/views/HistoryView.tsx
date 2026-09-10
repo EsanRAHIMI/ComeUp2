@@ -17,15 +17,16 @@ import { useRouter } from '../hooks/useRouter';
 import { addMonths, buildMonthGrid, currentMonthKey, monthLabel, todayDayKey } from '../lib/calendar';
 import { formatDuration, formatSessionDate } from '../lib/format';
 import type { CalendarDayData, CalendarReport, CalendarWorkoutStatus, WorkoutSession } from '../types';
+import { fa } from '../i18n/fa';
 
 const WEEKDAY_HEAD = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const STATUS_LABEL: Record<CalendarWorkoutStatus, string> = {
-  completed: 'Completed',
-  pending: 'Pending',
-  missed: 'Missed',
-  shifted: 'Shifted',
-  upcoming: 'Scheduled',
+  completed: 'انجام‌شده',
+  pending: 'در انتظار',
+  missed: 'ازدست‌رفته',
+  shifted: 'جابه‌جاشده',
+  upcoming: 'برنامه‌ریزی‌شده',
 };
 
 /** Primary dot for a day: trained beats schedule status. */
@@ -101,11 +102,11 @@ export function HistoryView() {
     <div className="view-stack">
       <section className="card cal">
         <div className="cal__head">
-          <button type="button" className="icon-btn" onClick={() => changeMonth(-1)} aria-label="Previous month">
+          <button type="button" className="icon-btn" onClick={() => changeMonth(-1)} aria-label={fa.history.prevMonth}>
             <ChevronLeft size={18} />
           </button>
           <h3>{monthLabel(month)}</h3>
-          <button type="button" className="icon-btn" onClick={() => changeMonth(1)} aria-label="Next month">
+          <button type="button" className="icon-btn" onClick={() => changeMonth(1)} aria-label={fa.history.nextMonth}>
             <ChevronRight size={18} />
           </button>
         </div>
@@ -119,7 +120,7 @@ export function HistoryView() {
         {calLoading ? (
           <div className="loading-row cal__loading">
             <Loader2 className="spin" size={18} />
-            <span>Loading month…</span>
+            <span>{fa.history.loadingMonth}</span>
           </div>
         ) : (
           <div className="cal__grid" role="grid" aria-label={monthLabel(month)}>
@@ -150,12 +151,12 @@ export function HistoryView() {
         )}
 
         <div className="cal__legend" aria-hidden>
-          <span><i className="cal__dot cal__dot--completed" /> Done</span>
-          <span><i className="cal__dot cal__dot--pending" /> Pending</span>
-          <span><i className="cal__dot cal__dot--shifted" /> Shifted</span>
-          <span><i className="cal__dot cal__dot--missed" /> Missed</span>
-          <span><i className="cal__dot cal__dot--upcoming" /> Planned</span>
-          <span><i className="cal__dot cal__dot--food" /> Food</span>
+          <span><i className="cal__dot cal__dot--completed" /> {fa.history.done}</span>
+          <span><i className="cal__dot cal__dot--pending" /> {fa.history.pending}</span>
+          <span><i className="cal__dot cal__dot--shifted" /> {fa.history.shifted}</span>
+          <span><i className="cal__dot cal__dot--missed" /> {fa.history.missed}</span>
+          <span><i className="cal__dot cal__dot--upcoming" /> {fa.history.planned}</span>
+          <span><i className="cal__dot cal__dot--food" /> {fa.history.food}</span>
         </div>
 
         {!calLoading && !monthHasData ? (
@@ -177,8 +178,8 @@ export function HistoryView() {
                 </div>
               ) : (selectedData.sessions ?? 0) > 0 ? (
                 <div className="cal-detail__row">
-                  <span className="chip cal-chip--completed">Trained</span>
-                  <strong>Unscheduled workout</strong>
+                  <span className="chip cal-chip--completed">{fa.history.trained}</span>
+                  <strong>{fa.history.unscheduled}</strong>
                 </div>
               ) : null}
 
@@ -201,21 +202,21 @@ export function HistoryView() {
 
               {selectedData.workout?.status === 'pending' || selectedData.workout?.status === 'shifted' ? (
                 <button type="button" className="btn btn--primary btn--block" onClick={() => navigate('workout')}>
-                  Go to workout <ArrowRight size={16} />
+                  {fa.history.goToWorkout} <ArrowRight size={16} />
                 </button>
               ) : selectedData.workout?.status === 'upcoming' ? (
                 <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('programs')}>
-                  View program <ArrowRight size={16} />
+                  {fa.history.viewProgram} <ArrowRight size={16} />
                 </button>
               ) : selectedData.nutrition ? (
                 <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('nutrition')}>
-                  Open Food <ArrowRight size={16} />
+                  {fa.history.openFood} <ArrowRight size={16} />
                 </button>
               ) : null}
             </>
           ) : (
             <p className="cal__empty">
-              {selected > todayKey ? 'Nothing planned for this day yet.' : 'A rest day — no activity recorded.'}
+              {selected > todayKey ? fa.history.nothingPlanned : fa.history.restDay}
             </p>
           )}
         </section>
@@ -224,7 +225,7 @@ export function HistoryView() {
       {sessions === null ? (
         <div className="loading-row">
           <Loader2 className="spin" size={22} />
-          <span>Loading your sessions…</span>
+          <span>{fa.history.loadingSessions}</span>
         </div>
       ) : completed.length === 0 ? (
         <EmptyState
@@ -234,9 +235,9 @@ export function HistoryView() {
       ) : (
         <>
           <section className="history-summary">
-            <div><strong>{completed.length}</strong><span>Workouts</span></div>
-            <div><strong>{totalSets}</strong><span>Sets</span></div>
-            <div><strong>{totalMinutes}</strong><span>Minutes</span></div>
+            <div><strong>{completed.length}</strong><span>{fa.history.workouts}</span></div>
+            <div><strong>{totalSets}</strong><span>{fa.history.sets}</span></div>
+            <div><strong>{totalMinutes}</strong><span>{fa.history.minutes}</span></div>
           </section>
 
           <div className="history-list">

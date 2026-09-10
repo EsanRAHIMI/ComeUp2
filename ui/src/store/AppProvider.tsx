@@ -11,6 +11,7 @@ import { authApi, mediaApi, profileApi, programsApi, ApiError } from '../api';
 import { exerciseKey } from '../lib/exerciseImages';
 import { getPersistedProgramId } from '../lib/format';
 import { syncActiveSession } from '../lib/sessionSync';
+import { fa } from '../i18n/fa';
 import { STORAGE_KEYS, readJSON, remove, writeJSON } from '../lib/storage';
 import type { AuthMode, Exercise, Program, User } from '../types';
 
@@ -99,10 +100,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         if (error instanceof ApiError && error.status === 401) {
           clearSession();
-          notify('Session expired. Please sign in again.', 'error');
+          notify(fa.toast.sessionExpired, 'error');
         } else {
           notify(
-            error instanceof Error ? error.message : 'Could not load your account data — please retry.',
+            error instanceof Error ? error.message : fa.toast.couldNotLoadAccount,
             'error',
           );
         }
@@ -149,9 +150,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setToken(result.token);
         setUser(result.user);
         await loadAccountData(result.token);
-        notify(`Welcome${result.user.name ? `, ${result.user.name.split(' ')[0]}` : ''}!`, 'success');
+        notify(fa.toast.welcome(result.user.name ? result.user.name.split(' ')[0] : undefined), 'success');
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Authentication failed', 'error');
+        notify(error instanceof Error ? error.message : fa.toast.authFailed, 'error');
         throw error;
       } finally {
         setBusy(false);
@@ -162,7 +163,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     clearSession();
-    notify('Signed out.', 'info');
+    notify(fa.toast.signedOut, 'info');
   }, [clearSession, notify]);
 
   const refreshPrograms = useCallback(async () => {
@@ -172,7 +173,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const result = await programsApi.list(token);
       setPrograms(result.programs);
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Could not sync programs', 'error');
+      notify(error instanceof Error ? error.message : fa.toast.couldNotSyncPrograms, 'error');
     } finally {
       setBusy(false);
     }
@@ -181,18 +182,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const importCoachPlan = useCallback<AppContextValue['importCoachPlan']>(
     async (input) => {
       if (!token) {
-        notify('Sign in to import a coach plan', 'error');
+        notify(fa.toast.signInToImport, 'error');
         return null;
       }
       setBusy(true);
-      notify('Building your plan…', 'info');
+      notify(fa.toast.buildingPlan, 'info');
       try {
         const { program } = await programsApi.importCoachPlan(token, input);
         setPrograms((current) => [program, ...current]);
-        notify('Coach plan scheduled', 'success');
+        notify(fa.toast.coachPlanScheduled, 'success');
         return program;
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Could not import coach plan', 'error');
+        notify(error instanceof Error ? error.message : fa.toast.couldNotImportCoach, 'error');
         return null;
       } finally {
         setBusy(false);
@@ -205,16 +206,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (program: Program) => {
       const id = getPersistedProgramId(program);
       if (!token || !id) {
-        notify('Save the program before activating it', 'error');
+        notify(fa.toast.saveBeforeActivate, 'error');
         return;
       }
       setBusy(true);
       try {
         const { program: updated } = await programsApi.activate(token, id);
         setPrograms((current) => current.map((item) => ({ ...item, isActive: item._id === updated._id })));
-        notify('Program activated', 'success');
+        notify(fa.toast.programActivated, 'success');
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Activation failed', 'error');
+        notify(error instanceof Error ? error.message : fa.toast.activationFailed, 'error');
       } finally {
         setBusy(false);
       }
@@ -226,7 +227,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (program: Program) => {
       const id = getPersistedProgramId(program);
       if (!token || !id) {
-        notify('Save the program before sharing it', 'error');
+        notify(fa.toast.saveBeforeShare, 'error');
         return;
       }
       setBusy(true);
@@ -237,10 +238,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             item._id === program._id ? { ...result.program, shareCode: result.shareCode } : item,
           ),
         );
-        notify(`Share code: ${result.shareCode}`, 'success');
+        notify(fa.toast.shareCode(result.shareCode), 'success');
         await navigator.clipboard?.writeText(result.shareCode).catch(() => undefined);
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Sharing failed', 'error');
+        notify(error instanceof Error ? error.message : fa.toast.sharingFailed, 'error');
       } finally {
         setBusy(false);
       }
@@ -256,9 +257,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         const { program: copy } = await programsApi.duplicate(token, id);
         setPrograms((current) => [copy, ...current]);
-        notify('Program duplicated', 'success');
+        notify(fa.toast.programDuplicated, 'success');
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Could not duplicate', 'error');
+        notify(error instanceof Error ? error.message : fa.toast.couldNotDuplicate, 'error');
       } finally {
         setBusy(false);
       }
@@ -274,9 +275,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         await programsApi.remove(token, id);
         setPrograms((current) => current.filter((p) => p._id !== program._id));
-        notify('Program deleted', 'info');
+        notify(fa.toast.programDeleted, 'info');
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Could not delete', 'error');
+        notify(error instanceof Error ? error.message : fa.toast.couldNotDelete, 'error');
       } finally {
         setBusy(false);
       }
@@ -291,10 +292,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         const { program } = await programsApi.update(token, id, patch);
         setPrograms((current) => current.map((p) => (p._id === program._id ? program : p)));
-        notify('Program updated', 'success');
+        notify(fa.toast.programUpdated, 'success');
         return true;
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Could not save changes', 'error');
+        notify(error instanceof Error ? error.message : fa.toast.couldNotSaveChanges, 'error');
         return false;
       } finally {
         setBusy(false);
@@ -311,10 +312,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const { user: updated } = await profileApi.update(token, patch);
         setUser(updated);
         writeJSON(STORAGE_KEYS.user, updated);
-        notify('Profile saved', 'success');
+        notify(fa.toast.profileSaved, 'success');
         return true;
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Could not save profile', 'error');
+        notify(error instanceof Error ? error.message : fa.toast.couldNotSaveProfile, 'error');
         return false;
       } finally {
         setBusy(false);
@@ -330,13 +331,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const { media } = await mediaApi.upsert(token, exercise.name, imageUrl);
         setExerciseMedia((current) => ({ ...current, [media.exerciseKey]: media.imageUrl }));
         notify(
-          media.source === 'personal' ? 'Personal exercise image saved' : 'Image shared with all users for this exercise',
+          media.source === 'personal' ? fa.toast.personalImageSaved : fa.toast.imageSharedAll,
           'success',
         );
       } catch (error) {
         // optimistic local fallback
         setExerciseMedia((current) => ({ ...current, [exerciseKey(exercise.name)]: imageUrl }));
-        notify(error instanceof Error ? error.message : 'Saved locally only', 'error');
+        notify(error instanceof Error ? error.message : fa.toast.savedLocallyOnly, 'error');
       }
     },
     [token, notify],

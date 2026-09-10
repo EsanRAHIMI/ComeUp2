@@ -10,6 +10,7 @@ import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
 import { getPersistedProgramId } from '../lib/format';
 import type { Program } from '../types';
+import { fa } from '../i18n/fa';
 
 function ProgramCardActions({
   program,
@@ -150,13 +151,13 @@ export function ProgramsView() {
       <div className="toolbar">
         <label className="search-box">
           <Search size={18} />
-          <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Search your programs" />
+          <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder={fa.programs.searchPh} />
         </label>
       </div>
 
       {filtered.length ? (
         <div className="program-list">
-          <p className="eyebrow program-list__label">Your programs</p>
+          <p className="eyebrow program-list__label">{fa.programs.yourPrograms}</p>
           {sortedPrograms.map((program) => {
             const id = program._id ?? program.id ?? program.name;
             const persisted = Boolean(getPersistedProgramId(program));
@@ -196,7 +197,7 @@ export function ProgramsView() {
                 {isOpen ? (
                   <>
                     {program.shareCode ? (
-                      <small className="manage-card__code">Share code: <strong>{program.shareCode}</strong></small>
+                      <small className="manage-card__code">{fa.programs.shareCode} <strong>{program.shareCode}</strong></small>
                     ) : null}
                     <ProgramDays program={program} />
                   </>

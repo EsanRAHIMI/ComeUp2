@@ -18,10 +18,10 @@ describe('scoreTone / scoreLabel', () => {
     assert.equal(scoreTone(65), 'ok');
     assert.equal(scoreTone(30), 'low');
     assert.equal(scoreTone(null), 'none');
-    assert.equal(scoreLabel(92), 'On track');
-    assert.equal(scoreLabel(65), 'Almost there');
-    assert.equal(scoreLabel(10), 'Off plan today');
-    assert.equal(scoreLabel(undefined), 'No data yet');
+    assert.equal(scoreLabel(92), 'روی برنامه');
+    assert.equal(scoreLabel(65), 'نزدیک به هدف');
+    assert.equal(scoreLabel(10), 'امروز خارج از برنامه');
+    assert.equal(scoreLabel(undefined), 'هنوز داده‌ای نیست');
   });
 });
 
@@ -65,13 +65,13 @@ describe('nextUnloggedSlot', () => {
 
 describe('status + confidence labels', () => {
   it('covers every meal status', () => {
-    assert.equal(MEAL_STATUS_META.done.label, 'Done');
+    assert.equal(MEAL_STATUS_META.done.label, 'انجام شد');
     assert.equal(MEAL_STATUS_META.off_plan.tone, 'bad');
     assert.equal(MEAL_STATUS_META.skipped.tone, 'muted');
   });
 
   it('labels confidence honestly', () => {
-    assert.equal(confidenceLabel('low'), 'Rough estimate');
-    assert.equal(confidenceLabel('high'), 'High confidence');
+    assert.equal(confidenceLabel('low'), 'تخمین تقریبی');
+    assert.equal(confidenceLabel('high'), 'اطمینان بالا');
   });
 });

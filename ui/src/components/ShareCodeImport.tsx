@@ -18,7 +18,7 @@ export function ShareCodeImport({ inputRef }: Props) {
     try {
       await programsApi.importByCode(token, code.trim().toUpperCase());
       await refreshPrograms();
-      notify('Program imported', 'success');
+      notify('برنامه وارد شد', 'success');
       setCode('');
     } catch (error) {
       notify(error instanceof ApiError ? error.message : 'Invalid share code', 'error');

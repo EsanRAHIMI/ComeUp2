@@ -14,22 +14,22 @@ export function scoreTone(score: number | null | undefined): ScoreTone {
 export function scoreLabel(score: number | null | undefined): string {
   switch (scoreTone(score)) {
     case 'good':
-      return 'On track';
+      return 'روی برنامه';
     case 'ok':
-      return 'Almost there';
+      return 'نزدیک به هدف';
     case 'low':
-      return 'Off plan today';
+      return 'امروز خارج از برنامه';
     default:
-      return 'No data yet';
+      return 'هنوز داده‌ای نیست';
   }
 }
 
 export const MEAL_STATUS_META: Record<MealLogStatus, { label: string; tone: 'good' | 'warn' | 'bad' | 'muted' }> = {
-  done: { label: 'Done', tone: 'good' },
-  heavier: { label: 'Heavier', tone: 'warn' },
-  lighter: { label: 'Lighter', tone: 'warn' },
-  off_plan: { label: 'Off-plan', tone: 'bad' },
-  skipped: { label: 'Skipped', tone: 'muted' },
+  done: { label: 'انجام شد', tone: 'good' },
+  heavier: { label: 'سنگین‌تر', tone: 'warn' },
+  lighter: { label: 'سبک‌تر', tone: 'warn' },
+  off_plan: { label: 'خارج از برنامه', tone: 'bad' },
+  skipped: { label: 'رد شده', tone: 'muted' },
 };
 
 export function waterPct(ml: number, targetMl: number): number {
@@ -59,10 +59,10 @@ export function nextUnloggedSlot<T extends { mealSlot: string }>(
 export function confidenceLabel(confidence: 'low' | 'medium' | 'high'): string {
   switch (confidence) {
     case 'high':
-      return 'High confidence';
+      return 'اطمینان بالا';
     case 'medium':
-      return 'Medium confidence';
+      return 'اطمینان متوسط';
     default:
-      return 'Rough estimate';
+      return 'تخمین تقریبی';
   }
 }

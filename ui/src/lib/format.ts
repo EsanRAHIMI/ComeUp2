@@ -19,7 +19,7 @@ export function nextScheduledSession(program: Program | null, now: number): Sche
   );
 }
 
-const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
+const dateTimeFormat = new Intl.DateTimeFormat('fa-IR', {
   weekday: 'short',
   month: 'short',
   day: 'numeric',
@@ -31,7 +31,7 @@ export function formatSessionDate(value: string | number | Date) {
   return dateTimeFormat.format(new Date(value));
 }
 
-const dateOnlyFormat = new Intl.DateTimeFormat(undefined, {
+const dateOnlyFormat = new Intl.DateTimeFormat('fa-IR', {
   weekday: 'short',
   month: 'short',
   day: 'numeric',
@@ -50,10 +50,10 @@ export function formatClock(totalSeconds: number) {
 
 export function formatDuration(totalSeconds: number) {
   const minutes = Math.round(totalSeconds / 60);
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 60) return `${minutes} دقیقه`;
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest ? `${hours}h ${rest}m` : `${hours}h`;
+  return rest ? `${hours}س ${rest}د` : `${hours}س`;
 }
 
 export function getPersistedProgramId(program: Program) {
@@ -83,23 +83,23 @@ export function estimateSessionMinutes(exercises: Exercise[], fallback = 60) {
 
 export function formatCountdown(totalSeconds: number) {
   const safe = Math.max(0, Math.round(totalSeconds));
-  if (safe <= 0) return 'Now';
+  if (safe <= 0) return 'الان';
   const hours = Math.floor(safe / 3600);
   const minutes = Math.floor((safe % 3600) / 60);
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes} min`;
-  return `${safe}s`;
+  if (hours > 0) return `${hours}س ${minutes}د`;
+  if (minutes > 0) return `${minutes} دقیقه`;
+  return `${safe}ث`;
 }
 
 export function formatCountdownLong(totalSeconds: number) {
   const safe = Math.max(0, Math.round(totalSeconds));
-  if (safe <= 0) return 'Ready to start';
+  if (safe <= 0) return 'آماده شروع';
   const hours = Math.floor(safe / 3600);
   const minutes = Math.floor((safe % 3600) / 60);
   const parts: string[] = [];
-  if (hours) parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
-  if (minutes) parts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
-  return parts.length ? parts.join(' ') : `${safe} seconds`;
+  if (hours) parts.push(`${hours} ساعت`);
+  if (minutes) parts.push(`${minutes} دقیقه`);
+  return parts.length ? parts.join(' و ') : `${safe} ثانیه`;
 }
 
 export function resolveRestSeconds(exercise: Exercise, defaultRestSeconds = 60, autoRestTimer = true) {
@@ -109,13 +109,13 @@ export function resolveRestSeconds(exercise: Exercise, defaultRestSeconds = 60, 
 }
 
 export function formatHeaderTime(date: Date) {
-  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(date);
+  return new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
 export function formatHeaderWeekday(date: Date) {
-  return new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(date);
+  return new Intl.DateTimeFormat('fa-IR', { weekday: 'long' }).format(date);
 }
 
 export function formatHeaderDate(date: Date) {
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+  return new Intl.DateTimeFormat('fa-IR', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 }

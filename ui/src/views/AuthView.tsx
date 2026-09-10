@@ -2,6 +2,7 @@ import { Loader2, Lock, Mail, Zap } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { authApi } from '../api';
 import { useApp } from '../hooks/useApp';
+import { fa, goalLabel, levelLabel } from '../i18n/fa';
 import type { AuthMode } from '../types';
 
 function readResetTokenFromUrl() {
@@ -13,6 +14,9 @@ function clearResetTokenFromUrl() {
   url.searchParams.delete('token');
   window.history.replaceState({}, '', url.pathname + url.search + url.hash);
 }
+
+const GOAL_VALUES = ['General Fitness', 'Strength', 'Muscle Gain', 'Weight Loss'] as const;
+const LEVEL_VALUES = ['Beginner', 'Intermediate', 'Advanced'] as const;
 
 export function AuthView() {
   const { authenticate, busy, notify } = useApp();
@@ -35,7 +39,7 @@ export function AuthView() {
         setForgotSent(true);
         notify(result.message, 'success');
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Could not send reset email', 'error');
+        notify(error instanceof Error ? error.message : fa.auth.couldNotSendReset, 'error');
       } finally {
         setPending(false);
       }
@@ -46,7 +50,7 @@ export function AuthView() {
       const password = String(formData.get('password'));
       const confirmPassword = String(formData.get('confirmPassword'));
       if (password !== confirmPassword) {
-        notify('Passwords do not match', 'error');
+        notify(fa.auth.passwordsMismatch, 'error');
         return;
       }
 
@@ -57,7 +61,7 @@ export function AuthView() {
         setMode('login');
         notify(result.message, 'success');
       } catch (error) {
-        notify(error instanceof Error ? error.message : 'Could not reset password', 'error');
+        notify(error instanceof Error ? error.message : fa.auth.couldNotReset, 'error');
       } finally {
         setPending(false);
       }
@@ -73,12 +77,12 @@ export function AuthView() {
 
   const title =
     mode === 'login'
-      ? 'Welcome back'
+      ? fa.auth.welcomeBack
       : mode === 'register'
-        ? 'Create your account'
+        ? fa.auth.createAccount
         : mode === 'forgot'
-          ? 'Reset your password'
-          : 'Choose a new password';
+          ? fa.auth.resetPassword
+          : fa.auth.chooseNewPassword;
 
   return (
     <div className="auth-view">
@@ -86,39 +90,34 @@ export function AuthView() {
         <span className="auth-view__mark">
           <Zap size={26} />
         </span>
-        <h1>ComeUp</h1>
-        <p>Your training, tracked rep by rep.</p>
+        <h1>{fa.appName}</h1>
+        <p>{fa.auth.tagline}</p>
       </div>
 
       <form className="auth-form" onSubmit={onSubmit}>
         <h2>{title}</h2>
 
-        {mode === 'forgot' && forgotSent ? (
-          <p className="auth-form__hint">
-            Check your inbox for a reset link. It expires in one hour.
-          </p>
-        ) : null}
+        {mode === 'forgot' && forgotSent ? <p className="auth-form__hint">{fa.auth.checkInbox}</p> : null}
 
         {mode === 'reset' && !resetToken ? (
-          <p className="auth-form__hint auth-form__hint--error">
-            This reset link is invalid. Request a new one below.
-          </p>
+          <p className="auth-form__hint auth-form__hint--error">{fa.auth.invalidReset}</p>
         ) : null}
 
         {mode === 'register' ? (
           <label className="field">
-            <span>Full name</span>
-            <input name="name" placeholder="Your name" autoComplete="name" minLength={2} required />
+            <span>{fa.auth.fullName}</span>
+            <input name="name" placeholder={fa.auth.namePh} autoComplete="name" minLength={2} required />
           </label>
         ) : null}
 
         {mode === 'login' || mode === 'register' || mode === 'forgot' ? (
           <label className="field">
-            <span>Email</span>
+            <span>{fa.auth.email}</span>
             <input
               name="email"
               type="email"
-              placeholder="you@email.com"
+              dir="ltr"
+              placeholder={fa.auth.emailPh}
               autoComplete="email"
               required
               readOnly={mode === 'forgot' && forgotSent}
@@ -128,10 +127,11 @@ export function AuthView() {
 
         {mode === 'login' || mode === 'register' || mode === 'reset' ? (
           <label className="field">
-            <span>{mode === 'reset' ? 'New password' : 'Password'}</span>
+            <span>{mode === 'reset' ? fa.auth.newPassword : fa.auth.password}</span>
             <input
               name="password"
               type="password"
+              dir="ltr"
               placeholder="••••••••"
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               minLength={mode === 'login' ? 1 : 8}
@@ -143,20 +143,23 @@ export function AuthView() {
         {mode === 'register' ? (
           <div className="field-row">
             <label className="field">
-              <span>Goal</span>
+              <span>{fa.auth.goal}</span>
               <select name="goal" defaultValue="General Fitness">
-                <option>General Fitness</option>
-                <option>Strength</option>
-                <option>Muscle Gain</option>
-                <option>Weight Loss</option>
+                {GOAL_VALUES.map((g) => (
+                  <option key={g} value={g}>
+                    {goalLabel(g)}
+                  </option>
+                ))}
               </select>
             </label>
             <label className="field">
-              <span>Level</span>
+              <span>{fa.auth.level}</span>
               <select name="fitnessLevel" defaultValue="Beginner">
-                <option>Beginner</option>
-                <option>Intermediate</option>
-                <option>Advanced</option>
+                {LEVEL_VALUES.map((l) => (
+                  <option key={l} value={l}>
+                    {levelLabel(l)}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
@@ -164,10 +167,11 @@ export function AuthView() {
 
         {mode === 'reset' ? (
           <label className="field">
-            <span>Confirm password</span>
+            <span>{fa.auth.confirmPassword}</span>
             <input
               name="confirmPassword"
               type="password"
+              dir="ltr"
               placeholder="••••••••"
               autoComplete="new-password"
               minLength={8}
@@ -189,28 +193,28 @@ export function AuthView() {
             <Lock size={18} />
           )}
           {mode === 'login'
-            ? 'Sign in'
+            ? fa.auth.signIn
             : mode === 'register'
-              ? 'Create account'
+              ? fa.auth.createAccountBtn
               : mode === 'forgot'
-                ? 'Send reset link'
-                : 'Update password'}
+                ? fa.auth.sendResetLink
+                : fa.auth.updatePassword}
         </button>
 
         {mode === 'login' ? (
           <>
             <button type="button" className="btn btn--text" onClick={() => setMode('forgot')}>
-              Forgot password?
+              {fa.auth.forgotPassword}
             </button>
             <button type="button" className="btn btn--text" onClick={() => setMode('register')}>
-              New here? Create an account
+              {fa.auth.newHere}
             </button>
           </>
         ) : null}
 
         {mode === 'register' ? (
           <button type="button" className="btn btn--text" onClick={() => setMode('login')}>
-            I already have an account
+            {fa.auth.haveAccount}
           </button>
         ) : null}
 
@@ -223,14 +227,14 @@ export function AuthView() {
               setMode('login');
             }}
           >
-            Back to sign in
+            {fa.auth.backToSignIn}
           </button>
         ) : null}
 
         {mode === 'reset' ? (
           <>
             <button type="button" className="btn btn--text" onClick={() => setMode('login')}>
-              Back to sign in
+              {fa.auth.backToSignIn}
             </button>
             <button
               type="button"
@@ -240,7 +244,7 @@ export function AuthView() {
                 setMode('forgot');
               }}
             >
-              Request a new reset link
+              {fa.auth.requestNewReset}
             </button>
           </>
         ) : null}
