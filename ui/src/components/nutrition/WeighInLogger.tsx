@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { nutritionApi } from '../../api';
 import { EmptyState } from '../EmptyState';
 import { useApp } from '../../hooks/useApp';
-import { MEAL_SLOT_LABELS_FA } from '@comeup/domain';
 import type { MealSlotId, NutritionWeighLog } from '@comeup/domain';
+import { useT } from '../../i18n/LocaleProvider';
 import { NutritionMealSlotField } from './NutritionMealSlotField';
 
 type Props = {
@@ -12,6 +12,7 @@ type Props = {
 };
 
 export function WeighInLogger({ date }: Props) {
+  const t = useT();
   const { token, notify } = useApp();
   const [mealSlot, setMealSlot] = useState<MealSlotId>('lunch');
   const [foodName, setFoodName] = useState('');
@@ -31,11 +32,11 @@ export function WeighInLogger({ date }: Props) {
       setLogs(result.logs);
     } catch (error) {
       setLogs([]);
-      setLoadError(error instanceof Error ? error.message : 'بارگذاری ثبت‌ها انجام نشد');
+      setLoadError(error instanceof Error ? error.message : t.nutrition.couldNotLoadLogs);
     } finally {
       setLoading(false);
     }
-  }, [token, date]);
+  }, [token, date, t.nutrition.couldNotLoadLogs]);
 
   useEffect(() => {
     void loadLogs();
@@ -52,7 +53,7 @@ export function WeighInLogger({ date }: Props) {
     if (!token || !foodName || !weight) return;
     const weightGrams = parseFloat(weight);
     if (!Number.isFinite(weightGrams) || weightGrams <= 0) {
-      notify('وزن باید بیشتر از صفر باشد.', 'error');
+      notify(t.nutrition.weightMustBePositive, 'error');
       return;
     }
     setBusy(true);
@@ -66,9 +67,9 @@ export function WeighInLogger({ date }: Props) {
       setLogs((current) => [...current, result.log]);
       setFoodName('');
       setWeight('');
-      notify('وعده ثبت شد.', 'success');
+      notify(t.nutrition.mealLogged, 'success');
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'ثبت انجام نشد', 'error');
+      notify(error instanceof Error ? error.message : t.nutrition.couldNotLog, 'error');
     } finally {
       setBusy(false);
     }
@@ -80,9 +81,9 @@ export function WeighInLogger({ date }: Props) {
     try {
       await nutritionApi.deleteLog(token, id);
       setLogs((current) => current.filter((log) => log.id !== id));
-      notify('ثبت حذف شد.', 'success');
+      notify(t.nutrition.logDeleted, 'success');
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'حذف انجام نشد', 'error');
+      notify(error instanceof Error ? error.message : t.nutrition.couldNotDeleteLog, 'error');
     } finally {
       setDeletingId(null);
     }
@@ -93,8 +94,8 @@ export function WeighInLogger({ date }: Props) {
       <section className="card">
         <div className="card__head">
           <div>
-            <p className="eyebrow">ترازو</p>
-            <h3>ثبت وعده</h3>
+            <p className="eyebrow">{t.nutrition.scale}</p>
+            <h3>{t.nutrition.log}</h3>
           </div>
           <span className="card__head-icon" aria-hidden>
             <Scale size={20} />
@@ -105,17 +106,17 @@ export function WeighInLogger({ date }: Props) {
           <NutritionMealSlotField value={mealSlot} onChange={setMealSlot} />
 
           <label className="field">
-            <span>نام ماده غذایی</span>
+            <span>{t.nutrition.foodName}</span>
             <input
               value={foodName}
               onChange={(event) => setFoodName(event.target.value)}
-              placeholder="مثلاً برنج پخته"
+              placeholder={t.nutrition.foodNamePh}
               required
             />
           </label>
 
           <label className="field">
-            <span>وزن (گرم)</span>
+            <span>{t.nutrition.weightGrams}</span>
             <input
               type="number"
               inputMode="decimal"
@@ -130,7 +131,7 @@ export function WeighInLogger({ date }: Props) {
 
           <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
             {busy ? <Loader2 className="spin" size={18} /> : <Plus size={18} />}
-            ثبت وزن
+            {t.nutrition.logWeight}
           </button>
         </form>
       </section>
@@ -138,14 +139,14 @@ export function WeighInLogger({ date }: Props) {
       {loading ? (
         <div className="loading-row">
           <Loader2 className="spin" size={20} />
-          <span>در حال بارگذاری ثبت‌ها…</span>
+          <span>{t.nutrition.loadingLogs}</span>
         </div>
       ) : loadError ? (
         <section className="card nutrition-error-card">
           <p>{loadError}</p>
           <button type="button" className="btn btn--ghost btn--block" onClick={() => void loadLogs()}>
             <RefreshCw size={16} />
-            تلاش مجدد
+            {t.nutrition.retry}
           </button>
         </section>
       ) : logs.length ? (
@@ -153,15 +154,15 @@ export function WeighInLogger({ date }: Props) {
           <section className="history-summary">
             <div>
               <strong>{logs.length}</strong>
-              <span>مورد ثبت‌شده</span>
+              <span>{t.nutrition.itemsLogged}</span>
             </div>
             <div>
               <strong>{mealCount}</strong>
-              <span>وعده</span>
+              <span>{t.nutrition.mealsCount}</span>
             </div>
             <div>
               <strong>{totalGrams}</strong>
-              <span>گرم کل</span>
+              <span>{t.nutrition.totalGramsLabel}</span>
             </div>
           </section>
 
@@ -173,14 +174,14 @@ export function WeighInLogger({ date }: Props) {
                 </span>
                 <div className="history-row__body">
                   <strong>{log.foodName}</strong>
-                  <small>{MEAL_SLOT_LABELS_FA[log.mealSlot]}</small>
+                  <small>{t.nutrition.mealSlots[log.mealSlot]}</small>
                 </div>
                 <div className="history-row__stats">
                   <span>{Math.round(log.weightGrams)} g</span>
                   <button
                     type="button"
                     className="btn btn--icon btn--ghost nutrition-log-delete"
-                    aria-label={`حذف ${log.foodName}`}
+                    aria-label={t.nutrition.deleteFoodAria(log.foodName)}
                     disabled={deletingId === log.id}
                     onClick={() => void removeLog(log.id)}
                   >
@@ -196,10 +197,7 @@ export function WeighInLogger({ date }: Props) {
           </div>
         </>
       ) : (
-        <EmptyState
-          title="هنوز چیزی ثبت نشده"
-          description="برای این تاریخ هنوز وعده‌ای با ترازو ثبت نکرده‌اید."
-        />
+        <EmptyState title={t.nutrition.noLogsYet} description={t.nutrition.noLogsBody} />
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { buildApiUrl } from '../../api/client';
+import { useT } from '../../i18n/LocaleProvider';
 
 type Props = {
   path: string;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function NutritionAuthImage({ path, token, alt = '', className }: Props) {
+  const t = useT();
   const [src, setSrc] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -67,7 +69,7 @@ export function NutritionAuthImage({ path, token, alt = '', className }: Props) 
         type="button"
         className={`nutrition-photo__placeholder nutrition-photo__placeholder--error ${className ?? ''}`.trim()}
         onClick={() => setReloadKey((value) => value + 1)}
-        aria-label="بارگذاری مجدد تصویر"
+        aria-label={t.nutrition.reloadImage}
       >
         <RefreshCw size={18} />
       </button>

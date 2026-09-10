@@ -1,3 +1,5 @@
+import { getT } from '../i18n';
+
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? (import.meta.env.DEV ? 'http://localhost:4000' : '/api');
 
@@ -29,7 +31,7 @@ function parseResponseBody(text: string): { message?: string } {
   try {
     return JSON.parse(text) as { message?: string };
   } catch {
-    throw new ApiError('پاسخ سرور نامعتبر بود — لطفاً دوباره تلاش کنید.', 502);
+    throw new ApiError(getT().api.invalidResponse, 502);
   }
 }
 
@@ -47,7 +49,7 @@ export async function apiRequest<T>(path: string, token: string | null, options:
   const data = parseResponseBody(text);
 
   if (!response.ok) {
-    throw new ApiError(data.message ?? 'Request failed', response.status);
+    throw new ApiError(data.message ?? getT().api.requestFailed, response.status);
   }
   return data as T;
 }
@@ -61,7 +63,7 @@ export async function apiUpload<T>(path: string, token: string, formData: FormDa
   const text = await response.text();
   const data = parseResponseBody(text);
   if (!response.ok) {
-    throw new ApiError(data.message ?? 'Upload failed', response.status);
+    throw new ApiError(data.message ?? getT().api.uploadFailed, response.status);
   }
   return data as T;
 }

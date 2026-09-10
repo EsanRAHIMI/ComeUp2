@@ -225,7 +225,7 @@ export function NutritionToday() {
         setScore(scoreRes.days[0] ?? null);
       }
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Could not update water', 'error');
+      notify(error instanceof Error ? error.message : fa.nutrition.couldNotUpdateWater, 'error');
     } finally {
       setWaterBusy(false);
     }
@@ -243,7 +243,7 @@ export function NutritionToday() {
         setScore(scoreRes.days[0] ?? null);
       }
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Could not update supplements', 'error');
+      notify(error instanceof Error ? error.message : fa.nutrition.couldNotUpdateSupplements, 'error');
     }
   }
 
@@ -254,7 +254,7 @@ export function NutritionToday() {
         <div className="nut-summary__score">
           <div className={`nut-score-ring nut-score-ring--${scoreTone(score?.score)}`}>
             <strong>{score?.score ?? '—'}</strong>
-            <span>score</span>
+            <span>{fa.nutrition.scoreWord}</span>
           </div>
           <div className="nut-summary__text">
             <h3>{localizedScoreLabel(score?.score)}</h3>
@@ -262,8 +262,8 @@ export function NutritionToday() {
               {accepted
                 ? score
                   ? `${localizedConfidence(score.confidence)} · ${score.nextAction}`
-                  : 'Log your first meal to start scoring'
-                : 'هدف تغذیه را بپذیر تا امتیازدهی روزانه فعال شود'}
+                  : fa.nutrition.logFirstMeal
+                : fa.nutrition.acceptToScore}
             </small>
           </div>
         </div>
@@ -273,7 +273,7 @@ export function NutritionToday() {
           </span>
           {nextSlot ? (
             <span className="nut-summary__item">
-              <Target size={14} /> Next: {nextSlot.label}
+              <Target size={14} /> {fa.nutrition.nextPrefix} {nextSlot.label}
             </span>
           ) : target ? (
             <span className="nut-summary__item nut-summary__item--good">
@@ -291,16 +291,13 @@ export function NutritionToday() {
         <section className="card nut-target nut-target--empty">
           <span className="card__head-icon" aria-hidden><Sparkles size={20} /></span>
           <h3>{fa.nutrition.createTarget}</h3>
-          <p>
-            ComeUp builds a practical daily eating structure from your goal, weight, training
-            schedule, and preferences — protein, carbs, fat, and water, split across your meals.
-          </p>
+          <p>{fa.nutrition.createTargetBody}</p>
           <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => void generateTarget()} disabled={busyTarget}>
-            {busyTarget ? <Loader2 className="spin" size={18} /> : <Sparkles size={18} />} Create nutrition target
+            {busyTarget ? <Loader2 className="spin" size={18} /> : <Sparkles size={18} />} {fa.nutrition.createTarget}
           </button>
           {hints.length > 0 ? (
             <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('profile')}>
-              اول {hints.map((h) => h.label).slice(0, 2).join(' و ')} را برای دقت بیشتر اضافه کن
+              {fa.nutrition.addFirstForAccuracy(hints.map((h) => h.label).slice(0, 2).join(` ${fa.listAnd} `))}
             </button>
           ) : null}
         </section>
@@ -308,9 +305,9 @@ export function NutritionToday() {
         <section className="card nut-target">
           <div className="nut-target__head">
             <div>
-              <p className="eyebrow">Daily target · {target.goalSnapshot.goal}</p>
+              <p className="eyebrow">{fa.nutrition.dailyTarget} · {target.goalSnapshot.goal}</p>
               <h3>
-                {target.status === 'accepted' ? 'Your nutrition target' : 'Proposed target'}
+                {target.status === 'accepted' ? fa.nutrition.yourTarget : fa.nutrition.proposedTarget}
                 <span className={`chip nut-conf nut-conf--${target.confidence}`}>{localizedConfidence(target.confidence)}</span>
               </h3>
             </div>
@@ -322,7 +319,7 @@ export function NutritionToday() {
             <div><span>{fa.nutrition.fat}</span><strong>{target.dailyFatG} g</strong></div>
             <div><span>{fa.nutrition.water}</span><strong>{target.waterTargetMl} ml</strong></div>
             {target.dailyCaloriesEstimate ? (
-              <div><span>~Calories</span><strong>{target.dailyCaloriesEstimate}</strong></div>
+              <div><span>{fa.nutrition.approxCalories}</span><strong>{target.dailyCaloriesEstimate}</strong></div>
             ) : null}
           </div>
 
@@ -346,7 +343,7 @@ export function NutritionToday() {
               </div>
               <div className="nut-target__actions">
                 <button type="button" className="btn btn--primary" onClick={() => void saveTargetEdit()} disabled={busyTarget}>
-                  {busyTarget ? <Loader2 className="spin" size={16} /> : <Check size={16} />} Save
+                  {busyTarget ? <Loader2 className="spin" size={16} /> : <Check size={16} />} {fa.save}
                 </button>
                 <button type="button" className="btn btn--ghost" onClick={() => setEditingTarget(false)}>
                   <X size={16} /> {fa.cancel}
@@ -371,7 +368,7 @@ export function NutritionToday() {
 
           {target.missingInputs.length > 0 ? (
             <button type="button" className="nut-target__hint" onClick={() => navigate('profile')}>
-              Add {target.missingInputs.join(', ')} in Profile to improve accuracy →
+              {fa.nutrition.addMissingInProfile(target.missingInputs.join(fa.listSep))}
             </button>
           ) : null}
         </section>
@@ -430,7 +427,7 @@ export function NutritionToday() {
                       }}
                       aria-expanded={isDetail}
                     >
-                      {isDetail ? <ChevronUp size={14} /> : <ChevronDown size={14} />} Details
+                      {isDetail ? <ChevronUp size={14} /> : <ChevronDown size={14} />} {fa.nutrition.details}
                     </button>
                   </div>
 
@@ -444,9 +441,9 @@ export function NutritionToday() {
                         <label className="field"><span>{fa.nutrition.fatG}</span><input type="number" min={0} max={400} value={draft.fatG} onChange={(e) => setDraft((d) => ({ ...d, fatG: e.target.value }))} /></label>
                         <label className="field"><span>{fa.nutrition.totalG}</span><input type="number" min={0} max={10000} value={draft.grams} onChange={(e) => setDraft((d) => ({ ...d, grams: e.target.value }))} /></label>
                       </div>
-                      <label className="field"><span>{fa.nutrition.note}</span><input maxLength={500} value={draft.note} onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))} placeholder="e.g. chicken, rice, salad" /></label>
+                      <label className="field"><span>{fa.nutrition.note}</span><input maxLength={500} value={draft.note} onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))} placeholder={fa.nutrition.notePh} /></label>
                       <button type="button" className="btn btn--primary btn--block" disabled={isBusy} onClick={() => void logMeal(slot.mealSlot, log?.status ?? 'done', draft)}>
-                        {isBusy ? <Loader2 className="spin" size={16} /> : <Check size={16} />} Save details
+                        {isBusy ? <Loader2 className="spin" size={16} /> : <Check size={16} />} {fa.nutrition.saveDetails}
                       </button>
                     </div>
                   ) : null}
@@ -465,13 +462,13 @@ export function NutritionToday() {
             <Droplets size={18} />
             <div>
               <strong>{waterMl} ml</strong>
-              <small>of {waterTarget} ml target ({wPct}%)</small>
+              <small>{fa.nutrition.waterOfTarget(waterTarget, wPct)}</small>
             </div>
           </div>
           <div className="nut-habits__water-actions">
             <button type="button" className="btn btn--ghost" disabled={waterBusy} onClick={() => void addWater(250)}>+250</button>
             <button type="button" className="btn btn--ghost" disabled={waterBusy} onClick={() => void addWater(500)}>+500</button>
-            <button type="button" className="btn btn--ghost" disabled={waterBusy || waterMl === 0} onClick={() => void addWater(-250)} aria-label="کاهش ۲۵۰ میلی‌لیتر">
+            <button type="button" className="btn btn--ghost" disabled={waterBusy || waterMl === 0} onClick={() => void addWater(-250)} aria-label={fa.nutrition.reduceWater250}>
               <Minus size={14} />
             </button>
           </div>
