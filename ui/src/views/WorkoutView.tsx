@@ -57,8 +57,8 @@ export function WorkoutView() {
         <NoProgramGuide open />
         <div className="view-stack view-stack--dimmed" aria-hidden="true">
           <EmptyState
-            title="No workout loaded"
-            description="Activate a program to start training."
+            title={fa.workoutExtra.noLoadedTitle}
+            description={fa.workoutExtra.noLoadedBody}
           />
         </div>
       </>
@@ -201,7 +201,7 @@ function SessionRunner({
               setImageDraft(currentImage);
               setEditingImage((v) => !v);
             }}
-            aria-label="Replace image"
+            aria-label={fa.workoutExtra.replaceImage}
             disabled={successBurst}
           >
             <ImagePlus size={15} />
@@ -223,9 +223,11 @@ function SessionRunner({
           <div className="runner__hero-meta">
             <h2>{current.name}</h2>
             <p>
-              {current.repRange || current.reps} {isTimed ? 'sec' : 'reps'}
-              {' · '}
-              {current.sets} sets
+              {fa.workoutExtra.heroMeta(
+                String(current.repRange || current.reps),
+                isTimed ? fa.common.sec : fa.common.reps,
+                current.sets,
+              )}
               {current.muscleGroups[0] ? ` · ${current.muscleGroups.slice(0, 2).join(', ')}` : ''}
             </p>
           </div>
@@ -251,12 +253,12 @@ function SessionRunner({
         <div className="runner__controls">
           <div className="runner__sets-panel">
             <div className="runner__sets-head">
-              <span>{isReviewingExercise ? 'Review logged sets' : 'Mark each set complete'}</span>
+              <span>{isReviewingExercise ? fa.workoutExtra.reviewSets : fa.workoutExtra.markSets}</span>
               <strong>
                 {currentDone}/{current.sets} ثبت‌شده · {current.repRange || current.reps} {isTimed ? 'ثانیه' : 'تکرار'}
               </strong>
             </div>
-            <div className="set-row" role="group" aria-label="Sets">
+            <div className="set-row" role="group" aria-label={fa.workoutExtra.setsAria}>
               {setNumbers.map((n) => {
                 const done = session.isSetDone(session.currentIndex, n);
                 const isActive = !done && n === activeSetNumber && !isReviewingExercise;
@@ -269,7 +271,11 @@ function SessionRunner({
                     className={`set-chip ${done ? 'is-done' : ''} ${isActive ? 'is-active' : ''} ${isPending ? 'is-pending' : ''}`}
                     onClick={() => toggleSet(n)}
                     aria-current={isActive ? 'step' : undefined}
-                    aria-label={`Set ${n}, ${repLabel}${isActive ? ', current set' : ''}${done ? ', completed' : ''}${isPending ? ', not logged' : ''}`}
+                    aria-label={fa.workoutExtra.setAria(
+                      n,
+                      repLabel,
+                      `${isActive ? fa.workoutExtra.currentSet : ''}${done ? fa.workoutExtra.completed : ''}${isPending ? fa.workoutExtra.notLogged : ''}`,
+                    )}
                   >
                     <span className="set-chip__num">{done ? <Check size={22} strokeWidth={2.5} /> : n}</span>
                     <small className="set-chip__reps">{repLabel}</small>
@@ -344,9 +350,9 @@ function SessionRunner({
         <p className="eyebrow">{fa.workout.readyToTrain}</p>
         <h2>{scheduledSession?.title ?? program.name}</h2>
         <div className="runner-intro__stats">
-          <span><Timer size={16} /> {program.duration} min</span>
-          <span><PlayCircle size={16} /> {exercises.length} exercises</span>
-          <span><Flame size={16} /> {program.totalCalories} cal</span>
+          <span><Timer size={16} /> {program.duration} {fa.common.min}</span>
+          <span><PlayCircle size={16} /> {fa.workoutExtra.exercisesCount(exercises.length)}</span>
+          <span><Flame size={16} /> {fa.workoutExtra.cal(program.totalCalories)}</span>
         </div>
         <div className="exercise-list runner-intro__list">
           {exercises.map((ex, i) => (
@@ -382,17 +388,17 @@ function SummaryCard({
 }) {
   const failed = status === 'failed';
   return (
-    <div className="summary-overlay" role="dialog" aria-label="Workout complete">
+    <div className="summary-overlay" role="dialog" aria-label={fa.workoutExtra.completeAria}>
       <div className="summary-card">
         {failed ? null : (
-          <button type="button" className="icon-btn summary-card__close" onClick={onClose} aria-label="Close">
+          <button type="button" className="icon-btn summary-card__close" onClick={onClose} aria-label={fa.close}>
             <X size={18} />
           </button>
         )}
         <span className={`summary-card__badge ${failed ? 'summary-card__badge--warn' : ''}`}>
           {failed ? <AlertTriangle size={30} /> : <CheckCircle2 size={30} />}
         </span>
-        <h2>{failed ? 'Couldn’t save' : 'Workout complete'}</h2>
+        <h2>{failed ? fa.workoutExtra.couldNotSaveTitle : fa.workoutExtra.completeTitle}</h2>
         {failed ? <p>{fa.workout.safeOnDevice}</p> : null}
         <div className="summary-card__stats">
           <div><strong>{formatDuration(summary.durationSeconds)}</strong><span>{fa.workout.duration}</span></div>
@@ -404,7 +410,7 @@ function SummaryCard({
             <button type="button" className="btn btn--ghost btn--block" onClick={onDiscard}>{fa.workout.discard}</button>
             <button type="button" className="btn btn--primary btn--block" onClick={onRetry} disabled={saving}>
               {saving ? <Loader2 className="spin" size={18} /> : <RotateCcw size={18} />}
-              ذخیره دوباره
+              {fa.workoutExtra.saveAgain}
             </button>
           </div>
         ) : (

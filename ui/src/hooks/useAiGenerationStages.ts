@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { fa } from '../i18n/fa';
 
 export type AiGenerationStage = {
   id: string;
@@ -6,38 +7,7 @@ export type AiGenerationStage = {
   message: string;
 };
 
-export const AI_GENERATION_STAGES: AiGenerationStage[] = [
-  {
-    id: 'profile',
-    label: 'Profile',
-    message: 'Reading your profile — goals, fitness level, and how often you train…',
-  },
-  {
-    id: 'constraints',
-    label: 'Constraints',
-    message: 'Checking your equipment, injuries, and preferred training days…',
-  },
-  {
-    id: 'structure',
-    label: 'Structure',
-    message: 'Designing your weekly split and session structure…',
-  },
-  {
-    id: 'exercises',
-    label: 'Exercises',
-    message: 'Selecting exercises, sets, reps, and rest periods for each day…',
-  },
-  {
-    id: 'nutrition',
-    label: 'Nutrition',
-    message: 'Adding nutrition guidance and coaching cues…',
-  },
-  {
-    id: 'finalize',
-    label: 'Finalize',
-    message: 'Almost there — finalizing your personalized program…',
-  },
-];
+export const AI_GENERATION_STAGES: AiGenerationStage[] = fa.aiGen.stages.map((s) => ({ ...s }));
 
 const STAGE_MS = 3800;
 

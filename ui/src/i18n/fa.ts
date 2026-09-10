@@ -358,6 +358,11 @@ export const fa = {
     done: 'انجام شد',
     skipRest: 'رد کردن استراحت',
     skip: 'رد کردن',
+    restReady: 'آماده',
+    restLabel: 'استراحت',
+    add15s: 'افزودن ۱۵ ثانیه',
+    resumeRest: 'ادامه استراحت',
+    pauseRest: 'توقف استراحت',
   },
 
   common: {
@@ -369,6 +374,312 @@ export const fa = {
     minutes: 'دقیقه',
     seconds: 'ثانیه',
     min: 'دقیقه',
+    yes: 'بله',
+    no: 'خیر',
+    sec: 'ثانیه',
+    reps: 'تکرار',
+    sets: 'ست',
+    rest: 'استراحت',
+    exercises: 'حرکت',
+    day: 'روز',
+    of: 'از',
+    latest: 'آخرین',
+  },
+
+  equipment: {
+    bodyweight: 'وزن بدن',
+    dumbbells: 'دمبل',
+    barbell: 'هالتر',
+    machine: 'دستگاه',
+    'cable machine': 'کابل',
+    kettlebell: 'کتل‌بل',
+    bands: 'کش',
+  } as Record<string, string>,
+
+  focusAreas: {
+    'full body': 'کل بدن',
+    legs: 'پا',
+    chest: 'سینه',
+    back: 'پشت',
+    shoulders: 'شانه',
+    arms: 'بازو',
+    core: 'مرکز بدن',
+    cardio: 'کاردیو',
+  } as Record<string, string>,
+
+  editor: {
+    title: 'ویرایش برنامه',
+    aria: 'ویرایش برنامه',
+    programName: 'نام برنامه',
+    dayTitles: 'عنوان روز / جلسه',
+    dayN: (n: number) => `روز ${n}`,
+    exercises: 'حرکات',
+    exerciseName: 'نام حرکت',
+    sets: 'ست',
+    reps: 'تکرار',
+    range: 'بازه',
+    restS: 'استراحت (ث)',
+    muscleGroupsPh: 'گروه‌های عضلانی (با ویرگول)',
+    instructionsPh: 'دستورالعمل',
+    saveChanges: 'ذخیره تغییرات',
+  },
+
+  generate: {
+    aria: 'ساخت سریع برنامه',
+    title: 'ساخت سریع',
+    quotaLeft: (r: number, l: number) => `${r} از ${l} تولید هوش مصنوعی این هفته باقی مانده`,
+    intro:
+      'از پروفایل تو (آسیب‌ها، تجهیزات، روزهای ترجیحی) به‌همراه گزینه‌های زیر استفاده می‌کند. قبل از ذخیره و فعال‌سازی برنامه را بررسی کن.',
+    focusOptional: 'نواحی تمرکز',
+    notesOptional: 'یادداشت اضافه',
+    weeklyLimit: 'سهمیه هفتگی هوش مصنوعی تمام شده',
+    generateAi: 'تولید با هوش مصنوعی',
+    saveActivate: 'ذخیره و فعال‌سازی',
+    couldNotSave: 'ذخیره برنامه ممکن نشد',
+    usedAll: 'هر ۵ تولید هوش مصنوعی این هفته را استفاده کرده‌ای.',
+    aiNotConfigured: 'هوش مصنوعی هنوز روی سرور پیکربندی نشده.',
+    tookTooLong: 'تولید بیش از حد طول کشید — دوباره تلاش کن.',
+    generationFailed: 'تولید ناموفق بود',
+  },
+
+  gpt: {
+    aria: 'سازنده برنامه مربی هوش مصنوعی',
+    quotaLeft: (r: number, l: number) => `${r} از ${l} پیام هوش مصنوعی این هفته باقی مانده`,
+    intro:
+      'اهدافت را بگو یا بنویس «برنامه‌ام را بساز». از پروفایلت استفاده می‌کنم؛ بعد می‌توانی تغییر بخواهی. وقتی آماده بودی بگو «ذخیره و فعال کن».',
+    placeholder: 'پیام به مربی هوش مصنوعی…',
+    weeklyLimit: 'سهمیه هفتگی هوش مصنوعی تمام شده',
+    saveActivate: 'ذخیره و فعال‌سازی این برنامه',
+    couldNotSave: 'ذخیره برنامه ممکن نشد',
+    usedAll: 'هر ۵ پیام هوش مصنوعی این هفته را استفاده کرده‌ای.',
+    aiNotConfigured: 'مربی هوش مصنوعی هنوز روی سرور پیکربندی نشده.',
+    tookTooLong: 'مربی هوش مصنوعی بیش از حد طول کشید — دوباره تلاش کن.',
+    generationFailed: 'تولید ناموفق بود',
+    suggestions: [
+      'به‌جای ۵ روز، ۴ روز باشد',
+      'حجم شانه را کمتر کن',
+      'تمرکز بازو را بیشتر کن',
+      'با درد زانو سازگار کن',
+      'هر جلسه ۶۰ دقیقه باشد',
+      'فقط دمبل و دستگاه',
+    ],
+  },
+
+  coachImport: {
+    pastePh: 'روز ۱، روز ۲، تغذیه، مکمل‌ها، قوانین استراحت و هدفت را اینجا بچسبان…',
+    reviewPlan: 'بررسی برنامه',
+    couldNotParse: 'پردازش برنامه ممکن نشد',
+    importFailed: 'وارد کردن ناموفق بود',
+    exercisesDetected: (n: number) => `${n} حرکت شناسایی شد`,
+    needLook: (n: number) => `${n} مورد نیاز به بررسی`,
+    unnamed: '(بدون نام)',
+    importAnyway: 'وارد کردن با وجود هشدار',
+    importPlan: 'وارد کردن برنامه',
+  },
+
+  createHub: {
+    aria: 'ساخت برنامه',
+    buildWithAi: 'ساخت با هوش مصنوعی',
+    buildHint: 'شخصی‌سازی‌شده بر اساس پروفایل',
+    importExisting: 'وارد کردن موجود',
+    importHint: 'از مربی یا دوست',
+    aiTagline: 'درباره اهدافت حرف بزن و برنامه کاملاً شخصی بگیر.',
+    startChat: 'شروع گفتگو',
+    recommended: 'پیشنهادی',
+    quickTagline: 'برنامه یک‌مرحله‌ای هوش مصنوعی از روی پروفایل.',
+    generate: 'تولید',
+    shareTitle: 'کد اشتراک',
+    shareTagline: 'کد مربی یا دوستت را وارد کن.',
+    enterCode: 'وارد کردن کد',
+    coachTitle: 'متن برنامه مربی',
+    coachTagline: 'برنامه نوشتاری را بچسبان و روی تقویم زمان‌بندی کن.',
+    pastePlan: 'چسباندن برنامه',
+  },
+
+  shareImport: {
+    codePh: 'مثلاً ABC12XYZ',
+    import: 'وارد کردن',
+    invalidCode: 'کد اشتراک نامعتبر است',
+  },
+
+  programDetail: {
+    planDetails: 'جزئیات برنامه',
+    upcoming: 'جلسات پیشِ رو',
+    coachProtocol: 'پروتکل مربی',
+    nutrition: 'تغذیه',
+    supplements: 'مکمل‌ها',
+    execution: 'اجرا',
+    goal: 'هدف',
+    notSet: 'تنظیم نشده',
+    addNutrition: 'یادداشت تغذیه اضافه کن',
+    dailyProtocol: 'پروتکل روزانه',
+    controlledSets: 'ست‌های کنترل‌شده',
+    progressiveOverload: 'اضافه‌بار پیشرونده',
+    trackedFromCoach: 'از وارد کردن مربی پیگیری می‌شود',
+    allExercises: 'همه حرکات',
+    dayNTitle: (day: number, title: string) => `روز ${day} · ${title}`,
+    setsRepsRest: (sets: number, reps: string, unit: string, rest: number) =>
+      `${sets} × ${reps} ${unit} · ${rest}ث استراحت`,
+    weekDay: (w: number, d: number) => `ه${w} ر${d}`,
+    durationMin: (n: number) => `${n} دقیقه`,
+  },
+
+  programsUi: {
+    actions: 'اقدامات برنامه',
+    activeProgram: 'برنامه فعال',
+    activateProgram: 'فعال‌سازی برنامه',
+    active: 'فعال',
+    activate: 'فعال‌سازی',
+    editProgram: 'ویرایش برنامه',
+    duplicateProgram: 'کپی برنامه',
+    shareProgram: 'اشتراک برنامه',
+    deleteProgram: 'حذف برنامه',
+    collapse: 'جمع کردن برنامه',
+    expand: 'باز کردن برنامه',
+    meta: (days: number, min: number, ex: number) => `${days}×/هفته · ${min} دقیقه · ${ex} حرکت`,
+    noMatches: 'نتیجه‌ای نیست',
+    noSaved: 'هنوز برنامه‌ای ذخیره نشده',
+    tryDifferent: 'عبارت دیگری جستجو کن.',
+    emptyBody: 'از مربی هوش مصنوعی یا ساخت سریع بالا استفاده کن — هر دو ۵ تولید در هفته دارند.',
+    startAi: 'شروع با مربی هوش مصنوعی',
+    deleteActive1: (name: string) => `«${name}» برنامه فعال توست. مطمئنی می‌خواهی حذفش کنی؟`,
+    deleteActive2: 'این کار برگشت‌ناپذیر است. برنامه فعال حذف شود؟',
+    deleteOne: (name: string) => `«${name}» حذف شود؟ این کار برگشت‌ناپذیر است.`,
+  },
+
+  workoutExtra: {
+    noLoadedTitle: 'تمرینی بارگذاری نشده',
+    noLoadedBody: 'اول یک برنامه فعال بساز یا وارد کن، بعد اینجا تمرین را شروع کن.',
+    replaceImage: 'تعویض تصویر',
+    reviewSets: 'بازبینی ست‌های ثبت‌شده',
+    markSets: 'هر ست را کامل علامت بزن',
+    setsAria: 'ست‌ها',
+    setAria: (n: number, rep: string, extra: string) => `ست ${n}، ${rep}${extra}`,
+    currentSet: '، ست فعلی',
+    completed: '، انجام‌شده',
+    notLogged: '، ثبت‌نشده',
+    heroMeta: (reps: string, unit: string, sets: number) => `${reps} ${unit} · ${sets} ست`,
+    exercisesCount: (n: number) => `${n} حرکت`,
+    cal: (n: number) => `${n} کالری`,
+    completeTitle: 'تمرین تمام شد',
+    couldNotSaveTitle: 'ذخیره نشد',
+    completeAria: 'تمرین تمام شد',
+    saveAgain: 'ذخیره دوباره',
+  },
+
+  measurements: {
+    latestPrefix: 'آخرین',
+    couldNotSave: 'ذخیره ممکن نشد',
+    saveMeasurement: 'ذخیره اندازه‌گیری',
+    kg: 'کیلوگرم',
+    bodyFatShort: 'چربی',
+  },
+
+  aiGen: {
+    usuallyTakes: (elapsed: string) => `معمولاً ۱۵ تا ۴۵ ثانیه · ${elapsed}`,
+    daysWk: (n: number) => `${n} روز/هفته`,
+    min: (n: number) => `${n} دقیقه`,
+    injuryNotes: (n: number) => `${n} یادداشت آسیب`,
+    stepOf: (a: number, b: number) =>
+      `گام ${a} از ${b} — برنامه در حال تولید است؛ این صفحه را باز نگه دار.`,
+    stages: [
+      {
+        id: 'profile',
+        label: 'پروفایل',
+        message: 'در حال خواندن پروفایل — اهداف، سطح و تعداد جلسات…',
+      },
+      {
+        id: 'constraints',
+        label: 'محدودیت‌ها',
+        message: 'بررسی تجهیزات، آسیب‌ها و روزهای ترجیحی…',
+      },
+      {
+        id: 'structure',
+        label: 'ساختار',
+        message: 'طراحی اسپلیت هفتگی و ساختار جلسه…',
+      },
+      {
+        id: 'exercises',
+        label: 'حرکات',
+        message: 'انتخاب حرکات، ست، تکرار و استراحت برای هر روز…',
+      },
+      {
+        id: 'nutrition',
+        label: 'تغذیه',
+        message: 'افزودن راهنمای تغذیه و نکات مربیگری…',
+      },
+      {
+        id: 'finalize',
+        label: 'نهایی‌سازی',
+        message: 'تقریباً آماده — در حال نهایی کردن برنامه شخصی…',
+      },
+    ],
+  },
+
+  draft: {
+    meta: (days: number, min: number, diff: string) => `${days} روز/هفته · ${min} دقیقه · ${diff}`,
+    dayNTitle: (day: number, title: string) => `روز ${day} · ${title}`,
+  },
+
+  profileEditExtra: {
+    missedShiftHint: 'تمرین‌های ازدست‌رفته در انتظار می‌مانند — برنامه به ترتیب جلو می‌رود.',
+    missedSkipHint: 'تمرین‌های ازدست‌رفته رد می‌شوند — تاریخ‌های تقویم را دنبال می‌کنی.',
+    autoRest: 'استراحت خودکار بین ست‌ها',
+    autoRestHint: 'بعد از هر ست کامل شمارش معکوس شروع می‌شود',
+    autoRestAria: 'تایمر استراحت خودکار',
+    countdownSound: 'صدای شمارش معکوس',
+    countdownSoundHint: 'سه بوق ملایم در ۳ ثانیه پایانی استراحت',
+    defaultRestHint: 'وقتی حرکت استراحت اختصاصی ندارد استفاده می‌شود',
+  },
+
+  historyExtra: {
+    couldNotLoad: 'بارگذاری تاریخچه ممکن نشد',
+    noSessionsTitle: 'هنوز جلسه‌ای نیست',
+    noSessionsBody: 'یک تمرین را تمام کن تا اینجا با مدت، ست‌ها و کالری دیده شود.',
+  },
+
+  admin: {
+    title: 'مدیریت',
+    subtitle: 'کاربران، برنامه‌ها، رسانه و فعالیت',
+    refresh: 'بازنشانی',
+    loadFailed: 'بارگذاری مدیریت ناموفق بود',
+    tabs: {
+      overview: 'نمای کلی',
+      users: 'کاربران',
+      programs: 'برنامه‌ها',
+      media: 'رسانه',
+      activity: 'فعالیت',
+    },
+    stats: {
+      users: 'کاربران',
+      programs: 'برنامه‌ها',
+      sharedImages: 'تصاویر مشترک',
+      personalOverrides: 'بازنویسی شخصی',
+      sessions: 'جلسات',
+      completed: 'تکمیل‌شده',
+      thisWeek: 'این هفته',
+    },
+    searchUsers: 'جستجوی کاربران…',
+    search: 'جستجو',
+    name: 'نام',
+    email: 'ایمیل',
+    goal: 'هدف',
+    level: 'سطح',
+    program: 'برنامه',
+    owner: 'مالک',
+    days: 'روزها',
+    active: 'فعال',
+    userCol: 'کاربر',
+    status: 'وضعیت',
+    when: 'زمان',
+    min: 'دقیقه',
+    deleteUserConfirm: 'این کاربر و همه برنامه‌ها/جلساتش حذف شود؟',
+    deleteProgramConfirm: 'این برنامه حذف شود؟',
+    userDeleted: 'کاربر حذف شد',
+    programDeleted: 'برنامه حذف شد',
+    deleteUser: 'حذف کاربر',
+    deleteProgram: 'حذف برنامه',
+    adminBadge: 'مدیر',
   },
 } as const;
 
@@ -380,6 +691,14 @@ export function goalLabel(goal: string) {
 
 export function levelLabel(level: string) {
   return fa.levels[level] ?? level;
+}
+
+export function equipmentLabel(item: string) {
+  return fa.equipment[item] ?? item;
+}
+
+export function focusLabel(item: string) {
+  return fa.focusAreas[item] ?? item;
 }
 
 export function joinFaList(items: string[]) {

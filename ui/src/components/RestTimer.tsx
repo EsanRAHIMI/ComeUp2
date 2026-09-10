@@ -59,7 +59,7 @@ export function RestTimer({
       <div className="rest-timer__ring" style={{ '--pct': `${pct}%` } as CSSProperties}>
         <div className="rest-timer__inner">
           <strong>{formatClock(remaining)}</strong>
-          <span>{done ? 'Ready' : 'Rest'}</span>
+          <span>{done ? fa.workout.restReady : fa.workout.restLabel}</span>
         </div>
       </div>
       <div className="rest-timer__controls">
@@ -73,7 +73,7 @@ export function RestTimer({
               return next;
             });
           }}
-          aria-label="Add 15 seconds"
+          aria-label={fa.workout.add15s}
         >
           <Plus size={16} /> 15s
         </button>
@@ -82,12 +82,12 @@ export function RestTimer({
           className="btn btn--ghost"
           onClick={() => setPaused((p) => !p)}
           disabled={done}
-          aria-label={paused ? 'Resume rest' : 'Pause rest'}
+          aria-label={paused ? fa.workout.resumeRest : fa.workout.pauseRest}
         >
           {paused ? <Play size={16} /> : <Pause size={16} />}
         </button>
         <button type="button" className="btn btn--ghost" onClick={() => setRemaining(0)} aria-label={fa.workout.skipRest}>
-          <SkipForward size={16} /> Skip
+          <SkipForward size={16} /> {fa.workout.skip}
         </button>
       </div>
     </div>

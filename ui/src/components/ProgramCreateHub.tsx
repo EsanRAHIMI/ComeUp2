@@ -1,5 +1,6 @@
 import { Bot, ChevronRight, ClipboardList, Share2, Sparkles } from 'lucide-react';
 import { useEffect, useState, type RefObject } from 'react';
+import { fa } from '../i18n/fa';
 import { CoachPlanImporter } from './CoachPlanImporter';
 import { ShareCodeImport } from './ShareCodeImport';
 
@@ -29,16 +30,16 @@ const AI_OPTIONS: Option[] = [
     id: 'ai-coach',
     icon: Bot,
     title: 'مربی هوش مصنوعی',
-    tagline: 'Chat about your goals and get a fully personalized plan.',
-    action: 'Start chat',
-    badge: 'Recommended',
+    tagline: fa.createHub.aiTagline,
+    action: fa.createHub.startChat,
+    badge: fa.createHub.recommended,
   },
   {
     id: 'quick',
     icon: Sparkles,
     title: 'ساخت سریع',
-    tagline: 'One-step AI program built from your profile.',
-    action: 'Generate',
+    tagline: fa.createHub.quickTagline,
+    action: fa.createHub.generate,
   },
 ];
 
@@ -46,16 +47,16 @@ const IMPORT_OPTIONS: Option[] = [
   {
     id: 'share',
     icon: Share2,
-    title: 'Share code',
-    tagline: 'Enter a code from your coach or a friend.',
-    action: 'Enter code',
+    title: fa.createHub.shareTitle,
+    tagline: fa.createHub.shareTagline,
+    action: fa.createHub.enterCode,
   },
   {
     id: 'coach',
     icon: ClipboardList,
-    title: 'Coach plan text',
-    tagline: 'Paste a written plan and schedule it on your calendar.',
-    action: 'Paste plan',
+    title: fa.createHub.coachTitle,
+    tagline: fa.createHub.coachTagline,
+    action: fa.createHub.pastePlan,
   },
 ];
 
@@ -94,7 +95,7 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
   let step = 0;
 
   return (
-    <section className="program-create-hub card" aria-label="Create a program">
+    <section className="program-create-hub card" aria-label={fa.createHub.aria}>
       <header className="program-create-hub__head">
         <div className="program-create-hub__step-pill">گام ۱ · یکی را انتخاب کن</div>
         <h2>چطور می‌خواهی برنامه‌ات را بگیری؟</h2>
@@ -103,8 +104,8 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
 
       <div className="program-create-hub__groups">
         <OptionGroup
-          label="Build with AI"
-          hint="Personalized to your profile"
+          label={fa.createHub.buildWithAi}
+          hint={fa.createHub.buildHint}
           options={AI_OPTIONS}
           panel={panel}
           stepStart={++step}
@@ -116,8 +117,8 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
         </div>
 
         <OptionGroup
-          label="Import existing"
-          hint="From a coach or friend"
+          label={fa.createHub.importExisting}
+          hint={fa.createHub.importHint}
           options={IMPORT_OPTIONS}
           panel={panel}
           stepStart={step + AI_OPTIONS.length}

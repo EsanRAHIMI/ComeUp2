@@ -56,7 +56,7 @@ export function HistoryView() {
       .catch((err) => {
         if (cancelled) return;
         setSessions([]);
-        notify(err instanceof Error ? err.message : 'Could not load history', 'error');
+        notify(err instanceof Error ? err.message : fa.historyExtra.couldNotLoad, 'error');
       });
     return () => {
       cancelled = true;
@@ -229,8 +229,8 @@ export function HistoryView() {
         </div>
       ) : completed.length === 0 ? (
         <EmptyState
-          title="No sessions yet"
-          description="Finish a workout and it will show up here with duration, sets, and calories."
+          title={fa.historyExtra.noSessionsTitle}
+          description={fa.historyExtra.noSessionsBody}
         />
       ) : (
         <>

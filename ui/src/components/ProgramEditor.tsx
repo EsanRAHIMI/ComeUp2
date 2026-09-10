@@ -1,6 +1,7 @@
 import { Loader2, Save, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useApp } from '../hooks/useApp';
+import { fa } from '../i18n/fa';
 import { getPersistedProgramId } from '../lib/format';
 import type { Exercise, Program, ScheduleEntry } from '../types';
 
@@ -92,22 +93,22 @@ export function ProgramEditor({ program, open, onClose }: { program: Program; op
     .sort((a, b) => a - b);
 
   return (
-    <div className="modal-overlay" role="dialog" aria-label="Edit program">
+    <div className="modal-overlay" role="dialog" aria-label={fa.editor.aria}>
       <div className="modal-card">
         <div className="modal-card__head">
-          <h2>Edit program</h2>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
+          <h2>{fa.editor.title}</h2>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label={fa.close}><X size={18} /></button>
         </div>
 
-        <label className="field"><span>Program name</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
+        <label className="field"><span>{fa.editor.programName}</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
 
         {days.length ? (
           <div className="field">
-            <span>Day / session titles</span>
+            <span>{fa.editor.dayTitles}</span>
             <div className="editor-days">
               {days.map((day) => (
                 <label key={day} className="editor-day">
-                  <em>Day {day}</em>
+                  <em>{fa.editor.dayN(day)}</em>
                   <input value={dayTitles[day]} onChange={(e) => setDayTitles((m) => ({ ...m, [day]: e.target.value }))} />
                 </label>
               ))}
@@ -115,26 +116,26 @@ export function ProgramEditor({ program, open, onClose }: { program: Program; op
           </div>
         ) : null}
 
-        <div className="field"><span>Exercises</span></div>
+        <div className="field"><span>{fa.editor.exercises}</span></div>
         <div className="editor-exercises">
           {exercises.map((ex, i) => (
             <div key={i} className="editor-exercise">
-              <input className="editor-exercise__name" value={ex.name} onChange={(e) => patchExercise(i, { name: e.target.value })} placeholder="Exercise name" />
+              <input className="editor-exercise__name" value={ex.name} onChange={(e) => patchExercise(i, { name: e.target.value })} placeholder={fa.editor.exerciseName} />
               <div className="editor-exercise__grid">
-                <label><em>Sets</em><input type="number" min={1} max={20} value={ex.sets} onChange={(e) => patchExercise(i, { sets: Number(e.target.value) })} /></label>
-                <label><em>Reps</em><input type="number" min={1} max={300} value={ex.reps} onChange={(e) => patchExercise(i, { reps: Number(e.target.value) })} /></label>
-                <label><em>Range</em><input value={ex.repRange} onChange={(e) => patchExercise(i, { repRange: e.target.value })} placeholder="8-12" /></label>
-                <label><em>Rest (s)</em><input type="number" min={0} max={900} value={ex.restTime} onChange={(e) => patchExercise(i, { restTime: Number(e.target.value) })} /></label>
+                <label><em>{fa.editor.sets}</em><input type="number" min={1} max={20} value={ex.sets} onChange={(e) => patchExercise(i, { sets: Number(e.target.value) })} /></label>
+                <label><em>{fa.editor.reps}</em><input type="number" min={1} max={300} value={ex.reps} onChange={(e) => patchExercise(i, { reps: Number(e.target.value) })} /></label>
+                <label><em>{fa.editor.range}</em><input value={ex.repRange} onChange={(e) => patchExercise(i, { repRange: e.target.value })} placeholder="8-12" /></label>
+                <label><em>{fa.editor.restS}</em><input type="number" min={0} max={900} value={ex.restTime} onChange={(e) => patchExercise(i, { restTime: Number(e.target.value) })} /></label>
               </div>
-              <input value={ex.muscleGroups} onChange={(e) => patchExercise(i, { muscleGroups: e.target.value })} placeholder="Muscle groups (comma separated)" />
-              <textarea rows={2} value={ex.instructions} onChange={(e) => patchExercise(i, { instructions: e.target.value })} placeholder="Instructions" />
+              <input value={ex.muscleGroups} onChange={(e) => patchExercise(i, { muscleGroups: e.target.value })} placeholder={fa.editor.muscleGroupsPh} />
+              <textarea rows={2} value={ex.instructions} onChange={(e) => patchExercise(i, { instructions: e.target.value })} placeholder={fa.editor.instructionsPh} />
             </div>
           ))}
         </div>
 
         <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => void save()} disabled={busy || name.trim().length < 1}>
           {busy ? <Loader2 className="spin" size={18} /> : <Save size={18} />}
-          Save changes
+          {fa.editor.saveChanges}
         </button>
       </div>
     </div>

@@ -260,8 +260,8 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
           </div>
           <small className="field__hint">
             {missedBehavior === 'shift'
-              ? 'Missed workouts stay pending — your program continues in order.'
-              : 'Missed workouts are skipped — you follow the calendar dates.'}
+              ? fa.profileEditExtra.missedShiftHint
+              : fa.profileEditExtra.missedSkipHint}
           </small>
         </div>
 
@@ -309,8 +309,8 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
         <div className="field profile-rest-settings">
           <div className="settings-row settings-row--inset">
             <div>
-              <strong>Auto rest between sets</strong>
-              <small>Count down after each completed set</small>
+              <strong>{fa.profileEditExtra.autoRest}</strong>
+              <small>{fa.profileEditExtra.autoRestHint}</small>
             </div>
             <button
               type="button"
@@ -318,15 +318,15 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
               onClick={() => setAutoRestTimer((v) => !v)}
               role="switch"
               aria-checked={autoRestTimer}
-              aria-label="Auto rest timer"
+              aria-label={fa.profileEditExtra.autoRestAria}
             >
               <span />
             </button>
           </div>
           <div className="settings-row settings-row--inset">
             <div>
-              <strong>Countdown sound</strong>
-              <small>Three soft beeps in the last 3 seconds of rest</small>
+              <strong>{fa.profileEditExtra.countdownSound}</strong>
+              <small>{fa.profileEditExtra.countdownSoundHint}</small>
             </div>
             <button
               type="button"
@@ -350,7 +350,7 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
               disabled={!autoRestTimer}
               onChange={(e) => setDefaultRestSeconds(Number(e.target.value))}
             />
-            <small className="field__hint">Used when an exercise has no custom rest time</small>
+            <small className="field__hint">{fa.profileEditExtra.defaultRestHint}</small>
           </label>
         </div>
 

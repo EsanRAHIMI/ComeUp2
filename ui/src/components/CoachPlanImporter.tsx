@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ApiError, programsApi } from '../api';
 import { useApp } from '../hooks/useApp';
 import { dateInputValue } from '../lib/format';
+import { fa } from '../i18n/fa';
 import type { ImportReviewItem } from '../types';
 
 type Props = {
@@ -35,7 +36,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
       setReview(result.review);
       if (!result.flaggedCount) notify('مشکلی نیست — آماده وارد کردن', 'success');
     } catch (error) {
-      notify(error instanceof ApiError ? error.message : 'Could not parse plan', 'error');
+      notify(error instanceof ApiError ? error.message : fa.coachImport.couldNotParse, 'error');
     } finally {
       setBusy(false);
     }
@@ -53,7 +54,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
       if (embedded) onClose?.();
       else setInternalOpen(false);
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Import failed', 'error');
+      notify(error instanceof Error ? error.message : fa.coachImport.importFailed, 'error');
     } finally {
       setBusy(false);
     }
@@ -68,7 +69,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Paste DAY 1, DAY 2, nutrition, supplements, rest rules, and your goal here…"
+            placeholder={fa.coachImport.pastePh}
             rows={6}
           />
           <div className="coach-importer__controls">
@@ -79,15 +80,15 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
           </div>
           <button type="button" className="btn btn--primary btn--block" onClick={() => void preview()} disabled={busy || text.trim().length < 40}>
             {busy ? <Loader2 className="spin" size={18} /> : <CalendarDays size={18} />}
-            Review plan
+            {fa.coachImport.reviewPlan}
           </button>
         </>
       ) : (
         <div className="import-review">
           <div className="import-review__head">
-            <strong>{review.length} exercises detected</strong>
+            <strong>{fa.coachImport.exercisesDetected(review.length)}</strong>
             {flagged.length ? (
-              <span className="import-review__warn"><AlertTriangle size={15} /> {flagged.length} need a look</span>
+              <span className="import-review__warn"><AlertTriangle size={15} /> {fa.coachImport.needLook(flagged.length)}</span>
             ) : (
               <span className="import-review__ok"><CheckCircle2 size={15} /> همه چیز اوکی است</span>
             )}
@@ -96,7 +97,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
             {review.map((item, i) => (
               <div key={i} className={`import-review__row ${item.needsReview ? 'is-flagged' : ''}`}>
                 <div className="import-review__main">
-                  <strong>{item.name || <em>(unnamed)</em>}</strong>
+                  <strong>{item.name || <em>{fa.coachImport.unnamed}</em>}</strong>
                   <small>D{item.day} · {item.sets} × {item.repRange || item.reps} · {item.restTime}s · {item.muscleGroups.join(', ')}</small>
                 </div>
                 {item.needsReview ? <small className="import-review__reason">{item.reason}</small> : null}
@@ -107,7 +108,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
             <button type="button" className="btn btn--ghost" onClick={() => setReview(null)} disabled={busy}>بازگشت و ویرایش</button>
             <button type="button" className="btn btn--primary" onClick={() => void confirmImport()} disabled={busy}>
               {busy ? <Loader2 className="spin" size={18} /> : <CheckCircle2 size={18} />}
-              Import {flagged.length ? 'anyway' : 'plan'}
+              {flagged.length ? fa.coachImport.importAnyway : fa.coachImport.importPlan}
             </button>
           </div>
         </div>
@@ -126,7 +127,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
             <small>برنامه مربی را بچسبان — یک زمان‌بندی تاریخ‌دار می‌سازیم.</small>
           </div>
           {onClose ? (
-            <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">
+            <button type="button" className="icon-btn" onClick={onClose} aria-label={fa.close}>
               <X size={18} />
             </button>
           ) : null}

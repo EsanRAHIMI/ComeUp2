@@ -110,7 +110,7 @@ export function DashboardView() {
     <div className="view-stack">
       <section className="week-stats">
         <div className="week-stats__head">
-          <p className="eyebrow">This week</p>
+          <p className="eyebrow">{fa.dashboard.thisWeek}</p>
           {weekly && weekly.adherencePct !== null ? (
             <span className="week-stats__badge">{weekly.adherencePct}٪ برنامه</span>
           ) : null}
@@ -269,7 +269,7 @@ export function DashboardView() {
               {nutrition
                 ? nutrition.nextSlot
                   ? nutrition.nextSlot.title
-                  : 'All meals logged'
+                  : fa.dashboard.allMealsLogged
                 : fa.dashboard.yourMealPlan}
             </h3>
           </div>

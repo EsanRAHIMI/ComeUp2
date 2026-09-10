@@ -1,6 +1,7 @@
 import { Bot, Dumbbell, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AI_GENERATION_STAGES, useAiGenerationStages } from '../hooks/useAiGenerationStages';
+import { fa, equipmentLabel, goalLabel, levelLabel } from '../i18n/fa';
 
 export type AiProfileContext = {
   name?: string;
@@ -21,7 +22,7 @@ type Props = {
 function formatElapsed(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
+  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}ث`;
 }
 
 export function AiGeneratingPanel({ active, profile, compact = false }: Props) {
@@ -38,12 +39,12 @@ export function AiGeneratingPanel({ active, profile, compact = false }: Props) {
   if (!active) return null;
 
   const chips = [
-    profile?.goal,
-    profile?.fitnessLevel,
-    profile?.workoutDaysPerWeek ? `${profile.workoutDaysPerWeek} days/wk` : null,
-    profile?.sessionDuration ? `${profile.sessionDuration} min` : null,
-    ...(profile?.equipment?.slice(0, 3) ?? []),
-    profile?.injuries?.length ? `${profile.injuries.length} injury note(s)` : null,
+    profile?.goal ? goalLabel(profile.goal) : null,
+    profile?.fitnessLevel ? levelLabel(profile.fitnessLevel) : null,
+    profile?.workoutDaysPerWeek ? fa.aiGen.daysWk(profile.workoutDaysPerWeek) : null,
+    profile?.sessionDuration ? fa.aiGen.min(profile.sessionDuration) : null,
+    ...(profile?.equipment?.slice(0, 3).map(equipmentLabel) ?? []),
+    profile?.injuries?.length ? fa.aiGen.injuryNotes(profile.injuries.length) : null,
   ].filter(Boolean) as string[];
 
   return (
@@ -61,7 +62,7 @@ export function AiGeneratingPanel({ active, profile, compact = false }: Props) {
             <Sparkles size={14} /> مربی هوش مصنوعی در حال کار است
           </p>
           <strong>در حال ساخت برنامه شخصی‌سازی‌شده تو</strong>
-          <small>Usually takes 15–45 seconds · {formatElapsed(elapsedSec)}</small>
+          <small>{fa.aiGen.usuallyTakes(formatElapsed(elapsedSec))}</small>
         </div>
       </div>
 
@@ -101,7 +102,7 @@ export function AiGeneratingPanel({ active, profile, compact = false }: Props) {
       ) : null}
 
       <p className="ai-gen__hint">
-        Step {stageIndex + 1} of {totalStages} — your program is being generated live; please keep this open.
+        {fa.aiGen.stepOf(stageIndex + 1, totalStages)}
       </p>
     </div>
   );
