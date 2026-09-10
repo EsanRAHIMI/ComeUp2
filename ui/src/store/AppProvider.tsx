@@ -45,6 +45,7 @@ export type AppContextValue = {
   updateProgram: (id: string, patch: Partial<Program>) => Promise<boolean>;
   updateProfile: (patch: Partial<User>, opts?: { silent?: boolean }) => Promise<boolean>;
   saveExerciseImage: (exercise: Exercise, imageUrl: string) => Promise<void>;
+  refreshUser: () => Promise<User | null>;
 };
 
 export const AppContext = createContext<AppContextValue | null>(null);
@@ -326,6 +327,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [token, notify],
   );
 
+  const refreshUser = useCallback(async () => {
+    if (!token) return null;
+    try {
+      const { user: fresh } = await authApi.me(token);
+      setUser(fresh);
+      writeJSON(STORAGE_KEYS.user, fresh);
+      return fresh;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        clearSession();
+      }
+      return null;
+    }
+  }, [token, clearSession]);
+
   const saveExerciseImage = useCallback(
     async (exercise: Exercise, imageUrl: string) => {
       if (!token) return;
@@ -372,6 +388,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProgram,
       updateProfile,
       saveExerciseImage,
+      refreshUser,
     }),
     [
       ready,
@@ -394,6 +411,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProgram,
       updateProfile,
       saveExerciseImage,
+      refreshUser,
     ],
   );
 

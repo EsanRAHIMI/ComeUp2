@@ -1,6 +1,7 @@
 import { Camera, ImagePlus, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { nutritionApi } from '../../api';
+import { ApiError, nutritionApi } from '../../api';
+import { openPaywall } from '../../lib/paywallBus';
 import { EmptyState } from '../EmptyState';
 import { useApp } from '../../hooks/useApp';
 import type { MealSlotId, NutritionGeneratedPlate, NutritionPlatePhoto } from '@comeup/domain';
@@ -85,7 +86,12 @@ export function PlatePhotoArchive({ date }: Props) {
       setPlates((current) => [result.plate, ...current.filter((plate) => plate.id !== result.plate.id)]);
       notify(t.nutrition.plateGenerated, 'success');
     } catch (error) {
-      notify(error instanceof Error ? error.message : t.nutrition.generateFailed, 'error');
+      if (error instanceof ApiError && (error.code === 'PREMIUM_REQUIRED' || error.status === 402 || error.status === 403)) {
+        openPaywall(t.premium.plateRequiresPremium);
+        notify(t.premium.plateRequiresPremium, 'info');
+      } else {
+        notify(error instanceof Error ? error.message : t.nutrition.generateFailed, 'error');
+      }
     } finally {
       setGenerating(false);
     }

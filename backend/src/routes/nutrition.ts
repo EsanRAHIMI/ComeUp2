@@ -27,6 +27,7 @@ import {
   saveNutritionPhoto,
 } from '../services/nutritionStorage.js';
 import { MEAL_SLOT_IDS } from '@comeup/domain';
+import { userIsPremium } from '../utils/premium.js';
 import { objectIdSchema, parseBody } from '../utils/schemas.js';
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -542,6 +543,16 @@ export const nutritionRoutes: FastifyPluginAsync = async (app) => {
         z.object({ date: isoDateSchema, mealSlot: z.enum(MEAL_SLOT_IDS) }),
         request.body,
       );
+
+      const billingUser = await User.findById(request.user.sub).select(
+        'subscriptionStatus subscriptionExpiresAt subscriptionProductId',
+      );
+      if (!userIsPremium(billingUser)) {
+        return reply.code(402).send({
+          message: 'ComeUp Premium is required for AI plate generation',
+          code: 'PREMIUM_REQUIRED',
+        });
+      }
 
       try {
         const plate = await generateNutritionPlate(request.user.sub, body.date, body.mealSlot);

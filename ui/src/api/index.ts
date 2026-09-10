@@ -455,3 +455,55 @@ export const adminApi = {
     }>(`/api/v1/admin/sessions${suffix}`, token);
   },
 };
+
+export const billingApi = {
+  status: (token: string) =>
+    apiRequest<{
+      isPremium: boolean;
+      status: string;
+      productId?: string;
+      expiresAt: string | null;
+      user: User;
+      configured?: boolean;
+    }>('/api/v1/billing/status', token),
+  verifyApple: (
+    token: string,
+    body: {
+      signedTransactionInfo?: string;
+      transactionId?: string;
+      productId?: string;
+      devGrant?: boolean;
+    },
+  ) =>
+    apiRequest<{
+      ok: boolean;
+      isPremium: boolean;
+      status: string;
+      productId?: string;
+      expiresAt: string | null;
+      user: User;
+    }>('/api/v1/billing/apple/verify', token, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  restoreApple: (
+    token: string,
+    body: {
+      signedTransactionInfo?: string;
+      transactionId?: string;
+      productId?: string;
+      devGrant?: boolean;
+    },
+  ) =>
+    apiRequest<{
+      ok: boolean;
+      isPremium: boolean;
+      status: string;
+      productId?: string;
+      expiresAt: string | null;
+      user: User;
+    }>('/api/v1/billing/apple/restore', token, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+};

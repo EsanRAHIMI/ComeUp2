@@ -19,17 +19,21 @@ export function buildApiUrl(path: string) {
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  code?: string;
+  body?: Record<string, unknown>;
+  constructor(message: string, status: number, code?: string, body?: Record<string, unknown>) {
     super(message);
     this.status = status;
+    this.code = code;
+    this.body = body;
     this.name = 'ApiError';
   }
 }
 
-function parseResponseBody(text: string): { message?: string } {
+function parseResponseBody(text: string): { message?: string; code?: string } & Record<string, unknown> {
   if (!text) return {};
   try {
-    return JSON.parse(text) as { message?: string };
+    return JSON.parse(text) as { message?: string; code?: string } & Record<string, unknown>;
   } catch {
     throw new ApiError(getT().api.invalidResponse, 502);
   }
@@ -49,7 +53,12 @@ export async function apiRequest<T>(path: string, token: string | null, options:
   const data = parseResponseBody(text);
 
   if (!response.ok) {
-    throw new ApiError(data.message ?? getT().api.requestFailed, response.status);
+    throw new ApiError(
+      (typeof data.message === 'string' ? data.message : undefined) ?? getT().api.requestFailed,
+      response.status,
+      typeof data.code === 'string' ? data.code : undefined,
+      data,
+    );
   }
   return data as T;
 }
@@ -63,7 +72,12 @@ export async function apiUpload<T>(path: string, token: string, formData: FormDa
   const text = await response.text();
   const data = parseResponseBody(text);
   if (!response.ok) {
-    throw new ApiError(data.message ?? getT().api.uploadFailed, response.status);
+    throw new ApiError(
+      (typeof data.message === 'string' ? data.message : undefined) ?? getT().api.uploadFailed,
+      response.status,
+      typeof data.code === 'string' ? data.code : undefined,
+      data,
+    );
   }
   return data as T;
 }

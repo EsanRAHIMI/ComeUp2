@@ -1,6 +1,7 @@
 import { CheckCircle2, Loader2, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ApiError, chatApi, programsApi } from '../api';
+import { openPaywall } from '../lib/paywallBus';
 import { AiGeneratingPanel } from './AiGeneratingPanel';
 import { AiProgramResult } from './AiProgramResult';
 import { DraftPreview } from './DraftPreview';
@@ -81,6 +82,13 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
       setConversationId(res.conversationId);
       setQuota(res.quota);
     } catch (error) {
+      if (
+        error instanceof ApiError &&
+        (error.code === 'PREMIUM_REQUIRED' ||
+          (error.status === 429 && !(error.body as { quota?: { isPremium?: boolean } } | undefined)?.quota?.isPremium))
+      ) {
+        openPaywall(fa.premium.quotaUpsell);
+      }
       const message =
         error instanceof ApiError && error.status === 429
           ? fa.generate.usedAll

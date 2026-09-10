@@ -25,6 +25,8 @@ export type WalkingTargetMetric = 'steps' | 'minutes' | 'distanceKm';
 
 export type MissedWorkoutBehavior = 'shift' | 'skip';
 
+export type SubscriptionStatus = 'none' | 'active' | 'expired' | 'grace' | 'revoked';
+
 export type User = {
   id: string;
   name: string;
@@ -52,6 +54,10 @@ export type User = {
   waterTargetMl?: number | null;
   walkingTarget?: { metric: WalkingTargetMetric; value: number } | null;
   missedWorkoutBehavior?: MissedWorkoutBehavior;
+  subscriptionStatus?: SubscriptionStatus;
+  subscriptionProductId?: string;
+  subscriptionExpiresAt?: string;
+  isPremium?: boolean;
 };
 
 export type GptQuota = {
@@ -59,6 +65,7 @@ export type GptQuota = {
   used: number;
   remaining: number;
   weekStartDate: string;
+  isPremium?: boolean;
 };
 
 export type ChatMessage = {
