@@ -31,3 +31,14 @@ shared/domain/node_modules/
 *.njsproj
 *.sln
 *.sw?
+
+# Capacitor / Xcode
+ui/ios/App/Pods/
+ui/ios/App/Podfile.lock
+ui/ios/DerivedData/
+ui/ios/**/xcuserdata/
+ui/ios/**/*.xcworkspace/xcuserdata/
+ui/android/
+*.mobileprovision
+*.p12
+.capacitor/

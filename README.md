@@ -172,7 +172,8 @@ ComeUp/
 
 - Email/password registration and login (JWT, default expiry `7d`)
 - Forgot / reset password (SMTP optional; reset link logged to console in dev)
-- Profile: age, height, weight, gender, injuries, equipment, preferred training days, session duration, goal, fitness level, workout days per week, preferences (voice feedback, form correction, notifications, auto rest timer, camera preference — stored but not all wired to runtime behavior)
+- Profile: age, height, weight, gender, injuries, equipment, preferred training days, session duration, goal, fitness level, workout days per week, rest preferences (auto rest timer, default rest seconds, rest countdown sound)
+- Account deletion: authenticated `DELETE /api/v1/account` with `{ confirm: "DELETE", password }` — hard-deletes user-owned data (and best-effort nutrition storage objects)
 
 ### Workout Programs
 
@@ -255,6 +256,28 @@ Available to users whose email is listed in `ADMIN_EMAILS`:
 
 ---
 
+
+
+## iOS / Capacitor
+
+The `ui` app can be wrapped for App Store builds with Capacitor (`appId` `com.najahai.comeup`).
+
+```bash
+cd ui
+npm install
+# Set an absolute HTTPS API origin for native builds (relative `/api` will not work in WKWebView):
+#   VITE_API_URL=https://gym.najahai.com/api
+npm run build
+npm run cap:sync
+npm run cap:ios   # opens Xcode
+```
+
+Notes:
+
+- `capacitor.config` points `webDir` at `dist` — always rebuild before syncing.
+- Camera / photo library usage strings are set in `ui/ios` Info.plist for nutrition plate photos.
+- Sign in with Apple, IAP, push, and real form/voice/camera features are **not** implemented in this P0.
+
 ## What ComeUp Does Not Include
 
 These are **not** implemented in the current codebase (some appear only in future docs):
@@ -263,9 +286,9 @@ These are **not** implemented in the current codebase (some appear only in futur
 |---------|--------|
 | Photo → macro estimation (Cal AI–style food scan) | Not implemented — photos are archive-only; macros come from manual weigh logs |
 | Barcode scanning | Not implemented |
-| Live camera / pose tracking / real form correction | Preferences exist; no vision pipeline |
-| Voice feedback / push notifications | Preference fields only |
-| Native iOS/Android app | Web PWA only |
+| Live camera / pose tracking / real form correction | Not implemented (legacy DB fields default off; not exposed in UI/API) |
+| Voice feedback / push notifications | Not implemented (legacy DB fields default off; not exposed in UI/API) |
+| Native iOS app | Capacitor iOS shell under `ui/ios` (see iOS / Capacitor below); Android not packaged |
 | `POST /ai/recommendations` in UI | Backend proxy exists; no UI surface |
 | Rule-based Quick Generate in UI | AI endpoint exists; UI uses GPT path |
 | Reference images for plate generation | Schema field present; not used in generation flow |
@@ -294,6 +317,12 @@ These are **not** implemented in the current codebase (some appear only in futur
 | `GET` | `/me` | Current user |
 | `POST` | `/forgot-password` | Rate-limited; uniform response |
 | `POST` | `/reset-password` | Token from email link |
+
+**Account** — `/api/v1`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `DELETE` | `/account` | Hard-delete own account (body: `{ confirm: "DELETE", password }`) |
 
 **Profile** — `/api/v1/profile`
 

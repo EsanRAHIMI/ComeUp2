@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { hardDeleteUserAccount } from '../services/accountDeletion.js';
 import { CommunityExerciseMedia } from '../models/CommunityExerciseMedia.js';
 import { ExerciseMedia } from '../models/ExerciseMedia.js';
 import { Program } from '../models/Program.js';
@@ -117,15 +118,8 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete('/admin/users/:id', guard, async (request, reply) => {
     const params = parseBody(z.object({ id: objectIdSchema }), request.params);
-    const user = await User.findByIdAndDelete(params.id);
-    if (!user) return reply.code(404).send({ message: 'User not found' });
-
-    await Promise.all([
-      Program.deleteMany({ ownerId: params.id }),
-      WorkoutSession.deleteMany({ userId: params.id }),
-      ExerciseMedia.deleteMany({ ownerId: params.id }),
-    ]);
-
+    const deleted = await hardDeleteUserAccount(params.id);
+    if (!deleted) return reply.code(404).send({ message: 'User not found' });
     return reply.code(204).send();
   });
 

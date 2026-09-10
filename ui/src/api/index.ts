@@ -56,6 +56,11 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  deleteAccount: (token: string, body: { confirm: 'DELETE'; password: string }) =>
+    apiRequest<void>('/api/v1/account', token, {
+      method: 'DELETE',
+      body: JSON.stringify(body),
+    }),
 };
 
 export const programsApi = {

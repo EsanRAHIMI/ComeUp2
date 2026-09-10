@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { User } from '../models/User.js';
+import { hardDeleteUserAccount } from '../services/accountDeletion.js';
 import { requestPasswordReset, resetPasswordWithToken } from '../services/passwordReset.js';
 import { publicUser } from '../utils/publicUser.js';
 import { parseBody } from '../utils/schemas.js';
@@ -27,6 +28,11 @@ const forgotPasswordSchema = z.object({
 const resetPasswordSchema = z.object({
   token: z.string().min(1),
   password: z.string().min(8),
+});
+
+const deleteAccountSchema = z.object({
+  confirm: z.literal('DELETE'),
+  password: z.string().min(1),
 });
 
 export const authRoutes: FastifyPluginAsync = async (app) => {
@@ -99,4 +105,20 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     }
     return { message: 'Password updated. You can sign in with your new password.' };
   });
+
+  app.delete('/account', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const input = parseBody(deleteAccountSchema, request.body);
+    const user = await User.findById(request.user.sub).select('+passwordHash');
+    if (!user) return reply.code(404).send({ message: 'User not found' });
+
+    if (!(await bcrypt.compare(input.password, user.passwordHash))) {
+      return reply.code(401).send({ message: 'Invalid password' });
+    }
+
+    const deleted = await hardDeleteUserAccount(user._id.toString());
+    if (!deleted) return reply.code(404).send({ message: 'User not found' });
+
+    return reply.code(204).send();
+  });
+
 };
