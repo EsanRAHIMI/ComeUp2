@@ -1,7 +1,9 @@
-import { fa, levelLabel } from '../i18n/fa';
+import { levelLabel } from '../i18n';
+import { useT } from '../i18n/LocaleProvider';
 import type { GptDraftProgram } from '../types';
 
 export function DraftPreview({ draft }: { draft: GptDraftProgram }) {
+  const fa = useT();
   return (
     <div className="gpt-draft">
       <div className="gpt-draft__head">

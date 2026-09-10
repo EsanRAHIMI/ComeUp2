@@ -17,17 +17,9 @@ import { useRouter } from '../hooks/useRouter';
 import { addMonths, buildMonthGrid, currentMonthKey, monthLabel, todayDayKey } from '../lib/calendar';
 import { formatDuration, formatSessionDate } from '../lib/format';
 import type { CalendarDayData, CalendarReport, CalendarWorkoutStatus, WorkoutSession } from '../types';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
 const WEEKDAY_HEAD = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-const STATUS_LABEL: Record<CalendarWorkoutStatus, string> = {
-  completed: 'انجام‌شده',
-  pending: 'در انتظار',
-  missed: 'ازدست‌رفته',
-  shifted: 'جابه‌جاشده',
-  upcoming: 'برنامه‌ریزی‌شده',
-};
 
 /** Primary dot for a day: trained beats schedule status. */
 function dayDotStatus(data: CalendarDayData | undefined): CalendarWorkoutStatus | null {
@@ -37,6 +29,14 @@ function dayDotStatus(data: CalendarDayData | undefined): CalendarWorkoutStatus 
 }
 
 export function HistoryView() {
+  const fa = useT();
+  const STATUS_LABEL: Record<CalendarWorkoutStatus, string> = {
+    completed: fa.historyStatus.completed,
+    pending: fa.historyStatus.pending,
+    missed: fa.historyStatus.missed,
+    shifted: fa.historyStatus.shifted,
+    upcoming: fa.historyStatus.upcoming,
+  };
   const { token, notify } = useApp();
   const { navigate } = useRouter();
   const [sessions, setSessions] = useState<WorkoutSession[] | null>(null);

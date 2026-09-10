@@ -1,7 +1,7 @@
 import { CalendarDays, Clock3, Flame, Share2 } from 'lucide-react';
 import type { Program } from '../types';
 import { getPersistedProgramId } from '../lib/format';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
 export function ProgramCard({
   program,
@@ -14,6 +14,7 @@ export function ProgramCard({
   onActivate: (program: Program) => void;
   onShare: (program: Program) => void;
 }) {
+  const fa = useT();
   const persisted = Boolean(getPersistedProgramId(program));
   return (
     <article className="program-card">

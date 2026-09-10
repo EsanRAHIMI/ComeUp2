@@ -1,9 +1,10 @@
 import { Target } from 'lucide-react';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 import type { Program } from '../types';
 import { formatSessionDate } from '../lib/format';
 
 export function ProgramDetail({ program, nowMs }: { program: Program; nowMs: number }) {
+  const fa = useT();
   const upcoming = (program.schedule ?? [])
     .filter((item) => new Date(item.startsAt).getTime() >= nowMs)
     .slice(0, 4);

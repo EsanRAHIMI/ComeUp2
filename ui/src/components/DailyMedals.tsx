@@ -1,6 +1,6 @@
 import { Dumbbell, Flame, Target } from 'lucide-react';
 import type { DailyMedal } from '../types';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
 const ICONS = {
   workout: Dumbbell,
@@ -14,16 +14,17 @@ type Props = {
 };
 
 export function DailyMedals({ medals, completedToday }: Props) {
+  const fa = useT();
   const earnedCount = medals.filter((m) => m.earned).length;
 
   return (
-    <section className="daily-medals" aria-label="دستاوردهای امروز">
+    <section className="daily-medals" aria-label={fa.medalsAria}>
       <div className="daily-medals__head">
         <div>
-          <p className="eyebrow">دستاوردهای امروز</p>
+          <p className="eyebrow">{fa.medalsExtra.eyebrow}</p>
           <strong>{earnedCount}/3 medals earned</strong>
         </div>
-        {completedToday ? <span className="daily-medals__done">آفرین، امروز عالی بودی</span> : null}
+        {completedToday ? <span className="daily-medals__done">{fa.medalsExtra.doneToday}</span> : null}
       </div>
       <div className="daily-medals__row">
         {medals.map((medal) => {

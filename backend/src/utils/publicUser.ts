@@ -35,6 +35,7 @@ export function publicUser(user: any) {
           autoRestTimer: user.preferences.autoRestTimer,
           defaultRestSeconds: user.preferences.defaultRestSeconds,
           restCountdownSound: user.preferences.restCountdownSound,
+          locale: user.preferences.locale,
         }
       : undefined,
     createdAt: user.createdAt,

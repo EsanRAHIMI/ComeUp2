@@ -1,7 +1,8 @@
 import { Bot, Dumbbell, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { AI_GENERATION_STAGES, useAiGenerationStages } from '../hooks/useAiGenerationStages';
-import { fa, equipmentLabel, goalLabel, levelLabel } from '../i18n/fa';
+import { useAiGenerationStages } from '../hooks/useAiGenerationStages';
+import { equipmentLabel, goalLabel, levelLabel } from '../i18n';
+import { useT } from '../i18n/LocaleProvider';
 
 export type AiProfileContext = {
   name?: string;
@@ -26,7 +27,8 @@ function formatElapsed(seconds: number) {
 }
 
 export function AiGeneratingPanel({ active, profile, compact = false }: Props) {
-  const { stage, stageIndex, totalStages, elapsedSec, progress } = useAiGenerationStages(active);
+  const fa = useT();
+  const { stage, stages, stageIndex, totalStages, elapsedSec, progress } = useAiGenerationStages(active);
   const [messageVisible, setMessageVisible] = useState(true);
 
   useEffect(() => {
@@ -39,11 +41,11 @@ export function AiGeneratingPanel({ active, profile, compact = false }: Props) {
   if (!active) return null;
 
   const chips = [
-    profile?.goal ? goalLabel(profile.goal) : null,
-    profile?.fitnessLevel ? levelLabel(profile.fitnessLevel) : null,
+    profile?.goal ? goalLabel(profile.goal, fa) : null,
+    profile?.fitnessLevel ? levelLabel(profile.fitnessLevel, fa) : null,
     profile?.workoutDaysPerWeek ? fa.aiGen.daysWk(profile.workoutDaysPerWeek) : null,
     profile?.sessionDuration ? fa.aiGen.min(profile.sessionDuration) : null,
-    ...(profile?.equipment?.slice(0, 3).map(equipmentLabel) ?? []),
+    ...(profile?.equipment?.slice(0, 3).map((item) => equipmentLabel(item, fa)) ?? []),
     profile?.injuries?.length ? fa.aiGen.injuryNotes(profile.injuries.length) : null,
   ].filter(Boolean) as string[];
 
@@ -59,9 +61,9 @@ export function AiGeneratingPanel({ active, profile, compact = false }: Props) {
         </div>
         <div className="ai-gen__hero-text">
           <p className="ai-gen__eyebrow">
-            <Sparkles size={14} /> مربی هوش مصنوعی در حال کار است
+            <Sparkles size={14} /> {fa.gptExtra.title}
           </p>
-          <strong>در حال ساخت برنامه شخصی‌سازی‌شده تو</strong>
+          <strong>{stage.message}</strong>
           <small>{fa.aiGen.usuallyTakes(formatElapsed(elapsedSec))}</small>
         </div>
       </div>
@@ -74,7 +76,7 @@ export function AiGeneratingPanel({ active, profile, compact = false }: Props) {
       </div>
 
       <ol className="ai-gen__steps">
-        {AI_GENERATION_STAGES.map((item, index) => {
+        {stages.map((item, index) => {
           const state = index < stageIndex ? 'done' : index === stageIndex ? 'active' : 'pending';
           return (
             <li key={item.id} className={`ai-gen__step ai-gen__step--${state}`}>

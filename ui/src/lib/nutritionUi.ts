@@ -1,5 +1,6 @@
 // Pure display helpers for the Phase 6 nutrition system.
 // No DOM, no network — unit-testable with the repo's Node test runner.
+// Labels default to English; React views should prefer useT().nutrition.* when rendering.
 import type { GramRange, MealLogStatus, TargetMealSlot } from '../types';
 
 export type ScoreTone = 'good' | 'ok' | 'low' | 'none';
@@ -14,22 +15,22 @@ export function scoreTone(score: number | null | undefined): ScoreTone {
 export function scoreLabel(score: number | null | undefined): string {
   switch (scoreTone(score)) {
     case 'good':
-      return 'روی برنامه';
+      return 'On track';
     case 'ok':
-      return 'نزدیک به هدف';
+      return 'Almost there';
     case 'low':
-      return 'امروز خارج از برنامه';
+      return 'Off plan today';
     default:
-      return 'هنوز داده‌ای نیست';
+      return 'No data yet';
   }
 }
 
 export const MEAL_STATUS_META: Record<MealLogStatus, { label: string; tone: 'good' | 'warn' | 'bad' | 'muted' }> = {
-  done: { label: 'انجام شد', tone: 'good' },
-  heavier: { label: 'سنگین‌تر', tone: 'warn' },
-  lighter: { label: 'سبک‌تر', tone: 'warn' },
-  off_plan: { label: 'خارج از برنامه', tone: 'bad' },
-  skipped: { label: 'رد شده', tone: 'muted' },
+  done: { label: 'Done', tone: 'good' },
+  heavier: { label: 'Heavier', tone: 'warn' },
+  lighter: { label: 'Lighter', tone: 'warn' },
+  off_plan: { label: 'Off plan', tone: 'bad' },
+  skipped: { label: 'Skipped', tone: 'muted' },
 };
 
 export function waterPct(ml: number, targetMl: number): number {
@@ -59,10 +60,10 @@ export function nextUnloggedSlot<T extends { mealSlot: string }>(
 export function confidenceLabel(confidence: 'low' | 'medium' | 'high'): string {
   switch (confidence) {
     case 'high':
-      return 'اطمینان بالا';
+      return 'High confidence';
     case 'medium':
-      return 'اطمینان متوسط';
+      return 'Medium confidence';
     default:
-      return 'تخمین تقریبی';
+      return 'Rough estimate';
   }
 }

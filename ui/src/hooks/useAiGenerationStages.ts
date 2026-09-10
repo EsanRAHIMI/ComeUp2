@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { fa } from '../i18n/fa';
+import { useEffect, useMemo, useState } from 'react';
+import { type UiCopy } from '../i18n';
+import { useT } from '../i18n/LocaleProvider';
 
 export type AiGenerationStage = {
   id: string;
@@ -7,11 +8,15 @@ export type AiGenerationStage = {
   message: string;
 };
 
-export const AI_GENERATION_STAGES: AiGenerationStage[] = fa.aiGen.stages.map((s) => ({ ...s }));
+function stagesFrom(copy: UiCopy): AiGenerationStage[] {
+  return copy.aiGen.stages.map((s) => ({ ...s }));
+}
 
 const STAGE_MS = 3800;
 
 export function useAiGenerationStages(active: boolean) {
+  const fa = useT();
+  const stages = useMemo(() => stagesFrom(fa), [fa]);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [stageIndex, setStageIndex] = useState(0);
 
@@ -26,20 +31,21 @@ export function useAiGenerationStages(active: boolean) {
     const tick = window.setInterval(() => {
       const elapsed = Math.floor((Date.now() - started) / 1000);
       setElapsedSec(elapsed);
-      setStageIndex(Math.min(AI_GENERATION_STAGES.length - 1, Math.floor((Date.now() - started) / STAGE_MS)));
+      setStageIndex(Math.min(stages.length - 1, Math.floor((Date.now() - started) / STAGE_MS)));
     }, 250);
 
     return () => window.clearInterval(tick);
-  }, [active]);
+  }, [active, stages.length]);
 
   const progress = active
     ? Math.min(92, 8 + stageIndex * 14 + Math.min(12, elapsedSec))
     : 100;
 
   return {
-    stage: AI_GENERATION_STAGES[stageIndex],
+    stage: stages[stageIndex],
+    stages,
     stageIndex,
-    totalStages: AI_GENERATION_STAGES.length,
+    totalStages: stages.length,
     elapsedSec,
     progress,
   };

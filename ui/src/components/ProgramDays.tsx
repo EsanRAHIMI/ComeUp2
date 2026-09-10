@@ -1,4 +1,5 @@
-import { fa } from '../i18n/fa';
+import { getT } from '../i18n';
+import { useT } from '../i18n/LocaleProvider';
 import type { Exercise, Program } from '../types';
 import { ExerciseListRow } from './ExerciseListRow';
 
@@ -6,6 +7,7 @@ type DayGroup = { day: number; title: string; exercises: Exercise[] };
 
 /** Group a program's exercises by training day (from week-1 schedule), with a flat fallback. */
 export function groupByDay(program: Program): DayGroup[] {
+  const fa = getT();
   const week1 = (program.schedule ?? []).filter((s) => s.week === 1);
   if (week1.length) {
     return week1.map((day) => ({
@@ -20,6 +22,7 @@ export function groupByDay(program: Program): DayGroup[] {
 }
 
 export function ProgramDays({ program }: { program: Program }) {
+  const fa = useT();
   const days = groupByDay(program);
   return (
     <div className="program-days">

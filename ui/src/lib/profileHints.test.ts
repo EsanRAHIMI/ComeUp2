@@ -35,9 +35,9 @@ describe('profilePromptText', () => {
 
   it('joins up to three labels naturally', () => {
     const text = profilePromptText([
-      { id: 'weight', label: 'وزن فعلی' },
-      { id: 'height', label: 'قد' },
+      { id: 'weight', label: 'current weight' },
+      { id: 'height', label: 'height' },
     ]);
-    assert.equal(text, 'برای پیشنهادهای دقیق‌تر، وزن فعلی و قد را اضافه کن.');
+    assert.equal(text, 'Add current weight and height for sharper recommendations.');
   });
 });

@@ -7,12 +7,13 @@ import { DraftPreview } from './DraftPreview';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
 import { profileContextFromUser } from '../lib/aiProfile';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 import type { ChatMessage, GptDraftProgram, GptQuota } from '../types';
 
-const SUGGESTIONS = fa.gpt.suggestions;
 
 export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const fa = useT();
+  const SUGGESTIONS = fa.gpt.suggestions;
   const { token, user, notify, refreshPrograms } = useApp();
   const { navigate } = useRouter();
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -56,7 +57,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
       setQuota(res.quota);
       if (res.activated && res.program) {
         await refreshPrograms();
-        notify('برنامه ذخیره و فعال شد', 'success');
+        notify(fa.gptExtra.savedActivated, 'success');
         onClose();
         navigate('dashboard');
       }
@@ -86,7 +87,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
     try {
       await chatApi.convert(token, conversationId, { activate: true });
       await refreshPrograms();
-      notify('برنامه ذخیره و فعال شد', 'success');
+      notify(fa.gptExtra.savedActivated, 'success');
       onClose();
       navigate('dashboard');
     } catch (error) {
@@ -103,7 +104,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
           <div className="gpt-builder__title">
             <span className="card__head-icon"><Bot size={18} /></span>
             <div>
-              <strong>مربی هوش مصنوعی</strong>
+              <strong>{fa.gptExtra.title}</strong>
               {quota ? <small>{fa.gpt.quotaLeft(quota.remaining, quota.limit)}</small> : null}
             </div>
           </div>

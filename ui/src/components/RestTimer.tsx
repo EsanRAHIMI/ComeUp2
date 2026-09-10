@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Pause, Play, Plus, SkipForward } from 'lucide-react';
 import { formatClock } from '../lib/format';
 import { createRestBeepGate, playRestBeep, shouldPlayRestBeep } from '../lib/restSound';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
 /**
  * Prominent rest countdown for the workout runner.
@@ -21,6 +21,7 @@ export function RestTimer({
   /** Three soft beeps at 3/2/1 s remaining (preferences.restCountdownSound). */
   soundEnabled?: boolean;
 }) {
+  const fa = useT();
   const baseTotal = Math.max(seconds, 1);
   const [remaining, setRemaining] = useState(seconds);
   const [total, setTotal] = useState(baseTotal);

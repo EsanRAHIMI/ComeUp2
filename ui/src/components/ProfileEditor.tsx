@@ -1,7 +1,8 @@
 import { Loader2, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useApp } from '../hooks/useApp';
-import { fa, goalLabel, levelLabel } from '../i18n/fa';
+import { goalLabel, levelLabel } from '../i18n';
+import { useT } from '../i18n/LocaleProvider';
 import type {
   FitnessLevel,
   Gender,
@@ -15,30 +16,9 @@ import type {
 const GOALS: Goal[] = ['General Fitness', 'Strength', 'Muscle Gain', 'Weight Loss'];
 const LEVELS: FitnessLevel[] = ['Beginner', 'Intermediate', 'Advanced'];
 const GENDERS: Gender[] = ['male', 'female', 'other', 'undisclosed'];
-const GENDER_LABELS: Record<Gender, string> = {
-  male: 'مرد',
-  female: 'زن',
-  other: 'سایر',
-  undisclosed: 'ترجیح می‌دهم نگویم',
-};
 const EQUIPMENT = ['bodyweight', 'dumbbells', 'barbell', 'machine', 'kettlebell', 'bands', 'cables', 'bench'];
-const WEEKDAYS = [...fa.weekdaysShort];
 const MUSCLE_FOCUS = ['chest', 'back', 'shoulders', 'arms', 'legs', 'glutes', 'core', 'full body'];
 
-const NUTRITION_PREFS: Array<{ id: NutritionPreference; label: string }> = [
-  { id: 'no_preference', label: 'بدون ترجیح' },
-  { id: 'high_protein', label: 'پروتئین بالا' },
-  { id: 'low_carb', label: 'کربوهیدرات کم' },
-  { id: 'vegetarian', label: 'گیاه‌خواری' },
-  { id: 'vegan', label: 'وگان' },
-  { id: 'keto', label: 'کتو' },
-];
-
-const WALKING_METRICS: Array<{ id: WalkingTargetMetric; label: string }> = [
-  { id: 'steps', label: 'قدم / روز' },
-  { id: 'minutes', label: 'دقیقه / روز' },
-  { id: 'distanceKm', label: 'فاصله (کیلومتر) / روز' },
-];
 
 function toggle<T>(list: T[], value: T) {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -60,6 +40,15 @@ function csvList(value: string) {
 }
 
 export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const fa = useT();
+  const WEEKDAYS = [...fa.weekdaysShort];
+  const GENDER_LABELS = fa.genders as Record<Gender, string>;
+  const NUTRITION_PREFS: Array<{ id: NutritionPreference; label: string }> = (
+    ['no_preference', 'high_protein', 'low_carb', 'vegetarian', 'vegan', 'keto'] as NutritionPreference[]
+  ).map((id) => ({ id, label: fa.nutritionPrefs[id] }));
+  const WALKING_METRICS: Array<{ id: WalkingTargetMetric; label: string }> = (
+    ['steps', 'minutes', 'distanceKm'] as WalkingTargetMetric[]
+  ).map((id) => ({ id, label: fa.walkingMetrics[id] }));
   const { user, updateProfile, busy } = useApp();
   const [name, setName] = useState(user?.name ?? '');
   const [gender, setGender] = useState<Gender>(user?.gender ?? 'undisclosed');
@@ -165,49 +154,49 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-label="ویرایش پروفایل">
+    <div className="modal-overlay" role="dialog" aria-label={fa.profileEdit.aria}>
       <div className="modal-card">
         <div className="modal-card__head">
-          <h2>ویرایش پروفایل</h2>
+          <h2>{fa.profileEdit.title}</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label={fa.close}><X size={18} /></button>
         </div>
 
-        <p className="eyebrow modal-section-title">اطلاعات پایه</p>
+        <p className="eyebrow modal-section-title">{fa.profileEdit.basics}</p>
 
-        <label className="field"><span>نام</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
+        <label className="field"><span>{fa.profileEdit.name}</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
 
         <div className="field-row">
-          <label className="field"><span>جنسیت</span>
+          <label className="field"><span>{fa.profileEdit.gender}</span>
             <select value={gender} onChange={(e) => setGender(e.target.value as Gender)}>
               {GENDERS.map((g) => <option key={g} value={g}>{GENDER_LABELS[g]}</option>)}
             </select>
           </label>
-          <label className="field"><span>سن</span><input type="number" min={12} max={100} value={age} onChange={(e) => setAge(e.target.value)} /></label>
+          <label className="field"><span>{fa.profileEdit.age}</span><input type="number" min={12} max={100} value={age} onChange={(e) => setAge(e.target.value)} /></label>
         </div>
 
         <div className="field-row">
-          <label className="field"><span>قد (سانتی‌متر)</span><input type="number" min={80} max={260} value={height} onChange={(e) => setHeight(e.target.value)} /></label>
-          <label className="field"><span>وزن (کیلوگرم)</span><input type="number" min={25} max={350} value={weight} onChange={(e) => setWeight(e.target.value)} /></label>
+          <label className="field"><span>{fa.profileEdit.heightCm}</span><input type="number" min={80} max={260} value={height} onChange={(e) => setHeight(e.target.value)} /></label>
+          <label className="field"><span>{fa.profileEdit.weightKg}</span><input type="number" min={25} max={350} value={weight} onChange={(e) => setWeight(e.target.value)} /></label>
         </div>
 
-        <p className="eyebrow modal-section-title">هدف</p>
+        <p className="eyebrow modal-section-title">{fa.profileEdit.goalSection}</p>
 
         <div className="field-row">
-          <label className="field"><span>هدف</span>
+          <label className="field"><span>{fa.profileEdit.goal}</span>
             <select value={goal} onChange={(e) => setGoal(e.target.value as Goal)}>{GOALS.map((g) => <option key={g} value={g}>{goalLabel(g)}</option>)}</select>
           </label>
-          <label className="field"><span>سطح</span>
+          <label className="field"><span>{fa.profileEdit.level}</span>
             <select value={level} onChange={(e) => setLevel(e.target.value as FitnessLevel)}>{LEVELS.map((l) => <option key={l} value={l}>{levelLabel(l)}</option>)}</select>
           </label>
         </div>
 
         <div className="field-row">
-          <label className="field"><span>وزن هدف (کیلوگرم)</span><input type="number" min={25} max={350} value={targetWeight} onChange={(e) => setTargetWeight(e.target.value)} placeholder={fa.optional} /></label>
-          <label className="field"><span>مهلت هدف</span><input type="date" value={goalDeadline} onChange={(e) => setGoalDeadline(e.target.value)} /></label>
+          <label className="field"><span>{fa.profileEdit.targetWeightKg}</span><input type="number" min={25} max={350} value={targetWeight} onChange={(e) => setTargetWeight(e.target.value)} placeholder={fa.optional} /></label>
+          <label className="field"><span>{fa.profileEdit.goalDeadline}</span><input type="date" value={goalDeadline} onChange={(e) => setGoalDeadline(e.target.value)} /></label>
         </div>
 
         <div className="field">
-          <span>تمرکز عضلانی <small className="field__hint">(اختیاری)</small></span>
+          <span>{fa.profileEdit.muscleFocusOptional} <small className="field__hint">({fa.optional})</small></span>
           <div className="chip-toggle">
             {MUSCLE_FOCUS.map((item) => (
               <button key={item} type="button" className={`chip-toggle__item ${muscleFocus.includes(item) ? 'is-on' : ''}`} onClick={() => setMuscleFocus((l) => toggle(l, item))}>{item}</button>
@@ -215,15 +204,15 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
           </div>
         </div>
 
-        <p className="eyebrow modal-section-title">تمرین</p>
+        <p className="eyebrow modal-section-title">{fa.profileEdit.training}</p>
 
         <div className="field-row">
-          <label className="field"><span>روز در هفته</span><input type="number" min={1} max={7} value={daysPerWeek} onChange={(e) => setDaysPerWeek(Number(e.target.value))} /></label>
-          <label className="field"><span>جلسه (دقیقه)</span><input type="number" min={20} max={180} step={5} value={sessionDuration} onChange={(e) => setSessionDuration(Number(e.target.value))} /></label>
+          <label className="field"><span>{fa.profileEdit.daysPerWeek}</span><input type="number" min={1} max={7} value={daysPerWeek} onChange={(e) => setDaysPerWeek(Number(e.target.value))} /></label>
+          <label className="field"><span>{fa.profileEdit.sessionMin}</span><input type="number" min={20} max={180} step={5} value={sessionDuration} onChange={(e) => setSessionDuration(Number(e.target.value))} /></label>
         </div>
 
         <div className="field">
-          <span>تجهیزات موجود</span>
+          <span>{fa.profileEdit.availableEquipment}</span>
           <div className="chip-toggle">
             {EQUIPMENT.map((item) => (
               <button key={item} type="button" className={`chip-toggle__item ${equipment.includes(item) ? 'is-on' : ''}`} onClick={() => setEquipment((l) => toggle(l, item))}>{item}</button>
@@ -232,7 +221,7 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         <div className="field">
-          <span>روزهای ترجیحی تمرین</span>
+          <span>{fa.profileEdit.preferredTrainingDays}</span>
           <div className="chip-toggle">
             {WEEKDAYS.map((label, idx) => (
               <button key={label} type="button" className={`chip-toggle__item ${preferredDays.includes(idx) ? 'is-on' : ''}`} onClick={() => setPreferredDays((l) => toggle(l, idx))}>{label}</button>
@@ -241,21 +230,21 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         <div className="field">
-          <span>اگر تمرینی را از دست دادم</span>
+          <span>{fa.profileEdit.ifIMiss}</span>
           <div className="chip-toggle">
             <button
               type="button"
               className={`chip-toggle__item ${missedBehavior === 'shift' ? 'is-on' : ''}`}
               onClick={() => setMissedBehavior('shift')}
             >
-              جلو بینداز
+              {fa.profileEdit.shiftForward}
             </button>
             <button
               type="button"
               className={`chip-toggle__item ${missedBehavior === 'skip' ? 'is-on' : ''}`}
               onClick={() => setMissedBehavior('skip')}
             >
-              برو به روز بعد
+              {fa.profileEdit.skipToNext}
             </button>
           </div>
           <small className="field__hint">
@@ -265,46 +254,46 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
           </small>
         </div>
 
-        <p className="eyebrow modal-section-title">سلامت</p>
+        <p className="eyebrow modal-section-title">{fa.profileEdit.health}</p>
 
         <label className="field">
-          <span>آسیب‌ها <small className="field__hint">(با ویرگول جدا کن)</small></span>
-          <input value={injuries} onChange={(e) => setInjuries(e.target.value)} placeholder="مثلاً درد زانو، کمر" />
+          <span>{fa.profileEdit.injuriesCsv} <small className="field__hint">{fa.profileEdit.injuriesHint}</small></span>
+          <input value={injuries} onChange={(e) => setInjuries(e.target.value)} placeholder={fa.profileEdit.injuriesPh} />
         </label>
 
         <label className="field">
-          <span>محدودیت‌های فیزیکی <small className="field__hint">(با ویرگول جدا کن)</small></span>
-          <input value={limitations} onChange={(e) => setLimitations(e.target.value)} placeholder="مثلاً نمی‌توانم بپرم، محدودیت شانه" />
+          <span>{fa.profileEdit.limitationsCsv} <small className="field__hint">{fa.profileEdit.injuriesHint}</small></span>
+          <input value={limitations} onChange={(e) => setLimitations(e.target.value)} placeholder={fa.profileEdit.limitationsPh} />
         </label>
 
-        <p className="eyebrow modal-section-title">تغذیه</p>
+        <p className="eyebrow modal-section-title">{fa.profileEdit.nutritionSection}</p>
 
         <div className="field-row">
-          <label className="field"><span>ترجیح</span>
+          <label className="field"><span>{fa.profileEdit.preference}</span>
             <select value={nutritionPref} onChange={(e) => setNutritionPref(e.target.value as NutritionPreference)}>
               {NUTRITION_PREFS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
           </label>
-          <label className="field"><span>هدف آب (میلی‌لیتر)</span><input type="number" min={250} max={10000} step={250} value={waterTargetMl} onChange={(e) => setWaterTargetMl(e.target.value)} placeholder="مثلاً ۲۵۰۰" /></label>
+          <label className="field"><span>{fa.profileEdit.waterTargetMl}</span><input type="number" min={250} max={10000} step={250} value={waterTargetMl} onChange={(e) => setWaterTargetMl(e.target.value)} placeholder="مثلاً ۲۵۰۰" /></label>
         </div>
 
         <label className="field">
-          <span>مکمل‌ها <small className="field__hint">(با ویرگول، اختیاری)</small></span>
-          <input value={supplements} onChange={(e) => setSupplements(e.target.value)} placeholder="مثلاً کراتین، وی، ویتامین D" />
+          <span>{fa.profileEdit.supplementsCsv} <small className="field__hint">{fa.profileEdit.supplementsHint}</small></span>
+          <input value={supplements} onChange={(e) => setSupplements(e.target.value)} placeholder={fa.profileEdit.supplementsPh} />
         </label>
 
-        <p className="eyebrow modal-section-title">پیاده‌روی</p>
+        <p className="eyebrow modal-section-title">{fa.profileEdit.walkingSection}</p>
 
         <div className="field-row">
-          <label className="field"><span>هدف روزانه</span>
+          <label className="field"><span>{fa.profileEdit.dailyTarget}</span>
             <select value={walkingMetric} onChange={(e) => setWalkingMetric(e.target.value as WalkingTargetMetric)}>
               {WALKING_METRICS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
             </select>
           </label>
-          <label className="field"><span>مقدار</span><input type="number" min={1} value={walkingValue} onChange={(e) => setWalkingValue(e.target.value)} placeholder={fa.optional} /></label>
+          <label className="field"><span>{fa.profileEdit.amount}</span><input type="number" min={1} value={walkingValue} onChange={(e) => setWalkingValue(e.target.value)} placeholder={fa.optional} /></label>
         </div>
 
-        <p className="eyebrow modal-section-title">تایمر استراحت</p>
+        <p className="eyebrow modal-section-title">{fa.profileEdit.restTimerSection}</p>
 
         <div className="field profile-rest-settings">
           <div className="settings-row settings-row--inset">
@@ -334,13 +323,13 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
               onClick={() => setRestCountdownSound((v) => !v)}
               role="switch"
               aria-checked={restCountdownSound}
-              aria-label="صدای شمارش معکوس استراحت"
+              aria-label={fa.profileEditExtra.countdownSound}
             >
               <span />
             </button>
           </div>
           <label className="field">
-            <span>استراحت پیش‌فرض (ثانیه)</span>
+            <span>{fa.profileEdit.defaultRestSec}</span>
             <input
               type="number"
               min={0}
@@ -356,7 +345,7 @@ export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () =>
 
         <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => void save()} disabled={busy || name.trim().length < 2}>
           {busy ? <Loader2 className="spin" size={18} /> : <Save size={18} />}
-          ذخیره پروفایل
+          {fa.profileEdit.saveProfile}
         </button>
       </div>
     </div>

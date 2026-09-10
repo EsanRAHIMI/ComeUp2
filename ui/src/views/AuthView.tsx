@@ -2,7 +2,8 @@ import { Loader2, Lock, Mail, Zap } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { authApi } from '../api';
 import { useApp } from '../hooks/useApp';
-import { fa, goalLabel, levelLabel } from '../i18n/fa';
+import { goalLabel, levelLabel } from '../i18n';
+import { useT } from '../i18n/LocaleProvider';
 import type { AuthMode } from '../types';
 
 function readResetTokenFromUrl() {
@@ -19,6 +20,7 @@ const GOAL_VALUES = ['General Fitness', 'Strength', 'Muscle Gain', 'Weight Loss'
 const LEVEL_VALUES = ['Beginner', 'Intermediate', 'Advanced'] as const;
 
 export function AuthView() {
+  const fa = useT();
   const { authenticate, busy, notify } = useApp();
   const initialResetToken = useMemo(() => readResetTokenFromUrl(), []);
   const [mode, setMode] = useState<AuthMode>(initialResetToken ? 'reset' : 'login');

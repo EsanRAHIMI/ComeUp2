@@ -17,7 +17,7 @@ import {
 import { browserSessionStore, readActiveSession, writeActiveSession } from '../lib/sessionStore';
 import { createSessionApi } from '../lib/sessionSync';
 import type { Exercise, Program } from '../types';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
 export type { SessionSummary } from '../lib/sessionEngine';
 export type CompleteOutcome = { summary: SessionSummary; status: 'saved' | 'failed' };
@@ -30,6 +30,7 @@ type Params = {
 };
 
 export function useWorkoutSession({ program, exercises, token, notify }: Params) {
+  const fa = useT();
   const pKey = programKey(program);
 
   // Lazy init restores any in-progress session for this program. The parent keys

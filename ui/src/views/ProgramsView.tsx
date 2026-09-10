@@ -10,7 +10,7 @@ import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
 import { getPersistedProgramId } from '../lib/format';
 import type { Program } from '../types';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
 function ProgramCardActions({
   program,
@@ -31,6 +31,7 @@ function ProgramCardActions({
   onShare: () => void;
   onDelete: () => void;
 }) {
+  const fa = useT();
   return (
     <div className="manage-card__actions" role="toolbar" aria-label={fa.programsUi.actions}>
       <button
@@ -98,6 +99,7 @@ function ProgramCardActions({
 }
 
 export function ProgramsView() {
+  const fa = useT();
   const { programs, busy, activateProgram, shareProgram, duplicateProgram, deleteProgram } = useApp();
   const { programsAction, clearProgramsAction } = useRouter();
   const shareInputRef = useRef<HTMLInputElement>(null);

@@ -4,12 +4,13 @@ import { adminApi, ApiError } from '../api';
 import { AdminMediaPanel } from '../components/AdminMediaPanel';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 import type { Program, User } from '../types';
 
 type Tab = 'overview' | 'users' | 'programs' | 'media' | 'activity';
 
 export function AdminView() {
+  const fa = useT();
   const { token, user, notify } = useApp();
   const { navigate } = useRouter();
   const [tab, setTab] = useState<Tab>('overview');

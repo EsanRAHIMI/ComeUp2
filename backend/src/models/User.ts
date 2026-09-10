@@ -63,6 +63,7 @@ const userSchema = new mongoose.Schema(
       preferredCamera: { type: String, enum: ['front', 'back'], default: 'front' },
       /** Three soft beeps in the final 3 s of rest (Train page). */
       restCountdownSound: { type: Boolean, default: true },
+      locale: { type: String, enum: ['en', 'fa', 'ar'] },
     },
   },
   { timestamps: true },
