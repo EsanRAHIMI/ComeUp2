@@ -1,6 +1,6 @@
 # ComeUp — In-App Purchase & Monetization Plan
 
-**Status:** Documentation only (no StoreKit / receipt code in this branch)  
+**Status:** Implementation started (Phase B+C on `feat/app-store-storekit-iap`)  
 **Last updated:** 2026-09-10  
 **Related:** App Store prep on Capacitor iOS (`com.najahai.comeup`)
 
@@ -170,30 +170,43 @@ Also prepare:
 
 ### Phase B — StoreKit 2 client + backend verify
 
-- [ ] StoreKit 2 product fetch + purchase + restore  
-- [ ] Backend verify via App Store Server API  
-- [ ] Persist entitlement; enforce on GPT quota + plate generate routes  
-- [ ] Webhook / server notifications for renew & expire  
-- [ ] **No** external payment CTA for digital unlock in iOS UI  
+- [x] StoreKit 2 product fetch + purchase + restore (`@capgo/native-purchases`, `ui/src/lib/iap.ts`)  
+- [x] Backend verify via JWS (`jose`) and/or App Store Server API (`APPLE_IAP_*` env)  
+- [x] Persist entitlement; enforce on GPT quota + plate generate routes  
+- [ ] Webhook / server notifications for renew & expire (**stub** `POST /api/v1/billing/apple/notifications`)  
+- [x] **No** external payment CTA for digital unlock in iOS UI  
 
 ### Phase C — Paywall UI
 
-- [ ] Persian RTL paywall (benefits Free vs Premium)  
-- [ ] Entry points: GPT quota exhausted, plate generate, optional Profile upsell  
-- [ ] Manage subscription link to Apple subscription management  
+- [x] Paywall UI with en / fa / ar (benefits Free vs Premium)  
+- [x] Entry points: GPT quota exhausted, plate generate, Profile upsell  
+- [x] Manage subscription via StoreKit / Apple ID settings  
 - [ ] Analytics events (optional, privacy-reviewed) — not required for first ship  
 
-### Explicitly out of scope for this docs branch
+### Env / ASC configuration (implementation)
 
-- No StoreKit code  
-- No RevenueCat SDK  
-- No price hard-coding in client beyond ASC-driven localized prices  
+See `backend/.env.example`:
+
+- `APPLE_BUNDLE_ID=com.najahai.comeup`
+- `APPLE_IAP_ENVIRONMENT=Sandbox|Production`
+- `APPLE_IAP_ISSUER_ID`, `APPLE_IAP_KEY_ID`, `APPLE_IAP_PRIVATE_KEY` (PEM or path — **do not commit real keys**)
+- `PREMIUM_GPT_WEEKLY_LIMIT=50`
+- Dev only: `APPLE_IAP_DEV_GRANT=1` with `signedTransactionInfo` starting `DEV.` or `{ productId, devGrant: true }`
+
+ASC: subscription group `comeup_premium`, products `comeup_premium_monthly` / `comeup_premium_yearly`. Enable **In-App Purchase** capability in Xcode.
+
+### Explicitly out of scope
+
+- RevenueCat dashboard / forced RC account  
+- Play Billing  
+- Lifetime product  
+- Changing Privacy Policy hosting  
 
 ---
 
 ## 9. Engineering notes for later (non-binding)
 
-Current free GPT enforcement: `backend/src/services/gptQuota.ts` (`WEEKLY_GPT_LIMIT = 5`).
+Current free GPT enforcement: `backend/src/services/gptQuota.ts` (`FREE_WEEKLY_GPT_LIMIT = 5`; premium uses `PREMIUM_GPT_WEEKLY_LIMIT`).
 
 Premium should:
 
@@ -214,4 +227,4 @@ Plate generation already rate-limited per user; Premium may raise that limit sep
 
 ---
 
-*Docs only. Implementation belongs in a later `feat/…-iap` branch.*
+*Implementation started on `feat/app-store-storekit-iap`. ASN V2 webhook remains TODO.*

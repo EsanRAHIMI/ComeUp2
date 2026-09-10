@@ -8,6 +8,7 @@ import { authPlugin } from './plugins/auth.js';
 import { adminRoutes } from './routes/admin.js';
 import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
+import { billingRoutes } from './routes/billing.js';
 import { exerciseMediaRoutes } from './routes/exerciseMedia.js';
 import { healthRoutes } from './routes/health.js';
 import { measurementRoutes } from './routes/measurements.js';
@@ -33,6 +34,7 @@ export async function buildApp() {
   await app.register(healthRoutes);
   await app.register(healthRoutes, { prefix: '/api' });
   await app.register(authRoutes, { prefix: '/api/v1' });
+  await app.register(billingRoutes, { prefix: '/api/v1' });
   await app.register(exerciseMediaRoutes, { prefix: '/api/v1' });
   await app.register(profileRoutes, { prefix: '/api/v1' });
   await app.register(programRoutes, { prefix: '/api/v1' });

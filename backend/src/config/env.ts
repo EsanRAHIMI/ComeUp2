@@ -38,6 +38,23 @@ const envSchema = z.object({
   AWS_REGION: z.string().optional(),
   AWS_S3_BUCKET: z.string().optional(),
   AWS_S3_PUBLIC_BASE_URL: z.string().url().optional(),
+  /** Apple IAP / App Store Server API */
+  APPLE_BUNDLE_ID: z.string().default('com.najahai.comeup'),
+  APPLE_IAP_ENVIRONMENT: z.enum(['Sandbox', 'Production']).default('Sandbox'),
+  APPLE_IAP_ISSUER_ID: z.string().optional(),
+  APPLE_IAP_KEY_ID: z.string().optional(),
+  /** PEM contents or absolute path to .p8 — never commit real keys. */
+  APPLE_IAP_PRIVATE_KEY: z.string().optional(),
+  PREMIUM_GPT_WEEKLY_LIMIT: z.coerce.number().int().positive().default(50),
+  /**
+   * Dev-only grant path. NEVER set in production.
+   * When NODE_ENV=development and this is '1', verify accepts DEV.* signedTransactionInfo
+   * or { productId, devGrant: true }.
+   */
+  APPLE_IAP_DEV_GRANT: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true' || value === '1'),
 }).superRefine((data, ctx) => {
   const s3Ready = Boolean(
     data.AWS_ACCESS_KEY_ID?.trim() &&
@@ -59,6 +76,14 @@ const envSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'NUTRITION_LOCAL_STORAGE is allowed only in development',
       path: ['NUTRITION_LOCAL_STORAGE'],
+    });
+  }
+
+  if (data.APPLE_IAP_DEV_GRANT && data.NODE_ENV === 'production') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'APPLE_IAP_DEV_GRANT must never be enabled in production',
+      path: ['APPLE_IAP_DEV_GRANT'],
     });
   }
 });

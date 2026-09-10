@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { AppHeader } from './components/AppHeader';
 import { BottomNav } from './components/BottomNav';
 import { ResumeBanner } from './components/ResumeBanner';
+import { PremiumHost } from './components/PremiumHost';
 import { Toast } from './components/Toast';
 import { useApp } from './hooks/useApp';
 import { RouterProvider, useRouter } from './hooks/useRouter';
@@ -71,6 +72,7 @@ function Shell() {
         </main>
         <BottomNav />
       </div>
+      <PremiumHost />
       <Toast />
     </RouterProvider>
   );

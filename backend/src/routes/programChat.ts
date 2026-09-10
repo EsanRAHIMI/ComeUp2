@@ -47,7 +47,13 @@ export const programChatRoutes: FastifyPluginAsync = async (app) => {
     // Check quota BEFORE calling GPT; only consume on a successful generation.
     const quota = await getQuota(request.user.sub);
     if (quota.remaining <= 0) {
-      return reply.code(429).send({ message: 'Weekly GPT limit reached', quota });
+      return reply.code(429).send({
+        message: quota.isPremium
+          ? 'Weekly GPT limit reached'
+          : 'Weekly free GPT limit reached — upgrade to ComeUp Premium for a higher cap',
+        code: quota.isPremium ? 'GPT_QUOTA_EXCEEDED' : 'PREMIUM_REQUIRED',
+        quota,
+      });
     }
 
     const user = await User.findById(request.user.sub);

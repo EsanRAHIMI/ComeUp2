@@ -65,6 +65,15 @@ const userSchema = new mongoose.Schema(
       restCountdownSound: { type: Boolean, default: true },
       locale: { type: String, enum: ['en', 'fa', 'ar'] },
     },
+    // --- Apple IAP / ComeUp Premium (StoreKit) ---
+    subscriptionStatus: {
+      type: String,
+      enum: ['none', 'active', 'expired', 'grace', 'revoked'],
+      default: 'none',
+    },
+    subscriptionProductId: { type: String, trim: true },
+    subscriptionExpiresAt: { type: Date },
+    subscriptionOriginalTransactionId: { type: String, trim: true, index: true },
   },
   { timestamps: true },
 );

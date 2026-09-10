@@ -279,18 +279,19 @@ Notes:
 
 - `capacitor.config` points `webDir` at `dist` — always rebuild before syncing.
 - Camera / photo library usage strings are set in `ui/ios` Info.plist for nutrition plate photos.
-- Sign in with Apple, IAP, push, and real form/voice/camera features are **not** implemented in this P0.
+- Sign in with Apple, push, and real form/voice/camera features are **not** implemented in this P0.
+- **IAP / ComeUp Premium (StoreKit):** `@capgo/native-purchases` + backend `/api/v1/billing/*` — see `docs/IAP_MONETIZATION_PLAN.md`. In Xcode, add the **In-App Purchase** capability. Create ASC subscription products `comeup_premium_monthly` / `comeup_premium_yearly` (group `comeup_premium`). Set `APPLE_IAP_*` on the backend (never commit real `.p8` keys).
 
 ### App Store docs (privacy & monetization)
 
-Docs only — no StoreKit implementation in-tree yet:
+Privacy docs + IAP plan (implementation started on `feat/app-store-storekit-iap`):
 
 | Doc | Purpose |
 |-----|---------|
 | [`docs/PRIVACY_POLICY_FA.md`](docs/PRIVACY_POLICY_FA.md) | Full Persian privacy policy (host later at e.g. `https://gym.najahai.com/privacy`) |
 | [`docs/PRIVACY_POLICY_EN.md`](docs/PRIVACY_POLICY_EN.md) | English privacy policy for App Store Connect |
 | [`docs/APP_STORE_PRIVACY_ANSWERS.md`](docs/APP_STORE_PRIVACY_ANSWERS.md) | Checklist mapping Apple App Privacy labels → real data collected |
-| [`docs/IAP_MONETIZATION_PLAN.md`](docs/IAP_MONETIZATION_PLAN.md) | StoreKit IAP rules, Free vs Premium, product IDs, phased roadmap |
+| [`docs/IAP_MONETIZATION_PLAN.md`](docs/IAP_MONETIZATION_PLAN.md) | StoreKit IAP rules, Free vs Premium, product IDs, Phase B+C status + env vars |
 
 Account deletion (Guideline 5.1.1): in-app Profile flow + authenticated `DELETE /api/v1/account`.
 
@@ -758,7 +759,7 @@ There is no bundled E2E or CI pipeline in this repository yet.
 
 Documented future direction (not implemented):
 
-- **`docs/IAP_MONETIZATION_PLAN.md`** — StoreKit Premium subscription plan (docs only; no IAP code yet)
+- **`docs/IAP_MONETIZATION_PLAN.md`** — StoreKit Premium plan + implementation notes (`APPLE_IAP_*`, paywall, verify routes)
 - **`docs/production-motion-tracking-plan.md`** — native mobile, camera pose tracking, real-time form feedback
 - Deeper Cal AI–style nutrition (photo macros, barcode, daily calorie targets)
 - Unified dashboard combining workout adherence and nutrition in one view

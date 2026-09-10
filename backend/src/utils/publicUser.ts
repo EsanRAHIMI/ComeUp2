@@ -1,5 +1,6 @@
 /** Normalize a User document into the safe public shape returned to clients. */
 import { isAdminEmail } from './admin.js';
+import { userIsPremium } from './premium.js';
 
 export function publicUser(user: any) {
   return {
@@ -38,6 +39,12 @@ export function publicUser(user: any) {
           locale: user.preferences.locale,
         }
       : undefined,
+    subscriptionStatus: user.subscriptionStatus ?? 'none',
+    subscriptionProductId: user.subscriptionProductId,
+    subscriptionExpiresAt: user.subscriptionExpiresAt
+      ? new Date(user.subscriptionExpiresAt).toISOString()
+      : undefined,
+    isPremium: userIsPremium(user),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

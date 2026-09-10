@@ -1,4 +1,4 @@
-import { Bot, LogOut, Pencil, Shield, Trash2 } from 'lucide-react';
+import { Bot, Crown, LogOut, Pencil, Shield, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { API_BASE_URL, ApiError, authApi, chatApi } from '../api';
 import { MeasurementsPanel } from '../components/MeasurementsPanel';
@@ -9,6 +9,7 @@ import { useTheme } from '../hooks/useTheme';
 import { genderLabel, nutritionPrefLabel, goalLabel, levelLabel, LOCALES } from '../i18n';
 import { useT, useLocale } from '../i18n/LocaleProvider';
 import type { GptQuota } from '../types';
+import { PaywallModal } from '../components/PaywallModal';
 
 export function ProfileView() {
   const fa = useT();
@@ -23,6 +24,7 @@ export function ProfileView() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -107,6 +109,26 @@ export function ProfileView() {
                 }${fa.misc.perDay}`
               : fa.notSet}
           </strong>
+        </div>
+      </section>
+
+      <section className="card settings-card">
+        <p className="eyebrow">{fa.premium.eyebrow}</p>
+        <div className="settings-row">
+          <div>
+            <strong>{fa.premium.profileEntry}</strong>
+            <small>
+              {user.isPremium
+                ? fa.premium.statusActive
+                : fa.premium.statusFree}
+              {user.subscriptionExpiresAt
+                ? ` · ${fa.premium.renewsOrExpires(user.subscriptionExpiresAt)}`
+                : ''}
+            </small>
+          </div>
+          <button type="button" className="btn btn--primary" onClick={() => setPaywallOpen(true)}>
+            <Crown size={16} /> {user.isPremium ? fa.premium.manage : fa.premium.upgrade}
+          </button>
         </div>
       </section>
 
@@ -289,6 +311,7 @@ export function ProfileView() {
       </button>
 
       <ProfileEditor open={editOpen} onClose={() => setEditOpen(false)} />
+      <PaywallModal open={paywallOpen} onClose={() => setPaywallOpen(false)} />
     </div>
   );
 }
