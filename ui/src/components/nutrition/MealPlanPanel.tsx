@@ -1,29 +1,34 @@
 import { Clock3, Salad } from 'lucide-react';
 import { useState } from 'react';
 import {
-  DAY_LABELS_FA,
   DAY_ORDER,
-  MEAL_SLOT_LABELS_FA,
   todayPlanDay,
   type DayOfWeek,
+  type MealSlotId,
   type NutritionPlan,
 } from '@comeup/domain';
+import { useT } from '../../i18n/LocaleProvider';
 
 type Props = {
   plan: NutritionPlan;
 };
 
 export function MealPlanPanel({ plan }: Props) {
+  const t = useT();
   const [activeDay, setActiveDay] = useState<DayOfWeek>(() => todayPlanDay());
   const rotation = plan.proteinRotation[activeDay];
+
+  function mealSlotLabel(id: string) {
+    return t.nutrition.mealSlots[id as MealSlotId] ?? id;
+  }
 
   return (
     <div className="nutrition-panel">
       <section className="card">
         <div className="card__head">
           <div>
-            <p className="eyebrow">برنامه هفتگی</p>
-            <h3>{DAY_LABELS_FA[activeDay]}</h3>
+            <p className="eyebrow">{t.nutrition.weeklyPlan}</p>
+            <h3>{t.nutrition.planDays[activeDay]}</h3>
           </div>
           <span className="card__head-icon" aria-hidden>
             <Salad size={20} />
@@ -38,14 +43,14 @@ export function MealPlanPanel({ plan }: Props) {
               className={`chip-toggle__item ${activeDay === day ? 'is-on' : ''}`}
               onClick={() => setActiveDay(day)}
             >
-              {DAY_LABELS_FA[day]}
+              {t.nutrition.planDays[day]}
             </button>
           ))}
         </div>
 
         {rotation ? (
           <p className="nutrition-meta muted">
-            ناهار: {rotation.lunch} · شام: {rotation.dinner}
+            {t.nutrition.lunchColon} {rotation.lunch} · {t.nutrition.dinnerColon} {rotation.dinner}
           </p>
         ) : null}
       </section>
@@ -56,7 +61,7 @@ export function MealPlanPanel({ plan }: Props) {
           <section key={slot.id} className="card nutrition-meal">
             <div className="card__head nutrition-meal__head">
               <div>
-                <p className="eyebrow">{MEAL_SLOT_LABELS_FA[slot.id] ?? slot.title}</p>
+                <p className="eyebrow">{mealSlotLabel(slot.id) ?? slot.title}</p>
                 <h3>{slot.title}</h3>
               </div>
               <span className="chip">
@@ -103,8 +108,8 @@ export function MealPlanPanel({ plan }: Props) {
       <section className="card">
         <div className="card__head">
           <div>
-            <p className="eyebrow">محدودیت‌ها</p>
-            <h3>قوانین روزانه</h3>
+            <p className="eyebrow">{t.nutrition.constraints}</p>
+            <h3>{t.nutrition.dailyRules}</h3>
           </div>
         </div>
         <ul className="nutrition-rules__grid">
@@ -121,8 +126,8 @@ export function MealPlanPanel({ plan }: Props) {
         <section className="card">
           <div className="card__head">
             <div>
-              <p className="eyebrow">انتخاب آزاد</p>
-              <h3>سبزیجات</h3>
+              <p className="eyebrow">{t.nutrition.freeChoice}</p>
+              <h3>{t.nutrition.vegetables}</h3>
             </div>
           </div>
           <div className="tag-row">
@@ -137,7 +142,7 @@ export function MealPlanPanel({ plan }: Props) {
 
       {plan.cheatMeal ? (
         <section className="card nutrition-cheat">
-          <p className="eyebrow">Cheat meal</p>
+          <p className="eyebrow">{t.nutrition.cheatMeal}</p>
           <p className="muted">{plan.cheatMeal}</p>
         </section>
       ) : null}

@@ -4,6 +4,7 @@ import { nutritionApi } from '../../api';
 import { EmptyState } from '../EmptyState';
 import { useApp } from '../../hooks/useApp';
 import type { MealSlotId, NutritionGeneratedPlate, NutritionPlatePhoto } from '@comeup/domain';
+import { useT } from '../../i18n/LocaleProvider';
 import { NutritionAuthImage } from './NutritionAuthImage';
 import { NutritionMealSlotField } from './NutritionMealSlotField';
 
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function PlatePhotoArchive({ date }: Props) {
+  const t = useT();
   const { token, notify } = useApp();
   const [mealSlot, setMealSlot] = useState<MealSlotId>('lunch');
   const [file, setFile] = useState<File | null>(null);
@@ -36,11 +38,11 @@ export function PlatePhotoArchive({ date }: Props) {
     } catch (error) {
       setPhotos([]);
       setPlates([]);
-      setLoadError(error instanceof Error ? error.message : 'بارگذاری آرشیو انجام نشد');
+      setLoadError(error instanceof Error ? error.message : t.nutrition.couldNotLoadArchive);
     } finally {
       setLoading(false);
     }
-  }, [token, date]);
+  }, [token, date, t.nutrition.couldNotLoadArchive]);
 
   useEffect(() => {
     void loadArchive();
@@ -67,9 +69,9 @@ export function PlatePhotoArchive({ date }: Props) {
       const result = await nutritionApi.uploadPhoto(token, form);
       setPhotos((current) => [result.photo, ...current]);
       setFile(null);
-      notify('عکس آپلود شد.', 'success');
+      notify(t.nutrition.photoUploaded, 'success');
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'آپلود انجام نشد', 'error');
+      notify(error instanceof Error ? error.message : t.nutrition.uploadFailedShort, 'error');
     } finally {
       setUploading(false);
     }
@@ -81,9 +83,9 @@ export function PlatePhotoArchive({ date }: Props) {
     try {
       const result = await nutritionApi.generatePlate(token, { date, mealSlot });
       setPlates((current) => [result.plate, ...current.filter((plate) => plate.id !== result.plate.id)]);
-      notify('تصویر بشقاب ساخته شد.', 'success');
+      notify(t.nutrition.plateGenerated, 'success');
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'تولید تصویر انجام نشد', 'error');
+      notify(error instanceof Error ? error.message : t.nutrition.generateFailed, 'error');
     } finally {
       setGenerating(false);
     }
@@ -94,8 +96,8 @@ export function PlatePhotoArchive({ date }: Props) {
       <section className="card">
         <div className="card__head">
           <div>
-            <p className="eyebrow">آرشیو</p>
-            <h3>عکس بشقاب واقعی</h3>
+            <p className="eyebrow">{t.nutrition.archive}</p>
+            <h3>{t.nutrition.realPlatePhotos}</h3>
           </div>
           <span className="card__head-icon" aria-hidden>
             <Camera size={20} />
@@ -105,7 +107,7 @@ export function PlatePhotoArchive({ date }: Props) {
         <NutritionMealSlotField value={mealSlot} onChange={setMealSlot} />
 
         <label className="field">
-          <span>انتخاب عکس</span>
+          <span>{t.nutrition.choosePhoto}</span>
           <input
             type="file"
             accept="image/*"
@@ -121,21 +123,21 @@ export function PlatePhotoArchive({ date }: Props) {
           onClick={() => void upload()}
         >
           {uploading ? <Loader2 className="spin" size={18} /> : <ImagePlus size={18} />}
-          آپلود عکس
+          {t.nutrition.uploadPhoto}
         </button>
       </section>
 
       {loading ? (
         <div className="loading-row">
           <Loader2 className="spin" size={20} />
-          <span>در حال بارگذاری عکس‌ها…</span>
+          <span>{t.nutrition.loadingPhotos}</span>
         </div>
       ) : loadError ? (
         <section className="card nutrition-error-card">
           <p>{loadError}</p>
           <button type="button" className="btn btn--ghost btn--block" onClick={() => void loadArchive()}>
             <RefreshCw size={16} />
-            تلاش مجدد
+            {t.nutrition.retry}
           </button>
         </section>
       ) : mealPhotos.length ? (
@@ -146,33 +148,28 @@ export function PlatePhotoArchive({ date }: Props) {
                 key={photo.id}
                 token={token}
                 path={photo.url}
-                alt={photo.caption ?? 'plate'}
+                alt={photo.caption ?? t.nutrition.plateAlt}
                 className="nutrition-photo"
               />
             ) : null,
           )}
         </div>
       ) : (
-        <EmptyState
-          title="عکسی برای این وعده نیست"
-          description="یک عکس واقعی از بشقاب این وعده آپلود کنید."
-        />
+        <EmptyState title={t.nutrition.noPhotosTitle} description={t.nutrition.noPhotosBody} />
       )}
 
       <section className="card">
         <div className="card__head">
           <div>
-            <p className="eyebrow">هوش مصنوعی</p>
-            <h3>تصویر فرضی بشقاب</h3>
+            <p className="eyebrow">{t.nutrition.ai}</p>
+            <h3>{t.nutrition.hypotheticalPlate}</h3>
           </div>
           <span className="card__head-icon" aria-hidden>
             <Sparkles size={20} />
           </span>
         </div>
 
-        <p className="field__hint nutrition-form__hint">
-          بر اساس مواد ثبت‌شده برای همین وعده، یک تصویر مرجع ساخته می‌شود.
-        </p>
+        <p className="field__hint nutrition-form__hint">{t.nutrition.generateHint}</p>
 
         <button
           type="button"
@@ -181,14 +178,14 @@ export function PlatePhotoArchive({ date }: Props) {
           onClick={() => void generate()}
         >
           {generating ? <Loader2 className="spin" size={18} /> : <Sparkles size={18} />}
-          تولید تصویر
+          {t.nutrition.generateImage}
         </button>
 
         {latestGenerated && token ? (
           <NutritionAuthImage
             token={token}
             path={latestGenerated.url}
-            alt="generated plate"
+            alt={t.nutrition.generatedPlateAlt}
             className="nutrition-photo nutrition-photo--wide"
           />
         ) : null}
