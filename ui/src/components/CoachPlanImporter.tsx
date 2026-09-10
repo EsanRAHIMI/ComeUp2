@@ -33,7 +33,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
     try {
       const result = await programsApi.importCoachPlanPreview(token, payload());
       setReview(result.review);
-      if (!result.flaggedCount) notify('No issues detected — ready to import', 'success');
+      if (!result.flaggedCount) notify('مشکلی نیست — آماده وارد کردن', 'success');
     } catch (error) {
       notify(error instanceof ApiError ? error.message : 'Could not parse plan', 'error');
     } finally {
@@ -47,7 +47,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
     try {
       await programsApi.importCoachPlan(token, payload());
       await refreshPrograms();
-      notify('Coach plan imported', 'success');
+      notify('برنامه مربی وارد شد', 'success');
       setText('');
       setReview(null);
       if (embedded) onClose?.();
@@ -72,10 +72,10 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
             rows={6}
           />
           <div className="coach-importer__controls">
-            <label className="field"><span>Start date</span><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></label>
-            <label className="field"><span>Gym time</span><input type="time" value={workoutTime} onChange={(e) => setWorkoutTime(e.target.value)} /></label>
-            <label className="field"><span>Weeks</span><input type="number" min={1} max={24} value={weeks} onChange={(e) => setWeeks(Number(e.target.value))} /></label>
-            <label className="field"><span>Session min</span><input type="number" min={30} max={180} step={5} value={sessionDuration} onChange={(e) => setSessionDuration(Number(e.target.value))} /></label>
+            <label className="field"><span>تاریخ شروع</span><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></label>
+            <label className="field"><span>ساعت باشگاه</span><input type="time" value={workoutTime} onChange={(e) => setWorkoutTime(e.target.value)} /></label>
+            <label className="field"><span>هفته‌ها</span><input type="number" min={1} max={24} value={weeks} onChange={(e) => setWeeks(Number(e.target.value))} /></label>
+            <label className="field"><span>دقیقه جلسه</span><input type="number" min={30} max={180} step={5} value={sessionDuration} onChange={(e) => setSessionDuration(Number(e.target.value))} /></label>
           </div>
           <button type="button" className="btn btn--primary btn--block" onClick={() => void preview()} disabled={busy || text.trim().length < 40}>
             {busy ? <Loader2 className="spin" size={18} /> : <CalendarDays size={18} />}
@@ -89,7 +89,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
             {flagged.length ? (
               <span className="import-review__warn"><AlertTriangle size={15} /> {flagged.length} need a look</span>
             ) : (
-              <span className="import-review__ok"><CheckCircle2 size={15} /> All clear</span>
+              <span className="import-review__ok"><CheckCircle2 size={15} /> همه چیز اوکی است</span>
             )}
           </div>
           <div className="import-review__list">
@@ -104,7 +104,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
             ))}
           </div>
           <div className="import-review__actions">
-            <button type="button" className="btn btn--ghost" onClick={() => setReview(null)} disabled={busy}>Back &amp; edit</button>
+            <button type="button" className="btn btn--ghost" onClick={() => setReview(null)} disabled={busy}>بازگشت و ویرایش</button>
             <button type="button" className="btn btn--primary" onClick={() => void confirmImport()} disabled={busy}>
               {busy ? <Loader2 className="spin" size={18} /> : <CheckCircle2 size={18} />}
               Import {flagged.length ? 'anyway' : 'plan'}
@@ -121,9 +121,9 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
       <div className="coach-importer coach-importer--embedded">
         <div className="program-create-hub__panel-head program-create-hub__panel-label">
           <div>
-            <span className="program-create-hub__panel-step">Step 2</span>
-            <strong>Import coach plan text</strong>
-            <small>Paste your coach&apos;s program — we&apos;ll build a dated schedule.</small>
+            <span className="program-create-hub__panel-step">گام ۲</span>
+            <strong>متن برنامه مربی را وارد کن</strong>
+            <small>برنامه مربی را بچسبان — یک زمان‌بندی تاریخ‌دار می‌سازیم.</small>
           </div>
           {onClose ? (
             <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">
@@ -141,8 +141,8 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
       <button type="button" className="coach-importer__toggle" onClick={() => setInternalOpen((v) => !v)}>
         <span className="card__head-icon"><ClipboardList size={20} /></span>
         <div>
-          <p className="eyebrow">Coach plan text</p>
-          <strong>Paste a written program → dated plan</strong>
+          <p className="eyebrow">متن برنامه مربی</p>
+          <strong>برنامه نوشتاری را بچسبان ← برنامه تاریخ‌دار</strong>
         </div>
         <span className="coach-importer__chevron">{open ? '−' : '+'}</span>
       </button>

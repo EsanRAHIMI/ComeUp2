@@ -2,7 +2,6 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { AiConversation } from '../models/AiConversation.js';
 import { User } from '../models/User.js';
-import { env } from '../config/env.js';
 import { AiServiceError, callAiService } from '../services/aiClient.js';
 import { consumeQuota, getQuota } from '../services/gptQuota.js';
 import {
@@ -13,37 +12,6 @@ import {
 import { parseBody } from '../utils/schemas.js';
 
 type GptReply = { reply: string; program: unknown };
-
-async function callLegacyAiService(path: string, body: unknown) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 120_000);
-
-  let response: Response;
-  try {
-    response = await fetch(`${env.AI_SERVICE_URL}${path}`, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${env.AI_SERVICE_TOKEN}`,
-      },
-      body: JSON.stringify(body),
-    });
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new AiServiceError('AI request timed out — please try again', 504);
-    }
-    throw new AiServiceError('AI service unavailable', 502);
-  } finally {
-    clearTimeout(timeout);
-  }
-
-  if (!response.ok) {
-    throw new AiServiceError(`AI service failed with ${response.status}`, response.status);
-  }
-
-  return response.json();
-}
 
 const quickGenerateSchema = z.object({
   goal: z.enum(['Weight Loss', 'Muscle Gain', 'General Fitness', 'Strength']).optional(),
@@ -108,12 +76,4 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     };
   });
 
-  app.post('/ai/recommendations', { preHandler: [app.authenticate] }, async (request, reply) => {
-    try {
-      return await callLegacyAiService('/recommendations', request.body);
-    } catch (error) {
-      request.log.error(error);
-      return reply.code(502).send({ message: 'AI service unavailable' });
-    }
-  });
 };

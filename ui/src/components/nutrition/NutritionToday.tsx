@@ -28,6 +28,7 @@ import {
   slotMacroSummary,
   waterPct,
 } from '../../lib/nutritionUi';
+import { fa } from '../../i18n/fa';
 import { missingProfileHints } from '../../lib/profileHints';
 import type {
   HabitEntry,
@@ -98,7 +99,7 @@ export function NutritionToday() {
     return (
       <div className="loading-row">
         <Loader2 className="spin" size={20} />
-        <span>Loading today…</span>
+        <span>{fa.nutrition.loadingToday}</span>
       </div>
     );
   }
@@ -117,9 +118,9 @@ export function NutritionToday() {
     try {
       const res = await nutritionApi.generateTarget(token);
       setTarget(res.target);
-      notify('Nutrition target created — review and accept it', 'success');
+      notify(fa.nutrition.targetCreated, 'success');
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Could not create target', 'error');
+      notify(error instanceof Error ? error.message : fa.nutrition.couldNotCreateTarget, 'error');
     } finally {
       setBusyTarget(false);
     }
@@ -131,10 +132,10 @@ export function NutritionToday() {
     try {
       const res = await nutritionApi.acceptTarget(token);
       setTarget(res.target);
-      notify('Target accepted — daily scoring is now on', 'success');
+      notify(fa.nutrition.targetAccepted, 'success');
       await load();
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Could not accept target', 'error');
+      notify(error instanceof Error ? error.message : fa.nutrition.couldNotAccept, 'error');
     } finally {
       setBusyTarget(false);
     }
@@ -152,10 +153,10 @@ export function NutritionToday() {
       });
       setTarget(res.target);
       setEditingTarget(false);
-      notify('Target updated', 'success');
+      notify(fa.nutrition.targetUpdated, 'success');
       await load();
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Could not update target', 'error');
+      notify(error instanceof Error ? error.message : fa.nutrition.couldNotUpdate, 'error');
     } finally {
       setBusyTarget(false);
     }
@@ -179,7 +180,7 @@ export function NutritionToday() {
       setDraft(emptyDraft);
       await load();
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Could not log meal', 'error');
+      notify(error instanceof Error ? error.message : fa.nutrition.couldNotLogMeal, 'error');
     } finally {
       setBusySlot(null);
     }
@@ -237,7 +238,7 @@ export function NutritionToday() {
                 ? score
                   ? `${confidenceLabel(score.confidence)} · ${score.nextAction}`
                   : 'Log your first meal to start scoring'
-                : 'Accept a nutrition target to unlock daily scoring'}
+                : 'هدف تغذیه را بپذیر تا امتیازدهی روزانه فعال شود'}
             </small>
           </div>
         </div>
@@ -251,7 +252,7 @@ export function NutritionToday() {
             </span>
           ) : target ? (
             <span className="nut-summary__item nut-summary__item--good">
-              <Check size={14} /> All meals logged
+              <Check size={14} /> {fa.nutrition.allMealsLogged}
             </span>
           ) : null}
         </div>
@@ -264,7 +265,7 @@ export function NutritionToday() {
       {!target ? (
         <section className="card nut-target nut-target--empty">
           <span className="card__head-icon" aria-hidden><Sparkles size={20} /></span>
-          <h3>Create your nutrition target</h3>
+          <h3>{fa.nutrition.createTarget}</h3>
           <p>
             ComeUp builds a practical daily eating structure from your goal, weight, training
             schedule, and preferences — protein, carbs, fat, and water, split across your meals.
@@ -274,7 +275,7 @@ export function NutritionToday() {
           </button>
           {hints.length > 0 ? (
             <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('profile')}>
-              Add {hints.map((h) => h.label).slice(0, 2).join(' and ')} first for accuracy
+              اول {hints.map((h) => h.label).slice(0, 2).join(' و ')} را برای دقت بیشتر اضافه کن
             </button>
           ) : null}
         </section>
@@ -291,10 +292,10 @@ export function NutritionToday() {
           </div>
 
           <div className="nut-target__macros">
-            <div><span>Protein</span><strong>{target.dailyProteinG} g</strong></div>
-            <div><span>Carbs</span><strong>{target.dailyCarbsG} g</strong></div>
-            <div><span>Fat</span><strong>{target.dailyFatG} g</strong></div>
-            <div><span>Water</span><strong>{target.waterTargetMl} ml</strong></div>
+            <div><span>{fa.nutrition.protein}</span><strong>{target.dailyProteinG} g</strong></div>
+            <div><span>{fa.nutrition.carbs}</span><strong>{target.dailyCarbsG} g</strong></div>
+            <div><span>{fa.nutrition.fat}</span><strong>{target.dailyFatG} g</strong></div>
+            <div><span>{fa.nutrition.water}</span><strong>{target.waterTargetMl} ml</strong></div>
             {target.dailyCaloriesEstimate ? (
               <div><span>~Calories</span><strong>{target.dailyCaloriesEstimate}</strong></div>
             ) : null}
@@ -303,18 +304,18 @@ export function NutritionToday() {
           {editingTarget ? (
             <div className="nut-target__edit">
               <div className="field-row">
-                <label className="field"><span>Protein (g)</span>
+                <label className="field"><span>{fa.nutrition.proteinG}</span>
                   <input type="number" min={0} max={500} placeholder={String(target.dailyProteinG)} value={targetDraft.protein} onChange={(e) => setTargetDraft((d) => ({ ...d, protein: e.target.value }))} />
                 </label>
-                <label className="field"><span>Carbs (g)</span>
+                <label className="field"><span>{fa.nutrition.carbsG}</span>
                   <input type="number" min={0} max={1000} placeholder={String(target.dailyCarbsG)} value={targetDraft.carbs} onChange={(e) => setTargetDraft((d) => ({ ...d, carbs: e.target.value }))} />
                 </label>
               </div>
               <div className="field-row">
-                <label className="field"><span>Fat (g)</span>
+                <label className="field"><span>{fa.nutrition.fatG}</span>
                   <input type="number" min={0} max={400} placeholder={String(target.dailyFatG)} value={targetDraft.fat} onChange={(e) => setTargetDraft((d) => ({ ...d, fat: e.target.value }))} />
                 </label>
-                <label className="field"><span>Water (ml)</span>
+                <label className="field"><span>{fa.nutrition.waterMl}</span>
                   <input type="number" min={250} max={10000} step={250} placeholder={String(target.waterTargetMl)} value={targetDraft.water} onChange={(e) => setTargetDraft((d) => ({ ...d, water: e.target.value }))} />
                 </label>
               </div>
@@ -323,7 +324,7 @@ export function NutritionToday() {
                   {busyTarget ? <Loader2 className="spin" size={16} /> : <Check size={16} />} Save
                 </button>
                 <button type="button" className="btn btn--ghost" onClick={() => setEditingTarget(false)}>
-                  <X size={16} /> Cancel
+                  <X size={16} /> {fa.cancel}
                 </button>
               </div>
             </div>
@@ -331,14 +332,14 @@ export function NutritionToday() {
             <div className="nut-target__actions">
               {target.status === 'proposed' ? (
                 <button type="button" className="btn btn--primary" onClick={() => void acceptTarget()} disabled={busyTarget}>
-                  {busyTarget ? <Loader2 className="spin" size={16} /> : <Check size={16} />} Accept
+                  {busyTarget ? <Loader2 className="spin" size={16} /> : <Check size={16} />} {fa.nutrition.accept}
                 </button>
               ) : null}
               <button type="button" className="btn btn--ghost" onClick={() => { setTargetDraft({ protein: '', carbs: '', fat: '', water: '' }); setEditingTarget(true); }}>
-                <Pencil size={16} /> Edit
+                <Pencil size={16} /> {fa.edit}
               </button>
               <button type="button" className="btn btn--ghost" onClick={() => void generateTarget()} disabled={busyTarget}>
-                <RefreshCw size={16} /> Regenerate
+                <RefreshCw size={16} /> {fa.nutrition.regenerate}
               </button>
             </div>
           )}
@@ -354,8 +355,8 @@ export function NutritionToday() {
       {/* ---------- Today's meals ---------- */}
       {target ? (
         <section className="card nut-meals">
-          <p className="eyebrow">Today’s meals</p>
-          {!accepted ? <p className="nut-meals__hint">Accept your target to activate scoring — logging works right away.</p> : null}
+          <p className="eyebrow">{fa.nutrition.todaysMeals}</p>
+          {!accepted ? <p className="nut-meals__hint">{fa.nutrition.acceptHint}</p> : null}
           <ul className="nut-meals__list">
             {target.mealSlots.map((slot) => {
               const log = logBySlot.get(slot.mealSlot);
@@ -411,14 +412,14 @@ export function NutritionToday() {
                   {isDetail ? (
                     <div className="nut-meal__detail">
                       <div className="field-row">
-                        <label className="field"><span>Protein (g)</span><input type="number" min={0} max={500} value={draft.proteinG} onChange={(e) => setDraft((d) => ({ ...d, proteinG: e.target.value }))} /></label>
-                        <label className="field"><span>Carbs (g)</span><input type="number" min={0} max={1000} value={draft.carbsG} onChange={(e) => setDraft((d) => ({ ...d, carbsG: e.target.value }))} /></label>
+                        <label className="field"><span>{fa.nutrition.proteinG}</span><input type="number" min={0} max={500} value={draft.proteinG} onChange={(e) => setDraft((d) => ({ ...d, proteinG: e.target.value }))} /></label>
+                        <label className="field"><span>{fa.nutrition.carbsG}</span><input type="number" min={0} max={1000} value={draft.carbsG} onChange={(e) => setDraft((d) => ({ ...d, carbsG: e.target.value }))} /></label>
                       </div>
                       <div className="field-row">
-                        <label className="field"><span>Fat (g)</span><input type="number" min={0} max={400} value={draft.fatG} onChange={(e) => setDraft((d) => ({ ...d, fatG: e.target.value }))} /></label>
-                        <label className="field"><span>Total (g)</span><input type="number" min={0} max={10000} value={draft.grams} onChange={(e) => setDraft((d) => ({ ...d, grams: e.target.value }))} /></label>
+                        <label className="field"><span>{fa.nutrition.fatG}</span><input type="number" min={0} max={400} value={draft.fatG} onChange={(e) => setDraft((d) => ({ ...d, fatG: e.target.value }))} /></label>
+                        <label className="field"><span>{fa.nutrition.totalG}</span><input type="number" min={0} max={10000} value={draft.grams} onChange={(e) => setDraft((d) => ({ ...d, grams: e.target.value }))} /></label>
                       </div>
-                      <label className="field"><span>Note</span><input maxLength={500} value={draft.note} onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))} placeholder="e.g. chicken, rice, salad" /></label>
+                      <label className="field"><span>{fa.nutrition.note}</span><input maxLength={500} value={draft.note} onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))} placeholder="e.g. chicken, rice, salad" /></label>
                       <button type="button" className="btn btn--primary btn--block" disabled={isBusy} onClick={() => void logMeal(slot.mealSlot, log?.status ?? 'done', draft)}>
                         {isBusy ? <Loader2 className="spin" size={16} /> : <Check size={16} />} Save details
                       </button>
@@ -431,9 +432,9 @@ export function NutritionToday() {
         </section>
       ) : null}
 
-      {/* ---------- Water & supplements ---------- */}
+      {/* ---------- {fa.nutrition.waterSupplements} ---------- */}
       <section className="card nut-habits">
-        <p className="eyebrow">Water & supplements</p>
+        <p className="eyebrow">{fa.nutrition.waterSupplements}</p>
         <div className="nut-habits__water">
           <div className="nut-habits__water-info">
             <Droplets size={18} />
@@ -445,7 +446,7 @@ export function NutritionToday() {
           <div className="nut-habits__water-actions">
             <button type="button" className="btn btn--ghost" disabled={waterBusy} onClick={() => void addWater(250)}>+250</button>
             <button type="button" className="btn btn--ghost" disabled={waterBusy} onClick={() => void addWater(500)}>+500</button>
-            <button type="button" className="btn btn--ghost" disabled={waterBusy || waterMl === 0} onClick={() => void addWater(-250)} aria-label="Remove 250 ml">
+            <button type="button" className="btn btn--ghost" disabled={waterBusy || waterMl === 0} onClick={() => void addWater(-250)} aria-label="کاهش ۲۵۰ میلی‌لیتر">
               <Minus size={14} />
             </button>
           </div>
@@ -463,14 +464,14 @@ export function NutritionToday() {
             })}
           </div>
         ) : (user?.supplements?.length ?? 0) === 0 ? (
-          <p className="nut-habits__hint">Add supplements in Profile to get a daily checklist here.</p>
+          <p className="nut-habits__hint">{fa.nutrition.addSupplements}</p>
         ) : null}
       </section>
 
       {/* ---------- Score explanation ---------- */}
       {score && score.score !== null ? (
         <section className="card nut-explain">
-          <p className="eyebrow">Why this score</p>
+          <p className="eyebrow">{fa.nutrition.whyScore}</p>
           <p className="nut-explain__text">{score.explanation}</p>
           {score.positiveLabels.length > 0 ? (
             <ul className="nut-explain__list nut-explain__list--pos">
@@ -489,7 +490,7 @@ export function NutritionToday() {
       {/* ---------- Timing notes ---------- */}
       {target && target.timingNotes.length > 0 ? (
         <section className="card nut-notes">
-          <p className="eyebrow">Timing tips</p>
+          <p className="eyebrow">{fa.nutrition.timingTips}</p>
           <ul>
             {target.timingNotes.map((note) => <li key={note}>{note}</li>)}
           </ul>

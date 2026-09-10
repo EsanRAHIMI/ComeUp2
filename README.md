@@ -155,7 +155,7 @@ ComeUp/
 │   ├── src/services/      # S3, AI client, coach plan parser, media resolver, …
 │   └── Dockerfile
 ├── ai/
-│   ├── src/routes/        # workouts, program, recommendations, nutrition
+│   ├── src/routes/        # program, nutrition, health
 │   ├── src/services/      # GPT program builder, plate image prompts
 │   └── Dockerfile
 ├── shared/domain/         # @comeup/domain
@@ -227,6 +227,8 @@ Coach-driven meal planning combined with user logging:
 
 Nutrition UI uses Persian labels for meal slots (`MEAL_SLOT_LABELS_FA` from `@comeup/domain`).
 
+The main web/Capacitor UI is **Persian (FA) + RTL** (`ui/src/i18n/fa.ts`, `index.html` `lang=fa` `dir=rtl`). Profile shows API base URL only in Vite DEV builds.
+
 ### Exercise Media
 
 - **Community catalog** — shared GIF/photo per exercise key (admin-managed)
@@ -289,8 +291,8 @@ These are **not** implemented in the current codebase (some appear only in futur
 | Live camera / pose tracking / real form correction | Not implemented (legacy DB fields default off; not exposed in UI/API) |
 | Voice feedback / push notifications | Not implemented (legacy DB fields default off; not exposed in UI/API) |
 | Native iOS app | Capacitor iOS shell under `ui/ios` (see iOS / Capacitor below); Android not packaged |
-| `POST /ai/recommendations` in UI | Backend proxy exists; no UI surface |
-| Rule-based Quick Generate in UI | AI endpoint exists; UI uses GPT path |
+| `POST /ai/recommendations` | Removed (unused proxy + rule-based AI tips) |
+| Rule-based Quick Generate | Removed unused AI `/workouts/generate` (UI uses GPT) |
 | Reference images for plate generation | Schema field present; not used in generation flow |
 | Bundled MongoDB in Docker Compose | Atlas required |
 
@@ -358,8 +360,6 @@ These are **not** implemented in the current codebase (some appear only in futur
 
 | Method | Path |
 |--------|------|
-| `POST` | `/workouts/generate` |
-| `POST` | `/recommendations` |
 | `GET` | `/program-chat/quota` |
 | `POST` | `/program-chat/start` |
 | `GET` | `/program-chat/:id` |
@@ -420,8 +420,6 @@ Protected by `Authorization: Bearer <AI_SERVICE_TOKEN>`. CORS is disabled.
 | Method | Path | Type |
 |--------|------|------|
 | `GET` | `/health`, `/ai/health` | Health — reports GPT and image-gen config |
-| `POST` | `/workouts/generate`, `/ai/workouts/generate` | Rule-based program |
-| `POST` | `/recommendations`, `/ai/recommendations` | Rule-based tips |
 | `POST` | `/program/generate`, `/ai/program/generate` | GPT structured program |
 | `POST` | `/nutrition/plates/generate`, `/ai/nutrition/plates/generate` | Plate image from weigh logs |
 

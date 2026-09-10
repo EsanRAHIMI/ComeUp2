@@ -9,14 +9,15 @@ import { WeighInLogger } from '../components/nutrition/WeighInLogger';
 import { useApp } from '../hooks/useApp';
 import { dateInputValue } from '../lib/format';
 import type { NutritionPlan } from '@comeup/domain';
+import { fa } from '../i18n/fa';
 
 type Tab = 'today' | 'plan' | 'log' | 'photos';
 
 const TABS: Array<{ id: Tab; label: string; icon: typeof Scale }> = [
-  { id: 'today', label: 'Today', icon: Sun },
-  { id: 'plan', label: 'برنامه', icon: ClipboardList },
-  { id: 'log', label: 'ثبت وعده', icon: Scale },
-  { id: 'photos', label: 'عکس بشقاب', icon: Camera },
+  { id: 'today', label: fa.nutrition.today, icon: Sun },
+  { id: 'plan', label: fa.nutrition.plan, icon: ClipboardList },
+  { id: 'log', label: fa.nutrition.log, icon: Scale },
+  { id: 'photos', label: fa.nutrition.photos, icon: Camera },
 ];
 
 export function NutritionView() {
@@ -59,8 +60,8 @@ export function NutritionView() {
       <section className="card">
         <div className="card__head">
           <div>
-            <p className="eyebrow">Nutrition</p>
-            <h3>Your daily food companion</h3>
+            <p className="eyebrow">{fa.nutrition.eyebrow}</p>
+            <h3>{fa.nutrition.companion}</h3>
           </div>
           <span className="card__head-icon" aria-hidden>
             <CalendarDays size={20} />
@@ -74,7 +75,7 @@ export function NutritionView() {
           </label>
         )}
 
-        <div className="chip-toggle nutrition-view__tabs" role="tablist" aria-label="Nutrition sections">
+        <div className="chip-toggle nutrition-view__tabs" role="tablist" aria-label={fa.nutrition.sections}>
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}

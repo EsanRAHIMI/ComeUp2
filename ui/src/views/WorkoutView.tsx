@@ -26,6 +26,7 @@ import { formatClock, formatDuration, nextScheduledSession, resolveRestSeconds }
 import { unlockRestAudio } from '../lib/restSound';
 import { findProgressExerciseIndex } from '../lib/sessionEngine';
 import type { Exercise, Program, ScheduleEntry } from '../types';
+import { fa } from '../i18n/fa';
 
 type Overlay = { summary: SessionSummary; status: 'saved' | 'failed' };
 
@@ -214,8 +215,8 @@ function SessionRunner({
                 <span className="runner__success-popup__icon">
                   <CheckCircle2 size={52} strokeWidth={2.2} />
                 </span>
-                <strong>Set complete!</strong>
-                <span>Crushed it — next exercise loading</span>
+                <strong>{fa.workout.setComplete}</strong>
+                <span>{fa.workout.crushedIt}</span>
               </div>
             </div>
           ) : null}
@@ -232,7 +233,7 @@ function SessionRunner({
 
         {editingImage ? (
           <div className="image-editor image-editor--compact">
-            <input value={imageDraft} onChange={(e) => setImageDraft(e.target.value)} placeholder="Image URL" />
+            <input value={imageDraft} onChange={(e) => setImageDraft(e.target.value)} placeholder={fa.workout.imageUrl} />
             <button
               type="button"
               className="btn btn--primary btn--sm"
@@ -242,7 +243,7 @@ function SessionRunner({
                 setEditingImage(false);
               }}
             >
-              Save
+              {fa.save}
             </button>
           </div>
         ) : null}
@@ -252,7 +253,7 @@ function SessionRunner({
             <div className="runner__sets-head">
               <span>{isReviewingExercise ? 'Review logged sets' : 'Mark each set complete'}</span>
               <strong>
-                {currentDone}/{current.sets} logged · {current.repRange || current.reps} {isTimed ? 'sec' : 'reps'}
+                {currentDone}/{current.sets} ثبت‌شده · {current.repRange || current.reps} {isTimed ? 'ثانیه' : 'تکرار'}
               </strong>
             </div>
             <div className="set-row" role="group" aria-label="Sets">
@@ -293,26 +294,26 @@ function SessionRunner({
           <div className="runner__nav-bar">
             <button type="button" className="runner__nav-btn" onClick={() => move(-1)} disabled={session.currentIndex === 0}>
               <ChevronLeft size={20} />
-              <span>Prev</span>
+              <span>{fa.workout.prev}</span>
             </button>
             <div className="runner__nav-center">
               <strong>{currentDone}/{current.sets}</strong>
-              <span>sets done</span>
+              <span>{fa.workout.setsDone}</span>
             </div>
             {session.currentIndex < exercises.length - 1 ? (
               <button type="button" className="runner__nav-btn runner__nav-btn--primary" onClick={() => move(1)}>
-                <span>Next</span>
+                <span>{fa.workout.next}</span>
                 <ChevronRight size={20} />
               </button>
             ) : (
               <button type="button" className="runner__nav-btn runner__nav-btn--success" onClick={() => void finish()} disabled={saving}>
                 {saving ? <Loader2 className="spin" size={20} /> : <CheckCircle2 size={20} />}
-                <span>Finish</span>
+                <span>{fa.workout.finish}</span>
               </button>
             )}
           </div>
           <button type="button" className="runner__finish-early" onClick={() => void finish()} disabled={saving}>
-            Finish workout early
+            {fa.workout.finishEarly}
           </button>
         </footer>
         </div>
@@ -328,8 +329,8 @@ function SessionRunner({
       <div className="view-stack">
         <section className="card runner-intro">
           <span className="empty-state__icon"><AlertTriangle size={22} /></span>
-          <h2>Workout saved on this device</h2>
-          <p>Your finished session hasn’t synced to the server yet. Save it again when you’re back online.</p>
+          <h2>{fa.workout.savedOnDevice}</h2>
+          <p>{fa.workout.notSynced}</p>
         </section>
         {summaryCard}
       </div>
@@ -340,7 +341,7 @@ function SessionRunner({
   return (
     <div className="view-stack">
       <section className="card runner-intro">
-        <p className="eyebrow">Ready to train</p>
+        <p className="eyebrow">{fa.workout.readyToTrain}</p>
         <h2>{scheduledSession?.title ?? program.name}</h2>
         <div className="runner-intro__stats">
           <span><Timer size={16} /> {program.duration} min</span>
@@ -354,7 +355,7 @@ function SessionRunner({
         </div>
         <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => void session.start()}>
           <PlayCircle size={20} />
-          Start workout
+          {fa.workout.startWorkout}
         </button>
       </section>
       {summaryCard}
@@ -392,24 +393,24 @@ function SummaryCard({
           {failed ? <AlertTriangle size={30} /> : <CheckCircle2 size={30} />}
         </span>
         <h2>{failed ? 'Couldn’t save' : 'Workout complete'}</h2>
-        {failed ? <p>Your workout is safe on this device. Try saving again.</p> : null}
+        {failed ? <p>{fa.workout.safeOnDevice}</p> : null}
         <div className="summary-card__stats">
-          <div><strong>{formatDuration(summary.durationSeconds)}</strong><span>Duration</span></div>
-          <div><strong>{summary.completedSets}/{summary.totalSets}</strong><span>Sets</span></div>
-          <div><strong>{summary.caloriesBurned}</strong><span>Calories</span></div>
+          <div><strong>{formatDuration(summary.durationSeconds)}</strong><span>{fa.workout.duration}</span></div>
+          <div><strong>{summary.completedSets}/{summary.totalSets}</strong><span>{fa.workout.sets}</span></div>
+          <div><strong>{summary.caloriesBurned}</strong><span>{fa.workout.calories}</span></div>
         </div>
         {failed ? (
           <div className="summary-card__actions">
-            <button type="button" className="btn btn--ghost btn--block" onClick={onDiscard}>Discard</button>
+            <button type="button" className="btn btn--ghost btn--block" onClick={onDiscard}>{fa.workout.discard}</button>
             <button type="button" className="btn btn--primary btn--block" onClick={onRetry} disabled={saving}>
               {saving ? <Loader2 className="spin" size={18} /> : <RotateCcw size={18} />}
-              Save again
+              ذخیره دوباره
             </button>
           </div>
         ) : (
           <div className="summary-card__actions">
-            <button type="button" className="btn btn--ghost btn--block" onClick={onHistory}>View history</button>
-            <button type="button" className="btn btn--primary btn--block" onClick={onClose}>Done</button>
+            <button type="button" className="btn btn--ghost btn--block" onClick={onHistory}>{fa.workout.viewHistory}</button>
+            <button type="button" className="btn btn--primary btn--block" onClick={onClose}>{fa.workout.done}</button>
           </div>
         )}
       </div>

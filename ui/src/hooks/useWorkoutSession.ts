@@ -17,6 +17,7 @@ import {
 import { browserSessionStore, readActiveSession, writeActiveSession } from '../lib/sessionStore';
 import { createSessionApi } from '../lib/sessionSync';
 import type { Exercise, Program } from '../types';
+import { fa } from '../i18n/fa';
 
 export type { SessionSummary } from '../lib/sessionEngine';
 export type CompleteOutcome = { summary: SessionSummary; status: 'saved' | 'failed' };
@@ -77,7 +78,7 @@ export function useWorkoutSession({ program, exercises, token, notify }: Params)
         const { session } = await sessionsApi.start(token, bId);
         setState((s) => (s ? { ...s, sessionId: session._id } : s));
       } catch {
-        notify('Offline — progress is saved on this device', 'info');
+        notify(fa.toast.offlineProgress, 'info');
       }
     }
     startingRef.current = false;
@@ -119,7 +120,7 @@ export function useWorkoutSession({ program, exercises, token, notify }: Params)
 
     setState(result.state);
     if (result.status === 'failed') {
-      notify('Could not save your workout. It is kept on this device — try again.', 'error');
+      notify(fa.toast.couldNotSaveWorkout, 'error');
     }
     return { summary, status: result.status };
   }, [state, totalSets, program, token, notify]);

@@ -1,6 +1,7 @@
 import { CalendarDays, Clock3, Flame, Share2 } from 'lucide-react';
 import type { Program } from '../types';
 import { getPersistedProgramId } from '../lib/format';
+import { fa } from '../i18n/fa';
 
 export function ProgramCard({
   program,
@@ -18,7 +19,7 @@ export function ProgramCard({
     <article className="program-card">
       <div className="program-card__top">
         <span className={`chip chip--${program.difficulty.toLowerCase()}`}>{program.difficulty}</span>
-        {program.isActive ? <span className="chip chip--active">Active</span> : null}
+        {program.isActive ? <span className="chip chip--active">{fa.programs.active}</span> : null}
       </div>
       <h3>{program.name}</h3>
       <p>{program.description}</p>

@@ -5,12 +5,12 @@ import type { User } from '../types';
 export type ProfileHint = { id: string; label: string };
 
 const HINTS: Array<{ id: string; label: string; missing: (u: User) => boolean }> = [
-  { id: 'weight', label: 'current weight', missing: (u) => !u.weight },
-  { id: 'height', label: 'height', missing: (u) => !u.height },
-  { id: 'age', label: 'age', missing: (u) => !u.age },
+  { id: 'weight', label: 'وزن فعلی', missing: (u) => !u.weight },
+  { id: 'height', label: 'قد', missing: (u) => !u.height },
+  { id: 'age', label: 'سن', missing: (u) => !u.age },
   {
     id: 'preferredDays',
-    label: 'preferred training days',
+    label: 'روزهای ترجیحی تمرین',
     missing: (u) => !u.preferredDays || u.preferredDays.length === 0,
   },
 ];
@@ -20,13 +20,15 @@ export function missingProfileHints(user: User | null | undefined): ProfileHint[
   return HINTS.filter((h) => h.missing(user)).map(({ id, label }) => ({ id, label }));
 }
 
-/** Human sentence for the Home prompt, e.g. "Add your current weight and height". */
+function joinFaList(items: string[]) {
+  if (items.length <= 1) return items[0] ?? '';
+  if (items.length === 2) return `${items[0]} و ${items[1]}`;
+  return `${items.slice(0, -1).join('، ')} و ${items[items.length - 1]}`;
+}
+
+/** Human sentence for the Home prompt. */
 export function profilePromptText(hints: ProfileHint[]): string | null {
   if (!hints.length) return null;
   const labels = hints.slice(0, 3).map((h) => h.label);
-  const list =
-    labels.length === 1
-      ? labels[0]
-      : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
-  return `Add your ${list} to get sharper recommendations.`;
+  return `برای پیشنهادهای دقیق‌تر، ${joinFaList(labels)} را اضافه کن.`;
 }

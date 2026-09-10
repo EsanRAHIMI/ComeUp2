@@ -6,9 +6,8 @@ import { ProfileEditor } from '../components/ProfileEditor';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
 import { useTheme } from '../hooks/useTheme';
+import { fa, goalLabel, levelLabel } from '../i18n/fa';
 import type { GptQuota } from '../types';
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function ProfileView() {
   const { user, logout, token } = useApp();
@@ -38,68 +37,72 @@ export function ProfileView() {
       <section className="card profile-card">
         <div className="profile-card__avatar">{user.name.slice(0, 1).toUpperCase()}</div>
         <h2>{user.name}</h2>
-        <p>{user.email}</p>
+        <p className="ltr-field">{user.email}</p>
         <div className="profile-card__facts">
-          <span>{user.goal}</span>
-          <span>{user.fitnessLevel}</span>
-          <span>{user.workoutDaysPerWeek} days/week</span>
-          {user.sessionDuration ? <span>{user.sessionDuration} min sessions</span> : null}
+          <span>{goalLabel(user.goal)}</span>
+          <span>{levelLabel(user.fitnessLevel)}</span>
+          <span>{fa.profile.daysPerWeek(user.workoutDaysPerWeek)}</span>
+          {user.sessionDuration ? <span>{fa.profile.minSessions(user.sessionDuration)}</span> : null}
         </div>
         <button type="button" className="btn btn--primary btn--block" onClick={() => setEditOpen(true)}>
-          <Pencil size={16} /> Edit profile
+          <Pencil size={16} /> {fa.profile.editProfile}
         </button>
       </section>
 
       <section className="card profile-details">
-        <p className="eyebrow">Your details</p>
+        <p className="eyebrow">{fa.profile.yourDetails}</p>
         <div className="profile-details__grid">
-          <div><span>Gender</span><strong>{user.gender ?? '—'}</strong></div>
-          <div><span>Age</span><strong>{user.age ?? '—'}</strong></div>
-          <div><span>Height</span><strong>{user.height ? `${user.height} cm` : '—'}</strong></div>
-          <div><span>Weight</span><strong>{user.weight ? `${user.weight} kg` : '—'}</strong></div>
-          <div><span>Target weight</span><strong>{user.targetWeight ? `${user.targetWeight} kg` : '—'}</strong></div>
-          <div><span>Goal deadline</span><strong>{user.goalDeadline ?? '—'}</strong></div>
+          <div><span>{fa.profile.gender}</span><strong>{user.gender ?? '—'}</strong></div>
+          <div><span>{fa.profile.age}</span><strong>{user.age ?? '—'}</strong></div>
+          <div><span>{fa.profile.height}</span><strong>{user.height ? fa.profile.cm(user.height) : '—'}</strong></div>
+          <div><span>{fa.profile.weight}</span><strong>{user.weight ? fa.profile.kg(user.weight) : '—'}</strong></div>
+          <div><span>{fa.profile.targetWeight}</span><strong>{user.targetWeight ? fa.profile.kg(user.targetWeight) : '—'}</strong></div>
+          <div><span>{fa.profile.goalDeadline}</span><strong className="ltr-field">{user.goalDeadline ?? '—'}</strong></div>
         </div>
         <div className="profile-details__row">
-          <span>Equipment</span>
-          <strong>{user.availableEquipment?.length ? user.availableEquipment.join(', ') : 'Not set'}</strong>
+          <span>{fa.profile.equipment}</span>
+          <strong>{user.availableEquipment?.length ? user.availableEquipment.join('، ') : fa.notSet}</strong>
         </div>
         <div className="profile-details__row">
-          <span>Preferred days</span>
-          <strong>{user.preferredDays?.length ? user.preferredDays.map((d) => WEEKDAYS[d]).join(', ') : 'Not set'}</strong>
+          <span>{fa.profile.preferredDays}</span>
+          <strong>
+            {user.preferredDays?.length
+              ? user.preferredDays.map((d) => fa.weekdaysShort[d] ?? String(d)).join('، ')
+              : fa.notSet}
+          </strong>
         </div>
         <div className="profile-details__row">
-          <span>Muscle focus</span>
-          <strong>{user.muscleFocus?.length ? user.muscleFocus.join(', ') : 'Not set'}</strong>
+          <span>{fa.profile.muscleFocus}</span>
+          <strong>{user.muscleFocus?.length ? user.muscleFocus.join('، ') : fa.notSet}</strong>
         </div>
         <div className="profile-details__row">
-          <span>Injuries</span>
-          <strong>{user.injuries?.length ? user.injuries.join(', ') : 'None'}</strong>
+          <span>{fa.profile.injuries}</span>
+          <strong>{user.injuries?.length ? user.injuries.join('، ') : fa.none}</strong>
         </div>
         <div className="profile-details__row">
-          <span>Limitations</span>
-          <strong>{user.physicalLimitations?.length ? user.physicalLimitations.join(', ') : 'None'}</strong>
+          <span>{fa.profile.limitations}</span>
+          <strong>{user.physicalLimitations?.length ? user.physicalLimitations.join('، ') : fa.none}</strong>
         </div>
         <div className="profile-details__row">
-          <span>Nutrition</span>
-          <strong>{user.nutritionPreference ? user.nutritionPreference.replace(/_/g, ' ') : 'No preference'}</strong>
+          <span>{fa.profile.nutrition}</span>
+          <strong>{user.nutritionPreference ? user.nutritionPreference.replace(/_/g, ' ') : fa.profile.noPreference}</strong>
         </div>
         <div className="profile-details__row">
-          <span>Supplements</span>
-          <strong>{user.supplements?.length ? user.supplements.join(', ') : 'None'}</strong>
+          <span>{fa.profile.supplements}</span>
+          <strong>{user.supplements?.length ? user.supplements.join('، ') : fa.none}</strong>
         </div>
         <div className="profile-details__row">
-          <span>Water target</span>
-          <strong>{user.waterTargetMl ? `${user.waterTargetMl} ml/day` : 'Not set'}</strong>
+          <span>{fa.profile.waterTarget}</span>
+          <strong>{user.waterTargetMl ? fa.profile.mlDay(user.waterTargetMl) : fa.notSet}</strong>
         </div>
         <div className="profile-details__row">
-          <span>Walking target</span>
+          <span>{fa.profile.walkingTarget}</span>
           <strong>
             {user.walkingTarget
               ? `${user.walkingTarget.value} ${
-                  user.walkingTarget.metric === 'distanceKm' ? 'km' : user.walkingTarget.metric
-                }/day`
-              : 'Not set'}
+                  user.walkingTarget.metric === 'distanceKm' ? 'کیلومتر' : user.walkingTarget.metric
+                }/روز`
+              : fa.notSet}
           </strong>
         </div>
       </section>
@@ -107,8 +110,10 @@ export function ProfileView() {
       <section className="card gpt-cta">
         <div className="gpt-cta__icon"><Bot size={22} /></div>
         <div className="gpt-cta__text">
-          <strong>AI weekly allowance</strong>
-          <small>{quota ? `${quota.remaining} of ${quota.limit} messages left this week` : 'Loading…'}</small>
+          <strong>{fa.profile.aiAllowance}</strong>
+          <small>
+            {quota ? fa.profile.messagesLeft(quota.remaining, quota.limit) : fa.profile.loadingQuota}
+          </small>
         </div>
       </section>
 
@@ -116,56 +121,62 @@ export function ProfileView() {
 
       {user.isAdmin ? (
         <button type="button" className="btn btn--primary btn--block" onClick={() => navigate('admin')}>
-          <Shield size={18} /> Admin panel
+          <Shield size={18} /> {fa.profile.adminPanel}
         </button>
       ) : null}
 
       <section className="card settings-card">
-        <p className="eyebrow">Settings</p>
+        <p className="eyebrow">{fa.profile.settings}</p>
         <div className="settings-row">
           <div>
-            <strong>Rest timer</strong>
+            <strong>{fa.profile.restTimer}</strong>
             <small>
               {user.preferences?.autoRestTimer === false
-                ? 'Off'
-                : `${user.preferences?.defaultRestSeconds ?? 60}s default between sets`}
+                ? fa.profile.restOff
+                : fa.profile.restDefault(user.preferences?.defaultRestSeconds ?? 60)}
             </small>
           </div>
         </div>
         <div className="settings-row">
           <div>
-            <strong>Rest countdown sound</strong>
-            <small>{user.preferences?.restCountdownSound === false ? 'Off' : 'Three soft beeps before the next set'}</small>
+            <strong>{fa.profile.restSound}</strong>
+            <small>{user.preferences?.restCountdownSound === false ? fa.profile.restOff : fa.profile.restSoundOn}</small>
           </div>
         </div>
         <div className="settings-row">
           <div>
-            <strong>Missed workouts</strong>
+            <strong>{fa.profile.missedWorkouts}</strong>
             <small>
-              {user.missedWorkoutBehavior === 'skip'
-                ? 'Skip to the next scheduled day'
-                : 'Shift forward — program continues in order'}
+              {user.missedWorkoutBehavior === 'skip' ? fa.profile.missedSkip : fa.profile.missedShift}
             </small>
           </div>
         </div>
         <div className="settings-row">
           <div>
-            <strong>Dark mode</strong>
-            <small>Best for dim gym lighting</small>
+            <strong>{fa.profile.darkMode}</strong>
+            <small>{fa.profile.darkModeHint}</small>
           </div>
-          <button type="button" className={`switch ${theme === 'dark' ? 'is-on' : ''}`} onClick={toggleTheme} role="switch" aria-checked={theme === 'dark'} aria-label="Dark mode">
+          <button
+            type="button"
+            className={`switch ${theme === 'dark' ? 'is-on' : ''}`}
+            onClick={toggleTheme}
+            role="switch"
+            aria-checked={theme === 'dark'}
+            aria-label={fa.profile.darkMode}
+          >
             <span />
           </button>
         </div>
-        <div className="system-list">
-          <span>API base</span>
-          <strong>{API_BASE_URL}</strong>
-        </div>
+        {import.meta.env.DEV ? (
+          <div className="system-list">
+            <span>{fa.profile.apiBase}</span>
+            <strong>{API_BASE_URL}</strong>
+          </div>
+        ) : null}
       </section>
 
-
       <section className="card settings-card danger-zone">
-        <p className="eyebrow">Danger zone</p>
+        <p className="eyebrow">{fa.profile.dangerZone}</p>
         {!deleteOpen ? (
           <button
             type="button"
@@ -177,27 +188,29 @@ export function ProfileView() {
               setDeleteError(null);
             }}
           >
-            <Trash2 size={18} /> Delete account
+            <Trash2 size={18} /> {fa.profile.deleteAccount}
           </button>
         ) : (
           <div className="danger-zone__form">
             <p className="danger-zone__warn">
-              This permanently deletes your account, programs, workouts, nutrition logs, and media.
-              Type <strong>DELETE</strong> and enter your password to confirm.
+              {fa.profile.deleteWarn}
             </p>
             <label className="field">
-              <span>Confirm</span>
+              <span>{fa.profile.confirm}</span>
               <input
+                className="ltr-field"
                 value={deleteConfirm}
                 onChange={(e) => setDeleteConfirm(e.target.value)}
                 placeholder="DELETE"
                 autoComplete="off"
+                dir="ltr"
               />
             </label>
             <label className="field">
-              <span>Password</span>
+              <span>{fa.auth.password}</span>
               <input
                 type="password"
+                dir="ltr"
                 value={deletePassword}
                 onChange={(e) => setDeletePassword(e.target.value)}
                 autoComplete="current-password"
@@ -214,7 +227,7 @@ export function ProfileView() {
                   setDeleteError(null);
                 }}
               >
-                Cancel
+                {fa.cancel}
               </button>
               <button
                 type="button"
@@ -233,14 +246,14 @@ export function ProfileView() {
                         ? error.message
                         : error instanceof Error
                           ? error.message
-                          : 'Could not delete account',
+                          : fa.profile.couldNotDelete,
                     );
                   } finally {
                     setDeleteBusy(false);
                   }
                 }}
               >
-                {deleteBusy ? 'Deleting…' : 'Permanently delete'}
+                {deleteBusy ? fa.profile.deleting : fa.profile.permanentlyDelete}
               </button>
             </div>
           </div>
@@ -248,7 +261,7 @@ export function ProfileView() {
       </section>
 
       <button type="button" className="btn btn--ghost btn--block" onClick={logout}>
-        <LogOut size={18} /> Sign out
+        <LogOut size={18} /> {fa.profile.signOut}
       </button>
 
       <ProfileEditor open={editOpen} onClose={() => setEditOpen(false)} />

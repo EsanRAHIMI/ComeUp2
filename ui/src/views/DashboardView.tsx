@@ -27,6 +27,7 @@ import { formatCountdown, formatCountdownLong, formatSessionDate, isSameLocalDay
 import { missingProfileHints, profilePromptText } from '../lib/profileHints';
 import { programKey } from '../lib/sessionEngine';
 import { readJSON, STORAGE_KEYS, writeJSON } from '../lib/storage';
+import { fa, goalLabel } from '../i18n/fa';
 import type { DailyReport, ReportOverview, WeeklyReport } from '../types';
 
 export function DashboardView() {
@@ -96,14 +97,14 @@ export function DashboardView() {
   };
 
   const todayEyebrow = daily?.completedToday
-    ? 'Today’s win'
+    ? fa.dashboard.todayWin
     : isRestDay
-      ? 'Rest day'
+      ? fa.dashboard.restDay
       : isShifted
-        ? 'Shifted workout'
+        ? fa.dashboard.shiftedWorkout
         : focusSession?.isToday === false
-          ? 'Next workout'
-          : 'Today’s workout';
+          ? fa.dashboard.nextWorkout
+          : fa.dashboard.todaysWorkout;
 
   return (
     <div className="view-stack">
@@ -111,29 +112,29 @@ export function DashboardView() {
         <div className="week-stats__head">
           <p className="eyebrow">This week</p>
           {weekly && weekly.adherencePct !== null ? (
-            <span className="week-stats__badge">{weekly.adherencePct}% plan</span>
+            <span className="week-stats__badge">{weekly.adherencePct}٪ برنامه</span>
           ) : null}
         </div>
         <div className="week-stats__mosaic">
           <article className="week-stat">
             <TrendingUp size={15} aria-hidden />
             <strong>{weekly?.completedSessions ?? 0}</strong>
-            <span>Sessions</span>
+            <span>{fa.dashboard.sessions}</span>
           </article>
           <article className="week-stat">
             <Timer size={15} aria-hidden />
             <strong>{weekly?.totalMinutes ?? 0}</strong>
-            <span>Minutes</span>
+            <span>{fa.dashboard.minutes}</span>
           </article>
           <article className="week-stat">
             <Flame size={15} aria-hidden />
             <strong>{weekly?.totalCalories ?? 0}</strong>
-            <span>Calories</span>
+            <span>{fa.dashboard.calories}</span>
           </article>
           <article className="week-stat week-stat--accent">
             <CalendarDays size={15} aria-hidden />
             <strong>{overview?.streakDays ?? daily?.streakDays ?? 0}</strong>
-            <span>Streak</span>
+            <span>{fa.dashboard.streak}</span>
           </article>
         </div>
         {weekly && weekly.adherencePct !== null ? (
@@ -144,17 +145,17 @@ export function DashboardView() {
       </section>
 
       {showProfilePrompt ? (
-        <section className="card profile-prompt" aria-label="Complete your profile">
+        <section className="card profile-prompt" aria-label={fa.dashboard.completeProfile}>
           <span className="profile-prompt__icon"><UserRound size={18} /></span>
           <div className="profile-prompt__text">
-            <strong>Sharper plan, better estimates</strong>
+            <strong>{fa.dashboard.sharperPlan}</strong>
             <small>{promptText}</small>
           </div>
           <div className="profile-prompt__actions">
             <button type="button" className="btn btn--primary" onClick={() => navigate('profile')}>
               Update
             </button>
-            <button type="button" className="profile-prompt__close" onClick={dismissPrompt} aria-label="Dismiss">
+            <button type="button" className="profile-prompt__close" onClick={dismissPrompt} aria-label={fa.dashboard.dismiss}>
               <X size={16} />
             </button>
           </div>
@@ -174,19 +175,19 @@ export function DashboardView() {
             <div className="home-countdown home-countdown--shifted">
               <RotateCcw size={18} />
               <div>
-                <strong>Carried over</strong>
-                <small>This workout shifted forward — ready whenever you are</small>
+                <strong>{fa.dashboard.carriedOver}</strong>
+                <small>{fa.dashboard.carriedOverHint}</small>
               </div>
             </div>
           ) : isRestDay ? (
             <div className="home-countdown home-countdown--rest">
               <Moon size={18} />
               <div>
-                <strong>Recovery counts too</strong>
+                <strong>{fa.dashboard.recoveryCounts}</strong>
                 <small>
                   {nextWorkout
-                    ? `Next: ${nextWorkout.title} · ${formatSessionDate(nextWorkout.startsAt)}`
-                    : 'No workout scheduled today'}
+                    ? `${fa.dashboard.nextPrefix} ${nextWorkout.title} · ${formatSessionDate(nextWorkout.startsAt)}`
+                    : fa.dashboard.noWorkoutToday}
                 </small>
               </div>
             </div>
@@ -194,9 +195,9 @@ export function DashboardView() {
             <div className="home-countdown">
               <Clock3 size={18} />
               <div>
-                <strong>{secondsUntil > 0 ? formatCountdown(secondsUntil) : 'Ready now'}</strong>
+                <strong>{secondsUntil > 0 ? formatCountdown(secondsUntil) : fa.dashboard.readyNow}</strong>
                 <small>
-                  {secondsUntil > 0 ? `${formatCountdownLong(secondsUntil)} until training` : 'Your scheduled session is here'}
+                  {secondsUntil > 0 ? `${formatCountdownLong(secondsUntil)} ${fa.dashboard.untilTraining}` : fa.dashboard.scheduledHere}
                   {focusSession ? ` · ${formatSessionDate(focusSession.startsAt)}` : ''}
                 </small>
               </div>
@@ -205,17 +206,17 @@ export function DashboardView() {
             <div className="home-countdown home-countdown--resume">
               <RotateCcw size={18} />
               <div>
-                <strong>Workout in progress</strong>
-                <small>Pick up where you left off today</small>
+                <strong>{fa.dashboard.workoutInProgress}</strong>
+                <small>{fa.dashboard.pickUpWhere}</small>
               </div>
             </div>
           ) : daily?.completedToday && daily.todayStats ? (
             <div className="home-countdown home-countdown--done">
               <Target size={18} />
               <div>
-                <strong>Session complete</strong>
+                <strong>{fa.dashboard.sessionComplete}</strong>
                 <small>
-                  {daily.todayStats.minutes} min · {daily.todayStats.sets} sets · {daily.todayStats.calories} cal burned
+                  {fa.dashboard.minSetsCal(daily.todayStats.minutes, daily.todayStats.sets, daily.todayStats.calories)}
                 </small>
               </div>
             </div>
@@ -223,40 +224,39 @@ export function DashboardView() {
 
           <div className="home-today__meta">
             <span><Dumbbell size={15} /> {activeProgram.name}</span>
-            <span><Timer size={15} /> ~{estimatedMinutes} min est.</span>
-            <span><PlayCircle size={15} /> {exerciseCount} exercises</span>
+            <span><Timer size={15} /> {fa.dashboard.estMin(estimatedMinutes)}</span>
+            <span><PlayCircle size={15} /> {fa.dashboard.exercisesCount(exerciseCount)}</span>
           </div>
           {canResumeToday ? (
             <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => navigate('workout')}>
-              <RotateCcw size={20} /> Resume workout
+              <RotateCcw size={20} /> {fa.dashboard.resumeWorkout}
             </button>
           ) : daily?.completedToday ? (
             <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('history')}>
-              View today in history <ArrowRight size={16} />
+              {fa.dashboard.viewTodayHistory} <ArrowRight size={16} />
             </button>
           ) : isRestDay ? (
             <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('programs')}>
-              View program <ArrowRight size={16} />
+              {fa.dashboard.viewProgram} <ArrowRight size={16} />
             </button>
           ) : (
             <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => navigate('workout')}>
-              <PlayCircle size={20} /> {isShifted ? 'Start shifted workout' : secondsUntil === 0 ? 'Start now' : 'Start workout'}
+              <PlayCircle size={20} /> {isShifted ? fa.dashboard.startShifted : secondsUntil === 0 ? fa.dashboard.startNow : fa.dashboard.startWorkout}
             </button>
           )}
         </section>
       ) : (
         <section className="home-today">
-          <p className="eyebrow">Get started</p>
-          <h2>No active program yet</h2>
+          <p className="eyebrow">{fa.dashboard.getStarted}</p>
+          <h2>{fa.dashboard.noActiveProgram}</h2>
           <p>
-            Build one with the AI Coach chat, quick-generate from your profile, or import a plan
-            from your coach with a share code.
+            {fa.dashboard.noActiveProgramBody}
           </p>
           <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => setBuilderOpen(true)}>
-            <Bot size={20} /> Create my program
+            <Bot size={20} /> {fa.dashboard.createMyProgram}
           </button>
           <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('programs')}>
-            See all ways to add a program <ArrowRight size={16} />
+            {fa.dashboard.seeAllWays} <ArrowRight size={16} />
           </button>
         </section>
       )}
@@ -264,13 +264,13 @@ export function DashboardView() {
       <section className="card home-nutrition">
         <div className="home-nutrition__head">
           <div>
-            <p className="eyebrow">Nutrition</p>
+            <p className="eyebrow">{fa.dashboard.nutrition}</p>
             <h3>
               {nutrition
                 ? nutrition.nextSlot
                   ? nutrition.nextSlot.title
                   : 'All meals logged'
-                : 'Your meal plan'}
+                : fa.dashboard.yourMealPlan}
             </h3>
           </div>
           {nutrition?.score != null ? (
@@ -286,7 +286,7 @@ export function DashboardView() {
             <div className="home-nutrition__meta">
               {nutrition.nextSlot?.time ? <span><Clock3 size={14} /> {nutrition.nextSlot.time}</span> : null}
               <span>
-                <Target size={14} /> {loggedCount}/{nutrition.slotCount} meals logged today
+                <Target size={14} /> {fa.dashboard.mealsLoggedToday(loggedCount, nutrition.slotCount)}
               </span>
               {nutrition.water ? (
                 <span>
@@ -301,10 +301,10 @@ export function DashboardView() {
             ) : null}
           </>
         ) : (
-          <p className="home-nutrition__empty">Open Food to see today’s plan and log your meals.</p>
+          <p className="home-nutrition__empty">{fa.dashboard.openFoodEmpty}</p>
         )}
         <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('nutrition')}>
-          {nutrition?.nextSlot ? 'Log this meal' : 'Open Food'} <ArrowRight size={16} />
+          {nutrition?.nextSlot ? fa.dashboard.logThisMeal : fa.dashboard.openFood} <ArrowRight size={16} />
         </button>
       </section>
 
@@ -312,29 +312,29 @@ export function DashboardView() {
         <section className="card home-goal">
           <div className="home-goal__head">
             <div>
-              <p className="eyebrow">Goal</p>
-              <h3>{user.goal}</h3>
+              <p className="eyebrow">{fa.dashboard.goal}</p>
+              <h3>{goalLabel(user.goal)}</h3>
             </div>
             <span className="card__head-icon" aria-hidden><Target size={20} /></span>
           </div>
           <div className="home-goal__facts">
             <div>
-              <span>Plan adherence</span>
+              <span>{fa.dashboard.planAdherence}</span>
               <strong>{weekly?.adherencePct != null ? `${weekly.adherencePct}%` : '—'}</strong>
             </div>
             <div>
-              <span>Streak</span>
-              <strong>{overview?.streakDays ?? daily?.streakDays ?? 0} days</strong>
+              <span>{fa.dashboard.streak}</span>
+              <strong>{overview?.streakDays ?? daily?.streakDays ?? 0} روز</strong>
             </div>
             <div>
-              <span>This week</span>
+              <span>{fa.dashboard.thisWeekLabel}</span>
               <strong>
                 {weekly?.completedSessions ?? 0}/{weekly?.scheduledThisWeek || '—'}
               </strong>
             </div>
           </div>
           <p className="home-goal__note">
-            Timeline estimates unlock as you log workouts and weigh-ins.
+            {fa.dashboard.timelineNote}
           </p>
         </section>
       ) : null}
@@ -343,18 +343,18 @@ export function DashboardView() {
         <section className="card home-program">
           <div className="home-program__head">
             <div>
-              <p className="eyebrow">Active program</p>
+              <p className="eyebrow">{fa.dashboard.activeProgram}</p>
               <h3>{activeProgram.name}</h3>
             </div>
             <span className={`chip chip--${activeProgram.difficulty.toLowerCase()}`}>{activeProgram.difficulty}</span>
           </div>
           <div className="home-program__facts">
-            <div><Target size={15} /><span>Goal</span><strong>{activeProgram.longTermGoal || activeProgram.tags[1] || activeProgram.difficulty}</strong></div>
-            <div><CalendarDays size={15} /><span>Days/wk</span><strong>{activeProgram.daysPerWeek}</strong></div>
-            <div><Timer size={15} /><span>Session</span><strong>{activeProgram.duration} min</strong></div>
+            <div><Target size={15} /><span>{fa.dashboard.goal}</span><strong>{activeProgram.longTermGoal || activeProgram.tags[1] || activeProgram.difficulty}</strong></div>
+            <div><CalendarDays size={15} /><span>{fa.dashboard.daysPerWeek}</span><strong>{activeProgram.daysPerWeek}</strong></div>
+            <div><Timer size={15} /><span>{fa.dashboard.session}</span><strong>{activeProgram.duration} دقیقه</strong></div>
           </div>
           <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('programs')}>
-            View full program <ArrowRight size={16} />
+            {fa.dashboard.viewFullProgram} <ArrowRight size={16} />
           </button>
         </section>
       ) : null}

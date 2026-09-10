@@ -4,15 +4,16 @@ import { measurementsApi } from '../api';
 import { useApp } from '../hooks/useApp';
 import { dateInputValue, formatDate } from '../lib/format';
 import type { Measurement } from '../types';
+import { fa } from '../i18n/fa';
 
 const FIELDS: Array<{ key: keyof Measurement; label: string }> = [
-  { key: 'weight', label: 'Weight (kg)' },
-  { key: 'bodyFat', label: 'Body fat %' },
-  { key: 'chest', label: 'Chest (cm)' },
-  { key: 'waist', label: 'Waist (cm)' },
-  { key: 'hips', label: 'Hips (cm)' },
-  { key: 'arms', label: 'Arms (cm)' },
-  { key: 'thighs', label: 'Thighs (cm)' },
+  { key: 'weight', label: 'وزن (کیلوگرم)' },
+  { key: 'bodyFat', label: 'چربی بدن ٪' },
+  { key: 'chest', label: 'سینه (سانتی‌متر)' },
+  { key: 'waist', label: 'کمر (سانتی‌متر)' },
+  { key: 'hips', label: 'باسن (سانتی‌متر)' },
+  { key: 'arms', label: 'بازو (سانتی‌متر)' },
+  { key: 'thighs', label: 'ران (سانتی‌متر)' },
 ];
 
 function num(value: string) {
@@ -46,7 +47,7 @@ export function MeasurementsPanel() {
       if (v !== undefined) (body as Record<string, unknown>)[f.key] = v;
     }
     if (Object.keys(body).length <= 2) {
-      notify('Enter at least one measurement', 'error');
+      notify('حداقل یک اندازه‌گیری وارد کن', 'error');
       return;
     }
     setBusy(true);
@@ -56,7 +57,7 @@ export function MeasurementsPanel() {
       setValues({});
       setNote('');
       setOpen(false);
-      notify('Measurement saved', 'success');
+      notify('اندازه‌گیری ذخیره شد', 'success');
     } catch (error) {
       notify(error instanceof Error ? error.message : 'Could not save', 'error');
     } finally {
@@ -70,10 +71,10 @@ export function MeasurementsPanel() {
     <section className="card measurements">
       <div className="card__head">
         <div>
-          <p className="eyebrow">Body metrics</p>
-          <h3>Measurements</h3>
+          <p className="eyebrow">شاخص‌های بدن</p>
+          <h3>اندازه‌گیری‌ها</h3>
         </div>
-        <button type="button" className="icon-btn" onClick={() => setOpen((v) => !v)} aria-label="Add measurement"><Plus size={18} /></button>
+        <button type="button" className="icon-btn" onClick={() => setOpen((v) => !v)} aria-label="افزودن اندازه‌گیری"><Plus size={18} /></button>
       </div>
 
       {latest ? (
@@ -84,12 +85,12 @@ export function MeasurementsPanel() {
           </div>
         </div>
       ) : (
-        <p className="measurements__empty">No measurements yet. Add your first to track progress.</p>
+        <p className="measurements__empty">هنوز اندازه‌گیری‌ای نیست. اولین را اضافه کن تا پیشرفت را ببینی.</p>
       )}
 
       {open ? (
         <div className="measurements__form">
-          <label className="field"><span>Date</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+          <label className="field"><span>تاریخ</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
           <div className="measurements__grid">
             {FIELDS.map((f) => (
               <label key={f.key} className="field">
@@ -98,7 +99,7 @@ export function MeasurementsPanel() {
               </label>
             ))}
           </div>
-          <label className="field"><span>Note</span><input value={note} onChange={(e) => setNote(e.target.value)} placeholder="optional" /></label>
+          <label className="field"><span>یادداشت</span><input value={note} onChange={(e) => setNote(e.target.value)} placeholder={fa.optional} /></label>
           <button type="button" className="btn btn--primary btn--block" onClick={() => void save()} disabled={busy}>
             {busy ? <Loader2 className="spin" size={18} /> : <Plus size={18} />} Save measurement
           </button>

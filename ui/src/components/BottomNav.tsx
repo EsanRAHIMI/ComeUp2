@@ -2,14 +2,15 @@ import { CalendarClock, Dumbbell, LayoutDashboard, Play, Salad } from 'lucide-re
 import { useDailyReport } from '../hooks/useDailyReport';
 import { useActiveSession } from '../hooks/useActiveSession';
 import { useRouter } from '../hooks/useRouter';
+import { fa } from '../i18n/fa';
 import type { ViewKey } from '../types';
 
 const TABS: { key: ViewKey; label: string; icon: typeof Dumbbell }[] = [
-  { key: 'dashboard', label: 'Home', icon: LayoutDashboard },
-  { key: 'programs', label: 'Programs', icon: Dumbbell },
-  { key: 'workout', label: 'Train', icon: Play },
-  { key: 'history', label: 'History', icon: CalendarClock },
-  { key: 'nutrition', label: 'Food', icon: Salad },
+  { key: 'dashboard', label: fa.nav.home, icon: LayoutDashboard },
+  { key: 'programs', label: fa.nav.programs, icon: Dumbbell },
+  { key: 'workout', label: fa.nav.train, icon: Play },
+  { key: 'history', label: fa.nav.history, icon: CalendarClock },
+  { key: 'nutrition', label: fa.nav.food, icon: Salad },
 ];
 
 export function BottomNav() {
@@ -22,7 +23,7 @@ export function BottomNav() {
     <>
       <div className="bottom-nav-scrim" aria-hidden="true" />
       <div className="bottom-nav-shell" aria-hidden={false}>
-        <nav className="bottom-nav" aria-label="Primary">
+        <nav className="bottom-nav" aria-label={fa.primaryNav}>
           {TABS.map(({ key, label, icon: Icon }) => {
             const active = view === key;
             const isTrain = key === 'workout';

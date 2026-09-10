@@ -7,6 +7,7 @@ import { useApp } from './hooks/useApp';
 import { RouterProvider, useRouter } from './hooks/useRouter';
 import { AppProvider } from './store/AppProvider';
 import { ThemeProvider } from './hooks/useTheme';
+import { fa } from './i18n/fa';
 import { AdminView } from './views/AdminView';
 import { AuthView } from './views/AuthView';
 import { DashboardView } from './views/DashboardView';
@@ -43,7 +44,7 @@ function Shell() {
     return (
       <div className="boot-splash">
         <Loader2 className="spin" size={28} />
-        <span>Loading ComeUp…</span>
+        <span>{fa.loading}</span>
       </div>
     );
   }
