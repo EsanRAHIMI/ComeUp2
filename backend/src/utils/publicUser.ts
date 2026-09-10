@@ -30,7 +30,13 @@ export function publicUser(user: any) {
       ? { metric: user.walkingTarget.metric, value: user.walkingTarget.value }
       : undefined,
     missedWorkoutBehavior: user.missedWorkoutBehavior ?? 'shift',
-    preferences: user.preferences,
+    preferences: user.preferences
+      ? {
+          autoRestTimer: user.preferences.autoRestTimer,
+          defaultRestSeconds: user.preferences.defaultRestSeconds,
+          restCountdownSound: user.preferences.restCountdownSound,
+        }
+      : undefined,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

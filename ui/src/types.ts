@@ -5,12 +5,8 @@ export type Difficulty = FitnessLevel;
 export type Gender = 'male' | 'female' | 'other' | 'undisclosed';
 
 export type UserPreferences = {
-  voiceFeedback?: boolean;
-  formCorrection?: boolean;
-  notifications?: boolean;
   autoRestTimer?: boolean;
   defaultRestSeconds?: number;
-  preferredCamera?: 'front' | 'back';
   /** Three soft beeps in the final 3 s of rest. */
   restCountdownSound?: boolean;
 };

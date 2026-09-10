@@ -55,9 +55,9 @@ const userSchema = new mongoose.Schema(
     },
     workoutDaysPerWeek: { type: Number, min: 1, max: 7, default: 3 },
     preferences: {
-      voiceFeedback: { type: Boolean, default: true },
-      formCorrection: { type: Boolean, default: true },
-      notifications: { type: Boolean, default: true },
+      voiceFeedback: { type: Boolean, default: false },
+      formCorrection: { type: Boolean, default: false },
+      notifications: { type: Boolean, default: false },
       autoRestTimer: { type: Boolean, default: true },
       defaultRestSeconds: { type: Number, min: 0, max: 900, default: 60 },
       preferredCamera: { type: String, enum: ['front', 'back'], default: 'front' },

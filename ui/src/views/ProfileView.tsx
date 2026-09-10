@@ -1,6 +1,6 @@
-import { Bot, LogOut, Pencil, Shield } from 'lucide-react';
+import { Bot, LogOut, Pencil, Shield, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { API_BASE_URL, chatApi } from '../api';
+import { API_BASE_URL, ApiError, authApi, chatApi } from '../api';
 import { MeasurementsPanel } from '../components/MeasurementsPanel';
 import { ProfileEditor } from '../components/ProfileEditor';
 import { useApp } from '../hooks/useApp';
@@ -16,6 +16,11 @@ export function ProfileView() {
   const { theme, toggleTheme } = useTheme();
   const [editOpen, setEditOpen] = useState(false);
   const [quota, setQuota] = useState<GptQuota | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -156,6 +161,90 @@ export function ProfileView() {
           <span>API base</span>
           <strong>{API_BASE_URL}</strong>
         </div>
+      </section>
+
+
+      <section className="card settings-card danger-zone">
+        <p className="eyebrow">Danger zone</p>
+        {!deleteOpen ? (
+          <button
+            type="button"
+            className="btn btn--danger btn--block"
+            onClick={() => {
+              setDeleteOpen(true);
+              setDeleteConfirm('');
+              setDeletePassword('');
+              setDeleteError(null);
+            }}
+          >
+            <Trash2 size={18} /> Delete account
+          </button>
+        ) : (
+          <div className="danger-zone__form">
+            <p className="danger-zone__warn">
+              This permanently deletes your account, programs, workouts, nutrition logs, and media.
+              Type <strong>DELETE</strong> and enter your password to confirm.
+            </p>
+            <label className="field">
+              <span>Confirm</span>
+              <input
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+              />
+            </label>
+            <label className="field">
+              <span>Password</span>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
+            {deleteError ? <p className="form-error">{deleteError}</p> : null}
+            <div className="danger-zone__actions">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                disabled={deleteBusy}
+                onClick={() => {
+                  setDeleteOpen(false);
+                  setDeleteError(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn--danger"
+                disabled={deleteBusy || deleteConfirm !== 'DELETE' || !deletePassword}
+                onClick={async () => {
+                  if (!token) return;
+                  setDeleteBusy(true);
+                  setDeleteError(null);
+                  try {
+                    await authApi.deleteAccount(token, { confirm: 'DELETE', password: deletePassword });
+                    logout();
+                  } catch (error) {
+                    setDeleteError(
+                      error instanceof ApiError
+                        ? error.message
+                        : error instanceof Error
+                          ? error.message
+                          : 'Could not delete account',
+                    );
+                  } finally {
+                    setDeleteBusy(false);
+                  }
+                }}
+              >
+                {deleteBusy ? 'Deleting…' : 'Permanently delete'}
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       <button type="button" className="btn btn--ghost btn--block" onClick={logout}>

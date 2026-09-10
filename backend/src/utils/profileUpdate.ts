@@ -49,12 +49,8 @@ export const profileUpdateSchema = z.object({
   missedWorkoutBehavior: z.enum(['shift', 'skip']).optional(),
   preferences: z
     .object({
-      voiceFeedback: z.boolean().optional(),
-      formCorrection: z.boolean().optional(),
-      notifications: z.boolean().optional(),
       autoRestTimer: z.boolean().optional(),
       defaultRestSeconds: z.number().int().min(0).max(900).optional(),
-      preferredCamera: z.enum(['front', 'back']).optional(),
       restCountdownSound: z.boolean().optional(),
     })
     .optional(),
