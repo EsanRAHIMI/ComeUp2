@@ -2,13 +2,14 @@ import { Download, Loader2 } from 'lucide-react';
 import { useState, type RefObject } from 'react';
 import { ApiError, programsApi } from '../api';
 import { useApp } from '../hooks/useApp';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
 type Props = {
   inputRef?: RefObject<HTMLInputElement | null>;
 };
 
 export function ShareCodeImport({ inputRef }: Props) {
+  const fa = useT();
   const { token, notify, refreshPrograms } = useApp();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -19,7 +20,7 @@ export function ShareCodeImport({ inputRef }: Props) {
     try {
       await programsApi.importByCode(token, code.trim().toUpperCase());
       await refreshPrograms();
-      notify('برنامه وارد شد', 'success');
+      notify(fa.shareExtra.imported, 'success');
       setCode('');
     } catch (error) {
       notify(error instanceof ApiError ? error.message : fa.shareImport.invalidCode, 'error');

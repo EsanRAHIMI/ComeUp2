@@ -1,4 +1,5 @@
 import type { Exercise, Program, ScheduleEntry } from '../types';
+import { getLocale, getT, localeToBcp47 } from '../i18n';
 
 export function localDayKey(date: Date) {
   const year = date.getFullYear();
@@ -19,26 +20,26 @@ export function nextScheduledSession(program: Program | null, now: number): Sche
   );
 }
 
-const dateTimeFormat = new Intl.DateTimeFormat('fa-IR', {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
-
-export function formatSessionDate(value: string | number | Date) {
-  return dateTimeFormat.format(new Date(value));
+function bcp47() {
+  return localeToBcp47(getLocale());
 }
 
-const dateOnlyFormat = new Intl.DateTimeFormat('fa-IR', {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-});
+export function formatSessionDate(value: string | number | Date) {
+  return new Intl.DateTimeFormat(bcp47(), {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
 
 export function formatDate(value: string | number | Date) {
-  return dateOnlyFormat.format(new Date(value));
+  return new Intl.DateTimeFormat(bcp47(), {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date(value));
 }
 
 export function formatClock(totalSeconds: number) {
@@ -49,10 +50,18 @@ export function formatClock(totalSeconds: number) {
 }
 
 export function formatDuration(totalSeconds: number) {
+  const t = getT();
   const minutes = Math.round(totalSeconds / 60);
-  if (minutes < 60) return `${minutes} دقیقه`;
+  if (minutes < 60) return `${minutes} ${t.common.minutes}`;
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
+  const locale = getLocale();
+  if (locale === 'en') {
+    return rest ? `${hours}h ${rest}m` : `${hours}h`;
+  }
+  if (locale === 'ar') {
+    return rest ? `${hours}س ${rest}د` : `${hours}س`;
+  }
   return rest ? `${hours}س ${rest}د` : `${hours}س`;
 }
 
@@ -82,24 +91,33 @@ export function estimateSessionMinutes(exercises: Exercise[], fallback = 60) {
 }
 
 export function formatCountdown(totalSeconds: number) {
+  const t = getT();
   const safe = Math.max(0, Math.round(totalSeconds));
-  if (safe <= 0) return 'الان';
+  if (safe <= 0) return t.common.now;
   const hours = Math.floor(safe / 3600);
   const minutes = Math.floor((safe % 3600) / 60);
+  const locale = getLocale();
+  if (locale === 'en') {
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes} ${t.common.min}`;
+    return `${safe}s`;
+  }
   if (hours > 0) return `${hours}س ${minutes}د`;
-  if (minutes > 0) return `${minutes} دقیقه`;
+  if (minutes > 0) return `${minutes} ${t.common.minutes}`;
   return `${safe}ث`;
 }
 
 export function formatCountdownLong(totalSeconds: number) {
+  const t = getT();
   const safe = Math.max(0, Math.round(totalSeconds));
-  if (safe <= 0) return 'آماده شروع';
+  if (safe <= 0) return t.common.readyToStart;
   const hours = Math.floor(safe / 3600);
   const minutes = Math.floor((safe % 3600) / 60);
   const parts: string[] = [];
-  if (hours) parts.push(`${hours} ساعت`);
-  if (minutes) parts.push(`${minutes} دقیقه`);
-  return parts.length ? parts.join(' و ') : `${safe} ثانیه`;
+  if (hours) parts.push(`${hours} ${hours === 1 ? t.common.hour : t.common.hours}`);
+  if (minutes) parts.push(`${minutes} ${minutes === 1 ? t.common.minute : t.common.minutes}`);
+  if (parts.length) return parts.join(` ${t.listAnd} `);
+  return `${safe} ${t.common.seconds}`;
 }
 
 export function resolveRestSeconds(exercise: Exercise, defaultRestSeconds = 60, autoRestTimer = true) {
@@ -109,13 +127,13 @@ export function resolveRestSeconds(exercise: Exercise, defaultRestSeconds = 60, 
 }
 
 export function formatHeaderTime(date: Date) {
-  return new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit' }).format(date);
+  return new Intl.DateTimeFormat(bcp47(), { hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
 export function formatHeaderWeekday(date: Date) {
-  return new Intl.DateTimeFormat('fa-IR', { weekday: 'long' }).format(date);
+  return new Intl.DateTimeFormat(bcp47(), { weekday: 'long' }).format(date);
 }
 
 export function formatHeaderDate(date: Date) {
-  return new Intl.DateTimeFormat('fa-IR', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+  return new Intl.DateTimeFormat(bcp47(), { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 }

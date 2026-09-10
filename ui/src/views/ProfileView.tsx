@@ -6,10 +6,13 @@ import { ProfileEditor } from '../components/ProfileEditor';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
 import { useTheme } from '../hooks/useTheme';
-import { fa, goalLabel, levelLabel } from '../i18n/fa';
+import { genderLabel, nutritionPrefLabel, goalLabel, levelLabel, LOCALES } from '../i18n';
+import { useT, useLocale } from '../i18n/LocaleProvider';
 import type { GptQuota } from '../types';
 
 export function ProfileView() {
+  const fa = useT();
+  const { locale, setLocale } = useLocale();
   const { user, logout, token } = useApp();
   const { navigate } = useRouter();
   const { theme, toggleTheme } = useTheme();
@@ -52,7 +55,7 @@ export function ProfileView() {
       <section className="card profile-details">
         <p className="eyebrow">{fa.profile.yourDetails}</p>
         <div className="profile-details__grid">
-          <div><span>{fa.profile.gender}</span><strong>{user.gender ?? '—'}</strong></div>
+          <div><span>{fa.profile.gender}</span><strong>{user.gender ? genderLabel(user.gender, fa) : '—'}</strong></div>
           <div><span>{fa.profile.age}</span><strong>{user.age ?? '—'}</strong></div>
           <div><span>{fa.profile.height}</span><strong>{user.height ? fa.profile.cm(user.height) : '—'}</strong></div>
           <div><span>{fa.profile.weight}</span><strong>{user.weight ? fa.profile.kg(user.weight) : '—'}</strong></div>
@@ -61,35 +64,35 @@ export function ProfileView() {
         </div>
         <div className="profile-details__row">
           <span>{fa.profile.equipment}</span>
-          <strong>{user.availableEquipment?.length ? user.availableEquipment.join('، ') : fa.notSet}</strong>
+          <strong>{user.availableEquipment?.length ? user.availableEquipment.join(fa.listSep) : fa.notSet}</strong>
         </div>
         <div className="profile-details__row">
           <span>{fa.profile.preferredDays}</span>
           <strong>
             {user.preferredDays?.length
-              ? user.preferredDays.map((d) => fa.weekdaysShort[d] ?? String(d)).join('، ')
+              ? user.preferredDays.map((d) => fa.weekdaysShort[d] ?? String(d)).join(fa.listSep)
               : fa.notSet}
           </strong>
         </div>
         <div className="profile-details__row">
           <span>{fa.profile.muscleFocus}</span>
-          <strong>{user.muscleFocus?.length ? user.muscleFocus.join('، ') : fa.notSet}</strong>
+          <strong>{user.muscleFocus?.length ? user.muscleFocus.join(fa.listSep) : fa.notSet}</strong>
         </div>
         <div className="profile-details__row">
           <span>{fa.profile.injuries}</span>
-          <strong>{user.injuries?.length ? user.injuries.join('، ') : fa.none}</strong>
+          <strong>{user.injuries?.length ? user.injuries.join(fa.listSep) : fa.none}</strong>
         </div>
         <div className="profile-details__row">
           <span>{fa.profile.limitations}</span>
-          <strong>{user.physicalLimitations?.length ? user.physicalLimitations.join('، ') : fa.none}</strong>
+          <strong>{user.physicalLimitations?.length ? user.physicalLimitations.join(fa.listSep) : fa.none}</strong>
         </div>
         <div className="profile-details__row">
           <span>{fa.profile.nutrition}</span>
-          <strong>{user.nutritionPreference ? user.nutritionPreference.replace(/_/g, ' ') : fa.profile.noPreference}</strong>
+          <strong>{user.nutritionPreference ? nutritionPrefLabel(user.nutritionPreference, fa) : fa.profile.noPreference}</strong>
         </div>
         <div className="profile-details__row">
           <span>{fa.profile.supplements}</span>
-          <strong>{user.supplements?.length ? user.supplements.join('، ') : fa.none}</strong>
+          <strong>{user.supplements?.length ? user.supplements.join(fa.listSep) : fa.none}</strong>
         </div>
         <div className="profile-details__row">
           <span>{fa.profile.waterTarget}</span>
@@ -100,8 +103,8 @@ export function ProfileView() {
           <strong>
             {user.walkingTarget
               ? `${user.walkingTarget.value} ${
-                  user.walkingTarget.metric === 'distanceKm' ? 'کیلومتر' : user.walkingTarget.metric
-                }/روز`
+                  user.walkingTarget.metric === 'distanceKm' ? fa.misc.km : user.walkingTarget.metric
+                }${fa.misc.perDay}`
               : fa.notSet}
           </strong>
         </div>
@@ -149,6 +152,27 @@ export function ProfileView() {
             <small>
               {user.missedWorkoutBehavior === 'skip' ? fa.profile.missedSkip : fa.profile.missedShift}
             </small>
+          </div>
+        </div>
+
+        <div className="settings-row settings-row--stack">
+          <div>
+            <strong>{fa.language.label}</strong>
+            <small>{fa.language.hint}</small>
+          </div>
+          <div className="chip-toggle language-picker" role="radiogroup" aria-label={fa.language.label}>
+            {LOCALES.map((code) => (
+              <button
+                key={code}
+                type="button"
+                role="radio"
+                aria-checked={locale === code}
+                className={`chip ${locale === code ? 'is-active' : ''}`}
+                onClick={() => setLocale(code)}
+              >
+                {fa.language[code]}
+              </button>
+            ))}
           </div>
         </div>
         <div className="settings-row">

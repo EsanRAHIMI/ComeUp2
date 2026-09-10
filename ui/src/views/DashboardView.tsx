@@ -27,10 +27,12 @@ import { formatCountdown, formatCountdownLong, formatSessionDate, isSameLocalDay
 import { missingProfileHints, profilePromptText } from '../lib/profileHints';
 import { programKey } from '../lib/sessionEngine';
 import { readJSON, STORAGE_KEYS, writeJSON } from '../lib/storage';
-import { fa, goalLabel } from '../i18n/fa';
+import { goalLabel } from '../i18n';
+import { useT } from '../i18n/LocaleProvider';
 import type { DailyReport, ReportOverview, WeeklyReport } from '../types';
 
 export function DashboardView() {
+  const fa = useT();
   const { activeProgram, token, user } = useApp();
   const { navigate } = useRouter();
   const { isRunning, isUnsaved, session } = useActiveSession();
@@ -84,8 +86,17 @@ export function DashboardView() {
   const isRestDay = todayStatus === 'rest' && !canResumeToday && !daily?.completedToday;
   const isShifted = todayStatus === 'shifted';
 
-  const hints = missingProfileHints(user);
-  const promptText = profilePromptText(hints);
+  const hints = missingProfileHints(user, {
+    weight: fa.profileHints.weight,
+    height: fa.profileHints.height,
+    age: fa.profileHints.age,
+    preferredDays: fa.profileHints.preferredDays,
+  });
+  const promptText = profilePromptText(hints, fa.profileHints.prompt, (items) => {
+    if (items.length <= 1) return items[0] ?? '';
+    if (items.length === 2) return `${items[0]} ${fa.listAnd} ${items[1]}`;
+    return `${items.slice(0, -1).join(fa.listSep)} ${fa.listAnd} ${items[items.length - 1]}`;
+  });
   const showProfilePrompt = Boolean(promptText) && !promptDismissed;
 
   const nutrition = daily?.nutrition;
@@ -112,7 +123,7 @@ export function DashboardView() {
         <div className="week-stats__head">
           <p className="eyebrow">{fa.dashboard.thisWeek}</p>
           {weekly && weekly.adherencePct !== null ? (
-            <span className="week-stats__badge">{weekly.adherencePct}٪ برنامه</span>
+            <span className="week-stats__badge">{weekly.adherencePct}{fa.misc.planPct}</span>
           ) : null}
         </div>
         <div className="week-stats__mosaic">
@@ -324,7 +335,7 @@ export function DashboardView() {
             </div>
             <div>
               <span>{fa.dashboard.streak}</span>
-              <strong>{overview?.streakDays ?? daily?.streakDays ?? 0} روز</strong>
+              <strong>{overview?.streakDays ?? daily?.streakDays ?? 0} {fa.misc.days}</strong>
             </div>
             <div>
               <span>{fa.dashboard.thisWeekLabel}</span>
@@ -351,7 +362,7 @@ export function DashboardView() {
           <div className="home-program__facts">
             <div><Target size={15} /><span>{fa.dashboard.goal}</span><strong>{activeProgram.longTermGoal || activeProgram.tags[1] || activeProgram.difficulty}</strong></div>
             <div><CalendarDays size={15} /><span>{fa.dashboard.daysPerWeek}</span><strong>{activeProgram.daysPerWeek}</strong></div>
-            <div><Timer size={15} /><span>{fa.dashboard.session}</span><strong>{activeProgram.duration} دقیقه</strong></div>
+            <div><Timer size={15} /><span>{fa.dashboard.session}</span><strong>{activeProgram.duration} {fa.misc.minutes}</strong></div>
           </div>
           <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('programs')}>
             {fa.dashboard.viewFullProgram} <ArrowRight size={16} />

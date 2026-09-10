@@ -9,6 +9,8 @@ export type UserPreferences = {
   defaultRestSeconds?: number;
   /** Three soft beeps in the final 3 s of rest. */
   restCountdownSound?: boolean;
+  /** UI language preference (synced when signed in). */
+  locale?: 'en' | 'fa' | 'ar';
 };
 
 export type NutritionPreference =

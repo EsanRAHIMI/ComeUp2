@@ -1,3 +1,4 @@
+import { useCallback, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { AppHeader } from './components/AppHeader';
 import { BottomNav } from './components/BottomNav';
@@ -7,7 +8,8 @@ import { useApp } from './hooks/useApp';
 import { RouterProvider, useRouter } from './hooks/useRouter';
 import { AppProvider } from './store/AppProvider';
 import { ThemeProvider } from './hooks/useTheme';
-import { fa } from './i18n/fa';
+import { isLocale, type Locale } from './i18n';
+import { LocaleProvider, useT } from './i18n/LocaleProvider';
 import { AdminView } from './views/AdminView';
 import { AuthView } from './views/AuthView';
 import { DashboardView } from './views/DashboardView';
@@ -38,6 +40,7 @@ function CurrentView() {
 }
 
 function Shell() {
+  const fa = useT();
   const { ready, token } = useApp();
 
   if (!ready) {
@@ -73,11 +76,32 @@ function Shell() {
   );
 }
 
+function LocaleBridge({ children }: { children: ReactNode }) {
+  const { user, updateProfile } = useApp();
+  const onLocaleChange = useCallback(
+    (locale: Locale) => {
+      void updateProfile({ preferences: { locale } }, { silent: true });
+    },
+    [updateProfile],
+  );
+  const initial = user?.preferences?.locale;
+  return (
+    <LocaleProvider
+      initialLocale={initial && isLocale(initial) ? initial : undefined}
+      onLocaleChange={onLocaleChange}
+    >
+      {children}
+    </LocaleProvider>
+  );
+}
+
 export function App() {
   return (
     <ThemeProvider>
       <AppProvider>
-        <Shell />
+        <LocaleBridge>
+          <Shell />
+        </LocaleBridge>
       </AppProvider>
     </ThemeProvider>
   );

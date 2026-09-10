@@ -7,7 +7,8 @@ import { DraftPreview } from './DraftPreview';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
 import { profileContextFromUser } from '../lib/aiProfile';
-import { fa, equipmentLabel, focusLabel, goalLabel, levelLabel } from '../i18n/fa';
+import { equipmentLabel, focusLabel, goalLabel, levelLabel } from '../i18n';
+import { useT } from '../i18n/LocaleProvider';
 import type { FitnessLevel, Goal, GptDraftProgram, GptQuota } from '../types';
 
 const GOALS: Goal[] = ['General Fitness', 'Strength', 'Muscle Gain', 'Weight Loss'];
@@ -20,6 +21,7 @@ function toggle(list: string[], value: string) {
 }
 
 export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const fa = useT();
   const { user, token, notify, refreshPrograms } = useApp();
   const { navigate } = useRouter();
   const [goal, setGoal] = useState<Goal>(user?.goal ?? 'General Fitness');
@@ -103,7 +105,7 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
     try {
       await chatApi.convert(token, conversationId, { activate: true });
       await refreshPrograms();
-      notify('برنامه ذخیره و فعال شد', 'success');
+      notify(fa.generateExtra.savedActivated, 'success');
       onClose();
       navigate('dashboard');
     } catch (error) {
@@ -150,13 +152,13 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
 
             <div className="field-row">
               <label className="field">
-                <span>هدف</span>
+                <span>{fa.generateExtra.goal}</span>
                 <select value={goal} onChange={(e) => setGoal(e.target.value as Goal)}>
                   {GOALS.map((g) => <option key={g} value={g}>{goalLabel(g)}</option>)}
                 </select>
               </label>
               <label className="field">
-                <span>سطح</span>
+                <span>{fa.generateExtra.level}</span>
                 <select value={level} onChange={(e) => setLevel(e.target.value as FitnessLevel)}>
                   {LEVELS.map((l) => <option key={l} value={l}>{levelLabel(l)}</option>)}
                 </select>
@@ -165,17 +167,17 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
 
             <div className="field-row">
               <label className="field">
-                <span>جلسه (دقیقه)</span>
+                <span>{fa.generateExtra.sessionMin}</span>
                 <input type="number" min={20} max={180} step={5} value={duration} onChange={(e) => setDuration(Number(e.target.value))} />
               </label>
               <label className="field">
-                <span>روز در هفته</span>
+                <span>{fa.generateExtra.daysPerWeek}</span>
                 <input type="number" min={1} max={7} value={daysPerWeek} onChange={(e) => setDaysPerWeek(Number(e.target.value))} />
               </label>
             </div>
 
             <div className="field">
-              <span>تجهیزات</span>
+              <span>{fa.generateExtra.equipment}</span>
               <div className="chip-toggle">
                 {EQUIPMENT.map((item) => (
                   <button
@@ -211,7 +213,7 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
               <input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="مثلاً پرس بالای سر نکن، تمرکز بیشتر روی باسن…"
+                placeholder={fa.generateExtra.notesPh}
                 maxLength={500}
               />
             </label>
@@ -227,7 +229,7 @@ export function GenerateForm({ open, onClose }: { open: boolean; onClose: () => 
             <DraftPreview draft={draft} />
             <div className="modal-card__actions">
               <button type="button" className="btn btn--ghost" onClick={resetPreview} disabled={confirming}>
-                تنظیم و تولید مجدد
+                {fa.generateExtra.tweakAgain}
               </button>
               <button type="button" className="btn btn--success btn--lg" onClick={() => void confirm()} disabled={confirming}>
                 {confirming ? <Loader2 className="spin" size={18} /> : <CheckCircle2 size={18} />}

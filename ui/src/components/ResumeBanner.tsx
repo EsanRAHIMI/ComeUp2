@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { useActiveSession } from '../hooks/useActiveSession';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 import { syncActiveSession } from '../lib/sessionSync';
 
 export function ResumeBanner() {
+  const fa = useT();
   const { session, isRunning, isUnsaved, discard } = useActiveSession();
   const { view, navigate } = useRouter();
   const { token, notify } = useApp();

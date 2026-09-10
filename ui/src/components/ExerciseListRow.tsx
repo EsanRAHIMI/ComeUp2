@@ -1,5 +1,5 @@
 import { useApp } from '../hooks/useApp';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 import { resolveExerciseImage } from '../lib/exerciseImages';
 import type { Exercise } from '../types';
 import { ExerciseImage } from './ExerciseImage';
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export function ExerciseListRow({ exercise, index, showMuscleGroups = true }: Props) {
+  const fa = useT();
   const { exerciseMedia } = useApp();
   const imageSrc = resolveExerciseImage(exercise, exerciseMedia);
 

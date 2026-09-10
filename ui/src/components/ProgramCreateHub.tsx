@@ -1,6 +1,6 @@
 import { Bot, ChevronRight, ClipboardList, Share2, Sparkles } from 'lucide-react';
 import { useEffect, useState, type RefObject } from 'react';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 import { CoachPlanImporter } from './CoachPlanImporter';
 import { ShareCodeImport } from './ShareCodeImport';
 
@@ -25,42 +25,41 @@ type Option = {
   badge?: string;
 };
 
-const AI_OPTIONS: Option[] = [
-  {
-    id: 'ai-coach',
-    icon: Bot,
-    title: 'مربی هوش مصنوعی',
-    tagline: fa.createHub.aiTagline,
-    action: fa.createHub.startChat,
-    badge: fa.createHub.recommended,
-  },
-  {
-    id: 'quick',
-    icon: Sparkles,
-    title: 'ساخت سریع',
-    tagline: fa.createHub.quickTagline,
-    action: fa.createHub.generate,
-  },
-];
-
-const IMPORT_OPTIONS: Option[] = [
-  {
-    id: 'share',
-    icon: Share2,
-    title: fa.createHub.shareTitle,
-    tagline: fa.createHub.shareTagline,
-    action: fa.createHub.enterCode,
-  },
-  {
-    id: 'coach',
-    icon: ClipboardList,
-    title: fa.createHub.coachTitle,
-    tagline: fa.createHub.coachTagline,
-    action: fa.createHub.pastePlan,
-  },
-];
-
 export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelChange, shareInputRef }: Props) {
+  const fa = useT();
+  const AI_OPTIONS: Option[] = [
+    {
+      id: 'ai-coach',
+      icon: Bot,
+      title: fa.createHub.buildWithAi,
+      tagline: fa.createHub.aiTagline,
+      action: fa.createHub.startChat,
+      badge: fa.createHub.recommended,
+    },
+    {
+      id: 'quick',
+      icon: Sparkles,
+      title: fa.generate.title,
+      tagline: fa.createHub.quickTagline,
+      action: fa.createHub.generate,
+    },
+  ];
+  const IMPORT_OPTIONS: Option[] = [
+    {
+      id: 'share',
+      icon: Share2,
+      title: fa.createHub.shareTitle,
+      tagline: fa.createHub.shareTagline,
+      action: fa.createHub.enterCode,
+    },
+    {
+      id: 'coach',
+      icon: ClipboardList,
+      title: fa.createHub.coachTitle,
+      tagline: fa.createHub.coachTagline,
+      action: fa.createHub.pastePlan,
+    },
+  ];
   const [highlightShare, setHighlightShare] = useState(false);
 
   useEffect(() => {
@@ -97,9 +96,9 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
   return (
     <section className="program-create-hub card" aria-label={fa.createHub.aria}>
       <header className="program-create-hub__head">
-        <div className="program-create-hub__step-pill">گام ۱ · یکی را انتخاب کن</div>
-        <h2>چطور می‌خواهی برنامه‌ات را بگیری؟</h2>
-        <p className="program-create-hub__sub">یکی از گزینه‌های زیر را بزن. قبل از ذخیره می‌توانی عوض کنی.</p>
+        <div className="program-create-hub__step-pill">{fa.createHubExtra.step1}</div>
+        <h2>{fa.createHubExtra.howTitle}</h2>
+        <p className="program-create-hub__sub">{fa.createHubExtra.howSub}</p>
       </header>
 
       <div className="program-create-hub__groups">
@@ -113,7 +112,7 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
         />
 
         <div className="program-create-hub__divider" role="separator">
-          <span>یا وارد کن</span>
+          <span>{fa.createHubExtra.orImport}</span>
         </div>
 
         <OptionGroup
@@ -129,8 +128,8 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
       {panel === 'share' ? (
         <div className={`program-create-hub__panel ${highlightShare ? 'is-highlight' : ''}`} id="share-code-import">
           <div className="program-create-hub__panel-label">
-            <span className="program-create-hub__panel-step">گام ۲</span>
-            <strong>کد اشتراک را وارد کن</strong>
+            <span className="program-create-hub__panel-step">{fa.createHubExtra.step2}</span>
+            <strong>{fa.createHubExtra.enterShare}</strong>
           </div>
           <ShareCodeImport inputRef={shareInputRef} />
         </div>
@@ -143,7 +142,7 @@ export function ProgramCreateHub({ onAiCoach, onQuickGenerate, panel, onPanelCha
       ) : null}
 
       {!panel ? (
-        <p className="program-create-hub__footer-hint">گزینه وارد کردن را بالا انتخاب کن، یا با مربی هوش مصنوعی شروع کن.</p>
+        <p className="program-create-hub__footer-hint">{fa.createHubExtra.footerHint}</p>
       ) : null}
     </section>
   );

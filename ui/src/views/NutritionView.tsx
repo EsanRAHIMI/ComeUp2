@@ -9,18 +9,18 @@ import { WeighInLogger } from '../components/nutrition/WeighInLogger';
 import { useApp } from '../hooks/useApp';
 import { dateInputValue } from '../lib/format';
 import type { NutritionPlan } from '@comeup/domain';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
 type Tab = 'today' | 'plan' | 'log' | 'photos';
 
-const TABS: Array<{ id: Tab; label: string; icon: typeof Scale }> = [
-  { id: 'today', label: fa.nutrition.today, icon: Sun },
-  { id: 'plan', label: fa.nutrition.plan, icon: ClipboardList },
-  { id: 'log', label: fa.nutrition.log, icon: Scale },
-  { id: 'photos', label: fa.nutrition.photos, icon: Camera },
-];
-
 export function NutritionView() {
+  const fa = useT();
+  const TABS = [
+    { id: 'today' as const, label: fa.nutrition.today, icon: Sun },
+    { id: 'plan' as const, label: fa.nutrition.plan, icon: ClipboardList },
+    { id: 'log' as const, label: fa.nutrition.log, icon: Scale },
+    { id: 'photos' as const, label: fa.nutrition.photos, icon: Camera },
+  ];
   const { token, notify } = useApp();
   const [date, setDate] = useState(() => dateInputValue());
   const [tab, setTab] = useState<Tab>('today');

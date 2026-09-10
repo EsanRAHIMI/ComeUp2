@@ -26,11 +26,12 @@ import { formatClock, formatDuration, nextScheduledSession, resolveRestSeconds }
 import { unlockRestAudio } from '../lib/restSound';
 import { findProgressExerciseIndex } from '../lib/sessionEngine';
 import type { Exercise, Program, ScheduleEntry } from '../types';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
 type Overlay = { summary: SessionSummary; status: 'saved' | 'failed' };
 
 export function WorkoutView() {
+  const fa = useT();
   const { activeProgram } = useApp();
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -84,6 +85,7 @@ function SessionRunner({
   exercises: Exercise[];
   scheduledSession: ScheduleEntry | null;
 }) {
+  const fa = useT();
   const { exerciseMedia, token, notify, saveExerciseImage, user } = useApp();
   const { navigate } = useRouter();
   const session = useWorkoutSession({ program, exercises, token, notify });
@@ -255,7 +257,7 @@ function SessionRunner({
             <div className="runner__sets-head">
               <span>{isReviewingExercise ? fa.workoutExtra.reviewSets : fa.workoutExtra.markSets}</span>
               <strong>
-                {currentDone}/{current.sets} ثبت‌شده · {current.repRange || current.reps} {isTimed ? 'ثانیه' : 'تکرار'}
+                {currentDone}/{current.sets} {fa.misc.logged} · {current.repRange || current.reps} {isTimed ? fa.misc.seconds : fa.misc.reps}
               </strong>
             </div>
             <div className="set-row" role="group" aria-label={fa.workoutExtra.setsAria}>
@@ -386,6 +388,7 @@ function SummaryCard({
   onRetry: () => void;
   onDiscard: () => void;
 }) {
+  const fa = useT();
   const failed = status === 'failed';
   return (
     <div className="summary-overlay" role="dialog" aria-label={fa.workoutExtra.completeAria}>

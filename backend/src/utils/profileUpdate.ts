@@ -52,6 +52,7 @@ export const profileUpdateSchema = z.object({
       autoRestTimer: z.boolean().optional(),
       defaultRestSeconds: z.number().int().min(0).max(900).optional(),
       restCountdownSound: z.boolean().optional(),
+      locale: z.enum(['en', 'fa', 'ar']).optional(),
     })
     .optional(),
 });

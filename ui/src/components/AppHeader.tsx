@@ -3,23 +3,23 @@ import { useEffect, useState } from 'react';
 import { useApp } from '../hooks/useApp';
 import { useTheme } from '../hooks/useTheme';
 import { useRouter } from '../hooks/useRouter';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 import { formatHeaderDate, formatHeaderTime, formatHeaderWeekday } from '../lib/format';
 import type { ViewKey } from '../types';
-
-const TITLES: Record<ViewKey, string> = {
-  dashboard: fa.titles.dashboard,
-  programs: fa.titles.programs,
-  workout: fa.titles.workout,
-  history: fa.titles.history,
-  nutrition: fa.titles.nutrition,
-  profile: fa.titles.profile,
-  admin: fa.titles.admin,
-};
 
 const SUB_VIEWS = new Set<ViewKey>(['profile', 'admin']);
 
 export function AppHeader() {
+  const fa = useT();
+  const TITLES: Record<ViewKey, string> = {
+    dashboard: fa.titles.dashboard,
+    programs: fa.titles.programs,
+    workout: fa.titles.workout,
+    history: fa.titles.history,
+    nutrition: fa.titles.nutrition,
+    profile: fa.titles.profile,
+    admin: fa.titles.admin,
+  };
   const { busy, user } = useApp();
   const { theme, toggleTheme } = useTheme();
   const { view, navigate } = useRouter();

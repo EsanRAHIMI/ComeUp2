@@ -28,7 +28,7 @@ import {
   slotMacroSummary,
   waterPct,
 } from '../../lib/nutritionUi';
-import { fa } from '../../i18n/fa';
+import { useT } from '../../i18n/LocaleProvider';
 import { missingProfileHints } from '../../lib/profileHints';
 import type {
   HabitEntry,
@@ -50,6 +50,26 @@ function numOrUndefined(value: string) {
 }
 
 export function NutritionToday() {
+  const fa = useT();
+  const localizedScoreLabel = (score: number | null | undefined) => {
+    const tone = score == null ? 'none' : score >= 80 ? 'good' : score >= 60 ? 'ok' : 'low';
+    if (tone === 'good') return fa.nutrition.onTrack;
+    if (tone === 'ok') return fa.nutrition.almostThere;
+    if (tone === 'low') return fa.nutrition.offPlanToday;
+    return fa.nutrition.noDataYet;
+  };
+  const localizedConfidence = (c: 'low' | 'medium' | 'high') =>
+    c === 'high' ? fa.nutrition.highConf : c === 'medium' ? fa.nutrition.mediumConf : fa.nutrition.roughEstimate;
+  const localizedStatus = (status: 'done' | 'heavier' | 'lighter' | 'off_plan' | 'skipped') => {
+    const map = {
+      done: fa.nutrition.done,
+      heavier: fa.nutrition.heavier,
+      lighter: fa.nutrition.lighter,
+      off_plan: fa.nutrition.offPlan,
+      skipped: fa.nutrition.skipped,
+    } as const;
+    return map[status];
+  };
   const { token, user, notify } = useApp();
   const { navigate } = useRouter();
   const today = dateInputValue();
@@ -110,7 +130,12 @@ export function NutritionToday() {
   const waterTarget = target?.waterTargetMl ?? user?.waterTargetMl ?? 2000;
   const waterMl = habit?.waterMl ?? 0;
   const wPct = waterPct(waterMl, waterTarget);
-  const hints = missingProfileHints(user);
+  const hints = missingProfileHints(user, {
+    weight: fa.profileHints.weight,
+    height: fa.profileHints.height,
+    age: fa.profileHints.age,
+    preferredDays: fa.profileHints.preferredDays,
+  });
 
   async function generateTarget() {
     if (!token) return;
@@ -232,11 +257,11 @@ export function NutritionToday() {
             <span>score</span>
           </div>
           <div className="nut-summary__text">
-            <h3>{scoreLabel(score?.score)}</h3>
+            <h3>{localizedScoreLabel(score?.score)}</h3>
             <small>
               {accepted
                 ? score
-                  ? `${confidenceLabel(score.confidence)} · ${score.nextAction}`
+                  ? `${localizedConfidence(score.confidence)} · ${score.nextAction}`
                   : 'Log your first meal to start scoring'
                 : 'هدف تغذیه را بپذیر تا امتیازدهی روزانه فعال شود'}
             </small>
@@ -286,7 +311,7 @@ export function NutritionToday() {
               <p className="eyebrow">Daily target · {target.goalSnapshot.goal}</p>
               <h3>
                 {target.status === 'accepted' ? 'Your nutrition target' : 'Proposed target'}
-                <span className={`chip nut-conf nut-conf--${target.confidence}`}>{confidenceLabel(target.confidence)}</span>
+                <span className={`chip nut-conf nut-conf--${target.confidence}`}>{localizedConfidence(target.confidence)}</span>
               </h3>
             </div>
           </div>
@@ -371,7 +396,7 @@ export function NutritionToday() {
                     </div>
                     {log ? (
                       <span className={`chip nut-status nut-status--${MEAL_STATUS_META[log.status].tone}`}>
-                        {MEAL_STATUS_META[log.status].label}
+                        {localizedStatus(log.status)}
                       </span>
                     ) : null}
                   </div>
@@ -386,7 +411,7 @@ export function NutritionToday() {
                         onClick={() => void logMeal(slot.mealSlot, status)}
                       >
                         {status === 'done' ? <Check size={14} /> : status === 'heavier' ? <TrendingUp size={14} /> : status === 'lighter' ? <TrendingDown size={14} /> : status === 'off_plan' ? <X size={14} /> : <Minus size={14} />}
-                        {MEAL_STATUS_META[status].label}
+                        {localizedStatus(status)}
                       </button>
                     ))}
                     <button

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ApiError, programsApi } from '../api';
 import { useApp } from '../hooks/useApp';
 import { dateInputValue } from '../lib/format';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 import type { ImportReviewItem } from '../types';
 
 type Props = {
@@ -14,6 +14,7 @@ type Props = {
 };
 
 export function CoachPlanImporter({ embedded = false, open: openProp = false, onClose }: Props) {
+  const fa = useT();
   const { token, notify, refreshPrograms } = useApp();
   const [text, setText] = useState('');
   const [startDate, setStartDate] = useState(() => dateInputValue());
@@ -34,7 +35,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
     try {
       const result = await programsApi.importCoachPlanPreview(token, payload());
       setReview(result.review);
-      if (!result.flaggedCount) notify('مشکلی نیست — آماده وارد کردن', 'success');
+      if (!result.flaggedCount) notify(fa.coachImportExtra.ready, 'success');
     } catch (error) {
       notify(error instanceof ApiError ? error.message : fa.coachImport.couldNotParse, 'error');
     } finally {
@@ -48,7 +49,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
     try {
       await programsApi.importCoachPlan(token, payload());
       await refreshPrograms();
-      notify('برنامه مربی وارد شد', 'success');
+      notify(fa.coachImportExtra.imported, 'success');
       setText('');
       setReview(null);
       if (embedded) onClose?.();
@@ -73,10 +74,10 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
             rows={6}
           />
           <div className="coach-importer__controls">
-            <label className="field"><span>تاریخ شروع</span><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></label>
-            <label className="field"><span>ساعت باشگاه</span><input type="time" value={workoutTime} onChange={(e) => setWorkoutTime(e.target.value)} /></label>
-            <label className="field"><span>هفته‌ها</span><input type="number" min={1} max={24} value={weeks} onChange={(e) => setWeeks(Number(e.target.value))} /></label>
-            <label className="field"><span>دقیقه جلسه</span><input type="number" min={30} max={180} step={5} value={sessionDuration} onChange={(e) => setSessionDuration(Number(e.target.value))} /></label>
+            <label className="field"><span>{fa.coachImportExtra.startDate}</span><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></label>
+            <label className="field"><span>{fa.coachImportExtra.gymTime}</span><input type="time" value={workoutTime} onChange={(e) => setWorkoutTime(e.target.value)} /></label>
+            <label className="field"><span>{fa.coachImportExtra.weeks}</span><input type="number" min={1} max={24} value={weeks} onChange={(e) => setWeeks(Number(e.target.value))} /></label>
+            <label className="field"><span>{fa.coachImportExtra.sessionMin}</span><input type="number" min={30} max={180} step={5} value={sessionDuration} onChange={(e) => setSessionDuration(Number(e.target.value))} /></label>
           </div>
           <button type="button" className="btn btn--primary btn--block" onClick={() => void preview()} disabled={busy || text.trim().length < 40}>
             {busy ? <Loader2 className="spin" size={18} /> : <CalendarDays size={18} />}
@@ -90,7 +91,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
             {flagged.length ? (
               <span className="import-review__warn"><AlertTriangle size={15} /> {fa.coachImport.needLook(flagged.length)}</span>
             ) : (
-              <span className="import-review__ok"><CheckCircle2 size={15} /> همه چیز اوکی است</span>
+              <span className="import-review__ok"><CheckCircle2 size={15} /> {fa.coachImportExtra.allOk}</span>
             )}
           </div>
           <div className="import-review__list">
@@ -105,7 +106,7 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
             ))}
           </div>
           <div className="import-review__actions">
-            <button type="button" className="btn btn--ghost" onClick={() => setReview(null)} disabled={busy}>بازگشت و ویرایش</button>
+            <button type="button" className="btn btn--ghost" onClick={() => setReview(null)} disabled={busy}>{fa.coachImportExtra.backEdit}</button>
             <button type="button" className="btn btn--primary" onClick={() => void confirmImport()} disabled={busy}>
               {busy ? <Loader2 className="spin" size={18} /> : <CheckCircle2 size={18} />}
               {flagged.length ? fa.coachImport.importAnyway : fa.coachImport.importPlan}
@@ -122,9 +123,9 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
       <div className="coach-importer coach-importer--embedded">
         <div className="program-create-hub__panel-head program-create-hub__panel-label">
           <div>
-            <span className="program-create-hub__panel-step">گام ۲</span>
-            <strong>متن برنامه مربی را وارد کن</strong>
-            <small>برنامه مربی را بچسبان — یک زمان‌بندی تاریخ‌دار می‌سازیم.</small>
+            <span className="program-create-hub__panel-step">{fa.coachImportExtra.step2}</span>
+            <strong>{fa.coachImportExtra.enterText}</strong>
+            <small>{fa.coachImportExtra.enterHint}</small>
           </div>
           {onClose ? (
             <button type="button" className="icon-btn" onClick={onClose} aria-label={fa.close}>
@@ -142,8 +143,8 @@ export function CoachPlanImporter({ embedded = false, open: openProp = false, on
       <button type="button" className="coach-importer__toggle" onClick={() => setInternalOpen((v) => !v)}>
         <span className="card__head-icon"><ClipboardList size={20} /></span>
         <div>
-          <p className="eyebrow">متن برنامه مربی</p>
-          <strong>برنامه نوشتاری را بچسبان ← برنامه تاریخ‌دار</strong>
+          <p className="eyebrow">{fa.coachImportExtra.eyebrow}</p>
+          <strong>{fa.coachImportExtra.strong}</strong>
         </div>
         <span className="coach-importer__chevron">{open ? '−' : '+'}</span>
       </button>

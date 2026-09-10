@@ -1,7 +1,7 @@
 import { Loader2, Save, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useApp } from '../hooks/useApp';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 import { getPersistedProgramId } from '../lib/format';
 import type { Exercise, Program, ScheduleEntry } from '../types';
 
@@ -18,6 +18,7 @@ type DraftExercise = {
 };
 
 export function ProgramEditor({ program, open, onClose }: { program: Program; open: boolean; onClose: () => void }) {
+  const fa = useT();
   const { updateProgram, busy } = useApp();
   const [name, setName] = useState(program.name);
 

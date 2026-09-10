@@ -4,17 +4,8 @@ import { measurementsApi } from '../api';
 import { useApp } from '../hooks/useApp';
 import { dateInputValue, formatDate } from '../lib/format';
 import type { Measurement } from '../types';
-import { fa } from '../i18n/fa';
+import { useT } from '../i18n/LocaleProvider';
 
-const FIELDS: Array<{ key: keyof Measurement; label: string }> = [
-  { key: 'weight', label: 'وزن (کیلوگرم)' },
-  { key: 'bodyFat', label: 'چربی بدن ٪' },
-  { key: 'chest', label: 'سینه (سانتی‌متر)' },
-  { key: 'waist', label: 'کمر (سانتی‌متر)' },
-  { key: 'hips', label: 'باسن (سانتی‌متر)' },
-  { key: 'arms', label: 'بازو (سانتی‌متر)' },
-  { key: 'thighs', label: 'ران (سانتی‌متر)' },
-];
 
 function num(value: string) {
   const n = Number(value);
@@ -22,6 +13,16 @@ function num(value: string) {
 }
 
 export function MeasurementsPanel() {
+  const fa = useT();
+  const FIELDS = [
+    { key: 'weight' as const, label: fa.measurementsExtra.weightKg },
+    { key: 'bodyFat' as const, label: fa.measurementsExtra.bodyFat },
+    { key: 'chest' as const, label: fa.measurementsExtra.chestCm },
+    { key: 'waist' as const, label: fa.measurementsExtra.waistCm },
+    { key: 'hips' as const, label: fa.measurementsExtra.hipsCm },
+    { key: 'arms' as const, label: fa.measurementsExtra.armsCm },
+    { key: 'thighs' as const, label: fa.measurementsExtra.thighsCm },
+  ];
   const { token, notify } = useApp();
   const [items, setItems] = useState<Measurement[]>([]);
   const [open, setOpen] = useState(false);
@@ -47,7 +48,7 @@ export function MeasurementsPanel() {
       if (v !== undefined) (body as Record<string, unknown>)[f.key] = v;
     }
     if (Object.keys(body).length <= 2) {
-      notify('حداقل یک اندازه‌گیری وارد کن', 'error');
+      notify(fa.measurementsExtra.needOne, 'error');
       return;
     }
     setBusy(true);
@@ -57,7 +58,7 @@ export function MeasurementsPanel() {
       setValues({});
       setNote('');
       setOpen(false);
-      notify('اندازه‌گیری ذخیره شد', 'success');
+      notify(fa.measurementsExtra.saved, 'success');
     } catch (error) {
       notify(error instanceof Error ? error.message : fa.measurements.couldNotSave, 'error');
     } finally {
@@ -71,10 +72,10 @@ export function MeasurementsPanel() {
     <section className="card measurements">
       <div className="card__head">
         <div>
-          <p className="eyebrow">شاخص‌های بدن</p>
-          <h3>اندازه‌گیری‌ها</h3>
+          <p className="eyebrow">{fa.measurementsExtra.eyebrow}</p>
+          <h3>{fa.measurementsExtra.title}</h3>
         </div>
-        <button type="button" className="icon-btn" onClick={() => setOpen((v) => !v)} aria-label="افزودن اندازه‌گیری"><Plus size={18} /></button>
+        <button type="button" className="icon-btn" onClick={() => setOpen((v) => !v)} aria-label={fa.measurementsExtra.addAria}><Plus size={18} /></button>
       </div>
 
       {latest ? (
@@ -85,12 +86,12 @@ export function MeasurementsPanel() {
           </div>
         </div>
       ) : (
-        <p className="measurements__empty">هنوز اندازه‌گیری‌ای نیست. اولین را اضافه کن تا پیشرفت را ببینی.</p>
+        <p className="measurements__empty">{fa.measurementsExtra.empty}</p>
       )}
 
       {open ? (
         <div className="measurements__form">
-          <label className="field"><span>تاریخ</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+          <label className="field"><span>{fa.measurementsExtra.date}</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
           <div className="measurements__grid">
             {FIELDS.map((f) => (
               <label key={f.key} className="field">
@@ -99,7 +100,7 @@ export function MeasurementsPanel() {
               </label>
             ))}
           </div>
-          <label className="field"><span>یادداشت</span><input value={note} onChange={(e) => setNote(e.target.value)} placeholder={fa.optional} /></label>
+          <label className="field"><span>{fa.measurementsExtra.note}</span><input value={note} onChange={(e) => setNote(e.target.value)} placeholder={fa.optional} /></label>
           <button type="button" className="btn btn--primary btn--block" onClick={() => void save()} disabled={busy}>
             {busy ? <Loader2 className="spin" size={18} /> : <Plus size={18} />} {fa.measurements.saveMeasurement}
           </button>

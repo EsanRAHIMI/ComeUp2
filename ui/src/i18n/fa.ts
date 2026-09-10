@@ -1,4 +1,4 @@
-/** Persian (FA) UI copy — single-locale App Store P1. Keep API fields / logs in English. */
+/** Persian (FA) UI copy. Keep API fields / logs in English. */
 export const fa = {
   appName: 'ComeUp',
   loading: 'در حال بارگذاری ComeUp…',
@@ -82,6 +82,41 @@ export const fa = {
 
   weekdaysShort: ['یک', 'دو', 'سه', 'چهار', 'پنج', 'جمعه', 'شنبه'],
   weekdaysFull: ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'],
+
+  listSep: '، ',
+  listAnd: 'و',
+
+  language: {
+    label: 'زبان',
+    hint: 'زبان برنامه — فوراً اعمال می‌شود',
+    en: 'English',
+    fa: 'فارسی',
+    ar: 'العربية',
+  },
+
+  genders: {
+    male: 'مرد',
+    female: 'زن',
+    other: 'سایر',
+    undisclosed: 'ترجیح می‌دهم نگویم',
+  } as Record<string, string>,
+
+  nutritionPrefs: {
+    no_preference: 'بدون ترجیح',
+    high_protein: 'پروتئین بالا',
+    low_carb: 'کربوهیدرات کم',
+    vegetarian: 'گیاه‌خواری',
+    vegan: 'وگان',
+    keto: 'کتو',
+  } as Record<string, string>,
+
+  walkingMetrics: {
+    steps: 'قدم / روز',
+    minutes: 'دقیقه / روز',
+    distanceKm: 'فاصله (کیلومتر) / روز',
+  } as Record<string, string>,
+
+  medalsAria: 'دستاوردهای امروز',
 
   dashboard: {
     thisWeek: 'این هفته',
@@ -392,8 +427,10 @@ export const fa = {
     barbell: 'هالتر',
     machine: 'دستگاه',
     'cable machine': 'کابل',
+    cables: 'کابل',
     kettlebell: 'کتل‌بل',
     bands: 'کش',
+    bench: 'نیمکت',
   } as Record<string, string>,
 
   focusAreas: {
@@ -405,6 +442,7 @@ export const fa = {
     arms: 'بازو',
     core: 'مرکز بدن',
     cardio: 'کاردیو',
+    glutes: 'باسن',
   } as Record<string, string>,
 
   editor: {
@@ -638,6 +676,151 @@ export const fa = {
     noSessionsBody: 'یک تمرین را تمام کن تا اینجا با مدت، ست‌ها و کالری دیده شود.',
   },
 
+  profileEdit: {
+    aria: 'ویرایش پروفایل',
+    title: 'ویرایش پروفایل',
+    basics: 'اطلاعات پایه',
+    name: 'نام',
+    gender: 'جنسیت',
+    age: 'سن',
+    heightCm: 'قد (سانتی‌متر)',
+    weightKg: 'وزن (کیلوگرم)',
+    goalSection: 'هدف',
+    goal: 'هدف',
+    level: 'سطح',
+    targetWeightKg: 'وزن هدف (کیلوگرم)',
+    goalDeadline: 'مهلت هدف',
+    muscleFocusOptional: 'تمرکز عضلانی',
+    training: 'تمرین',
+    daysPerWeek: 'روز در هفته',
+    sessionMin: 'جلسه (دقیقه)',
+    availableEquipment: 'تجهیزات موجود',
+    preferredTrainingDays: 'روزهای ترجیحی تمرین',
+    ifIMiss: 'اگر تمرینی را از دست دادم',
+    shiftForward: 'جلو بینداز',
+    skipToNext: 'برو به روز بعد',
+    health: 'سلامت',
+    injuriesCsv: 'آسیب‌ها',
+    injuriesHint: '(با ویرگول جدا کن)',
+    injuriesPh: 'مثلاً درد زانو، کمر',
+    limitationsCsv: 'محدودیت‌های فیزیکی',
+    limitationsPh: 'مثلاً نمی‌توانم بپرم، محدودیت شانه',
+    nutritionSection: 'تغذیه',
+    preference: 'ترجیح',
+    waterTargetMl: 'هدف آب (میلی‌لیتر)',
+    supplementsCsv: 'مکمل‌ها',
+    supplementsHint: '(با ویرگول، اختیاری)',
+    supplementsPh: 'مثلاً کراتین، وی، ویتامین D',
+    walkingSection: 'پیاده‌روی',
+    dailyTarget: 'هدف روزانه',
+    amount: 'مقدار',
+    restTimerSection: 'تایمر استراحت',
+    defaultRestSec: 'استراحت پیش‌فرض (ثانیه)',
+    saveProfile: 'ذخیره پروفایل',
+  },
+
+  createHubExtra: {
+    step1: 'گام ۱ · یکی را انتخاب کن',
+    howTitle: 'چطور می‌خواهی برنامه‌ات را بگیری؟',
+    howSub: 'یکی از گزینه‌های زیر را بزن. قبل از ذخیره می‌توانی عوض کنی.',
+    orImport: 'یا وارد کن',
+    step2: 'گام ۲',
+    enterShare: 'کد اشتراک را وارد کن',
+    footerHint: 'گزینه وارد کردن را بالا انتخاب کن، یا با مربی هوش مصنوعی شروع کن.',
+  },
+
+  medalsExtra: {
+    eyebrow: 'دستاوردهای امروز',
+    doneToday: 'آفرین، امروز عالی بودی',
+  },
+
+  measurementsExtra: {
+    weightKg: 'وزن (کیلوگرم)',
+    bodyFat: 'چربی بدن ٪',
+    chestCm: 'سینه (سانتی‌متر)',
+    waistCm: 'کمر (سانتی‌متر)',
+    hipsCm: 'باسن (سانتی‌متر)',
+    armsCm: 'بازو (سانتی‌متر)',
+    thighsCm: 'ران (سانتی‌متر)',
+    needOne: 'حداقل یک اندازه‌گیری وارد کن',
+    saved: 'اندازه‌گیری ذخیره شد',
+    eyebrow: 'شاخص‌های بدن',
+    title: 'اندازه‌گیری‌ها',
+    addAria: 'افزودن اندازه‌گیری',
+    empty: 'هنوز اندازه‌گیری‌ای نیست. اولین را اضافه کن تا پیشرفت را ببینی.',
+    date: 'تاریخ',
+    note: 'یادداشت',
+  },
+
+  coachImportExtra: {
+    ready: 'مشکلی نیست — آماده وارد کردن',
+    imported: 'برنامه مربی وارد شد',
+    startDate: 'تاریخ شروع',
+    gymTime: 'ساعت باشگاه',
+    weeks: 'هفته‌ها',
+    sessionMin: 'دقیقه جلسه',
+    allOk: 'همه چیز اوکی است',
+    backEdit: 'بازگشت و ویرایش',
+    step2: 'گام ۲',
+    enterText: 'متن برنامه مربی را وارد کن',
+    enterHint: 'برنامه مربی را بچسبان — یک زمان‌بندی تاریخ‌دار می‌سازیم.',
+    eyebrow: 'متن برنامه مربی',
+    strong: 'برنامه نوشتاری را بچسبان ← برنامه تاریخ‌دار',
+  },
+
+  generateExtra: {
+    savedActivated: 'برنامه ذخیره و فعال شد',
+    goal: 'هدف',
+    level: 'سطح',
+    sessionMin: 'جلسه (دقیقه)',
+    daysPerWeek: 'روز در هفته',
+    equipment: 'تجهیزات',
+    notesPh: 'مثلاً پرس بالای سر نکن، تمرکز بیشتر روی باسن…',
+    tweakAgain: 'تنظیم و تولید مجدد',
+  },
+
+  gptExtra: {
+    savedActivated: 'برنامه ذخیره و فعال شد',
+    title: 'مربی هوش مصنوعی',
+  },
+
+  shareExtra: {
+    imported: 'برنامه وارد شد',
+  },
+
+  noProgram: {
+    aria: 'دریافت برنامه تمرینی',
+    title: 'هنوز برنامه فعالی نداری',
+    body: 'نحوه شروع را انتخاب کن — مستقیم همان‌جا می‌رویم.',
+    aiTitle: 'مربی هوش مصنوعی',
+    aiBody: 'با مربی هوش مصنوعی چت کن، اهدافت را بگو و یک برنامه کاملاً شخصی بگیر.',
+    quickTitle: 'ساخت سریع',
+    quickBody: 'با پروفایل و چند انتخاب، در یک مرحله برنامه حرفه‌ای بساز.',
+    shareTitle: 'وارد کردن کد اشتراک',
+    shareBody: 'کد برنامه مربی یا دوستانت را بچسبان و به کتابخانه اضافه کن.',
+    completeProfile: 'پروفایل را کامل کن تا برنامه‌های هوش مصنوعی بهتر شوند',
+    completeBody: 'هدف، سطح آمادگی، تجهیزات و آسیب‌ها را در پروفایل اضافه کن تا مربی هوش مصنوعی برنامه دقیق‌تری بسازد.',
+  },
+
+  historyStatus: {
+    completed: 'انجام‌شده',
+    pending: 'در انتظار',
+    missed: 'ازدست‌رفته',
+    shifted: 'جابه‌جاشده',
+    upcoming: 'برنامه‌ریزی‌شده',
+  },
+
+  misc: {
+    km: 'کیلومتر',
+    perDay: '/روز',
+    days: 'روز',
+    minutes: 'دقیقه',
+    seconds: 'ثانیه',
+    reps: 'تکرار',
+    logged: 'ثبت‌شده',
+    planPct: '٪ برنامه',
+  },
+
   admin: {
     title: 'مدیریت',
     subtitle: 'کاربران، برنامه‌ها، رسانه و فعالیت',
@@ -681,28 +864,6 @@ export const fa = {
     deleteProgram: 'حذف برنامه',
     adminBadge: 'مدیر',
   },
-} as const;
+};
 
 export type FaCopy = typeof fa;
-
-export function goalLabel(goal: string) {
-  return fa.goals[goal] ?? goal;
-}
-
-export function levelLabel(level: string) {
-  return fa.levels[level] ?? level;
-}
-
-export function equipmentLabel(item: string) {
-  return fa.equipment[item] ?? item;
-}
-
-export function focusLabel(item: string) {
-  return fa.focusAreas[item] ?? item;
-}
-
-export function joinFaList(items: string[]) {
-  if (items.length <= 1) return items[0] ?? '';
-  if (items.length === 2) return `${items[0]} و ${items[1]}`;
-  return `${items.slice(0, -1).join('، ')} و ${items[items.length - 1]}`;
-}
