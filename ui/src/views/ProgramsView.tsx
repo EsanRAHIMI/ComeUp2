@@ -32,23 +32,23 @@ function ProgramCardActions({
   onDelete: () => void;
 }) {
   return (
-    <div className="manage-card__actions" role="toolbar" aria-label="Program actions">
+    <div className="manage-card__actions" role="toolbar" aria-label={fa.programsUi.actions}>
       <button
         type="button"
         className={`manage-card__action manage-card__action--primary ${program.isActive ? 'manage-card__action--is-active' : ''}`}
-        title={program.isActive ? 'Active program' : 'Activate program'}
+        title={program.isActive ? fa.programsUi.activeProgram : fa.programsUi.activateProgram}
         onClick={(e) => {
           e.stopPropagation();
           onActivate();
         }}
         disabled={busy || program.isActive || !persisted}
       >
-        {program.isActive ? 'Active' : 'Activate'}
+        {program.isActive ? fa.programsUi.active : fa.programsUi.activate}
       </button>
       <button
         type="button"
         className="manage-card__action"
-        title="Edit program"
+        title={fa.programsUi.editProgram}
         onClick={(e) => {
           e.stopPropagation();
           onEdit();
@@ -60,7 +60,7 @@ function ProgramCardActions({
       <button
         type="button"
         className="manage-card__action"
-        title="Duplicate program"
+        title={fa.programsUi.duplicateProgram}
         onClick={(e) => {
           e.stopPropagation();
           onDuplicate();
@@ -72,7 +72,7 @@ function ProgramCardActions({
       <button
         type="button"
         className="manage-card__action"
-        title="Share program"
+        title={fa.programsUi.shareProgram}
         onClick={(e) => {
           e.stopPropagation();
           onShare();
@@ -84,7 +84,7 @@ function ProgramCardActions({
       <button
         type="button"
         className="manage-card__action manage-card__action--danger"
-        title="Delete program"
+        title={fa.programsUi.deleteProgram}
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
@@ -119,9 +119,9 @@ export function ProgramsView() {
 
   function confirmDelete(program: Program) {
     if (program.isActive) {
-      if (!window.confirm(`"${program.name}" is your ACTIVE program. Are you sure you want to delete it?`)) return;
-      if (!window.confirm('This cannot be undone. Delete the active program?')) return;
-    } else if (!window.confirm(`Delete "${program.name}"? This cannot be undone.`)) {
+      if (!window.confirm(fa.programsUi.deleteActive1(program.name))) return;
+      if (!window.confirm(fa.programsUi.deleteActive2)) return;
+    } else if (!window.confirm(fa.programsUi.deleteOne(program.name))) {
       return;
     }
     deleteProgram(program);
@@ -172,7 +172,7 @@ export function ProgramsView() {
                     <div className="manage-card__title">
                       <h3>{program.name}</h3>
                     </div>
-                    <small>{program.daysPerWeek}×/wk · {program.duration} min · {program.exercises.length} exercises</small>
+                    <small>{fa.programsUi.meta(program.daysPerWeek, program.duration, program.exercises.length)}</small>
                   </button>
                   <ProgramCardActions
                     program={program}
@@ -188,7 +188,7 @@ export function ProgramsView() {
                     type="button"
                     className="manage-card__chevron"
                     onClick={() => setExpanded(isOpen ? null : id)}
-                    aria-label={isOpen ? 'Collapse program' : 'Expand program'}
+                    aria-label={isOpen ? fa.programsUi.collapse : fa.programsUi.expand}
                   >
                     <ChevronDown size={18} className={isOpen ? 'rot-180' : ''} />
                   </button>
@@ -208,13 +208,9 @@ export function ProgramsView() {
         </div>
       ) : (
         <EmptyState
-          title={term ? 'No matches' : 'No saved programs yet'}
-          description={
-            term
-              ? 'Try a different search.'
-              : 'Use AI Coach or Quick generate above — both share 5 AI generations per week.'
-          }
-          actionLabel={term ? undefined : 'Start with AI Coach'}
+          title={term ? fa.programsUi.noMatches : fa.programsUi.noSaved}
+          description={term ? fa.programsUi.tryDifferent : fa.programsUi.emptyBody}
+          actionLabel={term ? undefined : fa.programsUi.startAi}
           onAction={term ? undefined : () => setGptOpen(true)}
         />
       )}

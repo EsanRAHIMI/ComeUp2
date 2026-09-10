@@ -49,7 +49,7 @@ export function ProgramCard({
           className="icon-btn"
           onClick={() => onShare(program)}
           disabled={busy || !persisted}
-          aria-label="Share program"
+          aria-label={fa.programsUi.shareProgram}
         >
           <Share2 size={17} />
         </button>

@@ -2,6 +2,7 @@ import { Download, Loader2 } from 'lucide-react';
 import { useState, type RefObject } from 'react';
 import { ApiError, programsApi } from '../api';
 import { useApp } from '../hooks/useApp';
+import { fa } from '../i18n/fa';
 
 type Props = {
   inputRef?: RefObject<HTMLInputElement | null>;
@@ -21,7 +22,7 @@ export function ShareCodeImport({ inputRef }: Props) {
       notify('برنامه وارد شد', 'success');
       setCode('');
     } catch (error) {
-      notify(error instanceof ApiError ? error.message : 'Invalid share code', 'error');
+      notify(error instanceof ApiError ? error.message : fa.shareImport.invalidCode, 'error');
     } finally {
       setBusy(false);
     }
@@ -34,13 +35,13 @@ export function ShareCodeImport({ inputRef }: Props) {
         ref={inputRef}
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        placeholder="e.g. ABC12XYZ"
+        placeholder={fa.shareImport.codePh}
         onKeyDown={(e) => {
           if (e.key === 'Enter') void submit();
         }}
       />
       <button type="button" className="btn btn--primary" onClick={() => void submit()} disabled={busy || code.trim().length < 3}>
-        {busy ? <Loader2 className="spin" size={16} /> : 'Import'}
+        {busy ? <Loader2 className="spin" size={16} /> : fa.shareImport.import}
       </button>
     </div>
   );

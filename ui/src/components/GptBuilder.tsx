@@ -7,16 +7,10 @@ import { DraftPreview } from './DraftPreview';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
 import { profileContextFromUser } from '../lib/aiProfile';
+import { fa } from '../i18n/fa';
 import type { ChatMessage, GptDraftProgram, GptQuota } from '../types';
 
-const SUGGESTIONS = [
-  'Make it 4 days instead of 5',
-  'Reduce shoulder volume',
-  'Increase arm focus',
-  'Adjust for knee pain',
-  'Make each session 60 minutes',
-  'Use only dumbbells and machines',
-];
+const SUGGESTIONS = fa.gpt.suggestions;
 
 export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { token, user, notify, refreshPrograms } = useApp();
@@ -69,16 +63,16 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
     } catch (error) {
       const message =
         error instanceof ApiError && error.status === 429
-          ? 'You have used all 5 AI messages this week.'
+          ? fa.gpt.usedAll
           : error instanceof ApiError && error.status === 503
-            ? 'AI Coach is not configured on the server yet.'
+            ? fa.gpt.aiNotConfigured
             : error instanceof ApiError && error.status === 504
-              ? 'AI Coach took too long — please try again.'
+              ? fa.gpt.tookTooLong
               : error instanceof ApiError
                 ? error.message
                 : error instanceof Error
                   ? error.message
-                  : 'Generation failed';
+                  : fa.gpt.generationFailed;
       notify(message, 'error');
       setMessages((m) => [...m, { role: 'assistant', content: `⚠️ ${message}` }]);
     } finally {
@@ -96,31 +90,31 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
       onClose();
       navigate('dashboard');
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Could not save program', 'error');
+      notify(error instanceof Error ? error.message : fa.gpt.couldNotSave, 'error');
     } finally {
       setConverting(false);
     }
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-label="AI Coach program builder">
+    <div className="modal-overlay" role="dialog" aria-label={fa.gpt.aria}>
       <div className="gpt-builder">
         <header className="gpt-builder__head">
           <div className="gpt-builder__title">
             <span className="card__head-icon"><Bot size={18} /></span>
             <div>
               <strong>مربی هوش مصنوعی</strong>
-              {quota ? <small>{quota.remaining} of {quota.limit} AI messages left this week</small> : null}
+              {quota ? <small>{fa.gpt.quotaLeft(quota.remaining, quota.limit)}</small> : null}
             </div>
           </div>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label={fa.close}><X size={18} /></button>
         </header>
 
         <div className="gpt-builder__body" ref={scrollRef}>
           {messages.length === 0 ? (
             <div className="gpt-builder__intro">
               <Sparkles size={22} />
-              <p>Describe your goals or just say “build my program”. I’ll use your profile, then you can ask for changes. Say “save and activate” when you’re ready.</p>
+              <p>{fa.gpt.intro}</p>
             </div>
           ) : null}
 
@@ -157,7 +151,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void send(input); }}
-            placeholder={noQuota ? 'Weekly AI limit reached' : 'Message your AI coach…'}
+            placeholder={noQuota ? fa.gpt.weeklyLimit : fa.gpt.placeholder}
             disabled={busy || noQuota}
           />
           <button type="button" className="btn btn--primary" onClick={() => void send(input)} disabled={busy || noQuota || !input.trim()}>
@@ -168,7 +162,7 @@ export function GptBuilder({ open, onClose }: { open: boolean; onClose: () => vo
         {draft ? (
           <button type="button" className="btn btn--success btn--block btn--lg gpt-builder__save" onClick={() => void convert()} disabled={converting}>
             {converting ? <Loader2 className="spin" size={18} /> : <CheckCircle2 size={18} />}
-            Save &amp; activate this program
+            {fa.gpt.saveActivate}
           </button>
         ) : null}
       </div>

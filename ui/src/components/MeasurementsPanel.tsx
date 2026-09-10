@@ -59,7 +59,7 @@ export function MeasurementsPanel() {
       setOpen(false);
       notify('اندازه‌گیری ذخیره شد', 'success');
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'Could not save', 'error');
+      notify(error instanceof Error ? error.message : fa.measurements.couldNotSave, 'error');
     } finally {
       setBusy(false);
     }
@@ -79,7 +79,7 @@ export function MeasurementsPanel() {
 
       {latest ? (
         <div className="measurements__latest">
-          <span><Ruler size={14} /> Latest · {formatDate(latest.measuredAt)}</span>
+          <span><Ruler size={14} /> {fa.measurements.latestPrefix} · {formatDate(latest.measuredAt)}</span>
           <div className="measurements__chips">
             {FIELDS.map((f) => (latest[f.key] !== undefined ? <span key={f.key}>{f.label.split(' ')[0]}: {String(latest[f.key])}</span> : null))}
           </div>
@@ -101,7 +101,7 @@ export function MeasurementsPanel() {
           </div>
           <label className="field"><span>یادداشت</span><input value={note} onChange={(e) => setNote(e.target.value)} placeholder={fa.optional} /></label>
           <button type="button" className="btn btn--primary btn--block" onClick={() => void save()} disabled={busy}>
-            {busy ? <Loader2 className="spin" size={18} /> : <Plus size={18} />} Save measurement
+            {busy ? <Loader2 className="spin" size={18} /> : <Plus size={18} />} {fa.measurements.saveMeasurement}
           </button>
         </div>
       ) : null}
@@ -111,7 +111,7 @@ export function MeasurementsPanel() {
           {items.slice(0, 6).map((m) => (
             <div key={m._id} className="measurements__row">
               <strong>{formatDate(m.measuredAt)}</strong>
-              <small>{m.weight ? `${m.weight} kg` : ''}{m.bodyFat ? ` · ${m.bodyFat}% bf` : ''}</small>
+              <small>{m.weight ? `${m.weight} ${fa.measurements.kg}` : ''}{m.bodyFat ? ` · ${m.bodyFat}% ${fa.measurements.bodyFatShort}` : ''}</small>
             </div>
           ))}
         </div>

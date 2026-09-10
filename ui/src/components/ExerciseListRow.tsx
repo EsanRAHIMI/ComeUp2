@@ -1,4 +1,5 @@
 import { useApp } from '../hooks/useApp';
+import { fa } from '../i18n/fa';
 import { resolveExerciseImage } from '../lib/exerciseImages';
 import type { Exercise } from '../types';
 import { ExerciseImage } from './ExerciseImage';
@@ -20,8 +21,8 @@ export function ExerciseListRow({ exercise, index, showMuscleGroups = true }: Pr
         <strong>{exercise.name}</strong>
         <small>
           {exercise.sets} × {exercise.repRange || exercise.reps}{' '}
-          {exercise.trackingType === 'time' ? 'sec' : 'reps'}
-          {exercise.restTime ? ` · ${exercise.restTime}s rest` : ''}
+          {exercise.trackingType === 'time' ? fa.common.sec : fa.common.reps}
+          {exercise.restTime ? ` · ${exercise.restTime}ث ${fa.common.rest}` : ''}
         </small>
       </div>
       {showMuscleGroups ? <em>{exercise.muscleGroups.slice(0, 2).join(', ')}</em> : null}

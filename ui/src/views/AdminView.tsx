@@ -4,6 +4,7 @@ import { adminApi, ApiError } from '../api';
 import { AdminMediaPanel } from '../components/AdminMediaPanel';
 import { useApp } from '../hooks/useApp';
 import { useRouter } from '../hooks/useRouter';
+import { fa } from '../i18n/fa';
 import type { Program, User } from '../types';
 
 type Tab = 'overview' | 'users' | 'programs' | 'media' | 'activity';
@@ -34,7 +35,7 @@ export function AdminView() {
       if (tab === 'media') setMedia(await adminApi.exerciseMedia(token));
       if (tab === 'activity') setSessions((await adminApi.sessions(token, { limit: 80 })).sessions);
     } catch (error) {
-      notify(error instanceof ApiError ? error.message : 'Admin load failed', 'error');
+      notify(error instanceof ApiError ? error.message : fa.admin.loadFailed, 'error');
     } finally {
       setBusy(false);
     }
@@ -47,16 +48,16 @@ export function AdminView() {
   if (!user?.isAdmin) return null;
 
   async function removeUser(id: string) {
-    if (!token || !window.confirm('Delete this user and all their programs/sessions?')) return;
+    if (!token || !window.confirm(fa.admin.deleteUserConfirm)) return;
     await adminApi.deleteUser(token, id);
-    notify('User deleted', 'success');
+    notify(fa.admin.userDeleted, 'success');
     void load();
   }
 
   async function removeProgram(id: string) {
-    if (!token || !window.confirm('Delete this program?')) return;
+    if (!token || !window.confirm(fa.admin.deleteProgramConfirm)) return;
     await adminApi.deleteProgram(token, id);
-    notify('Program deleted', 'success');
+    notify(fa.admin.programDeleted, 'success');
     void load();
   }
 
@@ -71,20 +72,26 @@ export function AdminView() {
         <div className="admin-view__title">
           <Shield size={20} />
           <div>
-            <h2>Admin</h2>
-            <small>Manage users, programs, media, and activity</small>
+            <h2>{fa.admin.title}</h2>
+            <small>{fa.admin.subtitle}</small>
           </div>
         </div>
         <button type="button" className="btn btn--ghost" onClick={() => void load()} disabled={busy}>
           {busy ? <Loader2 className="spin" size={16} /> : <RefreshCw size={16} />}
-          Refresh
+          {fa.admin.refresh}
         </button>
       </div>
 
       <div className="admin-tabs">
-        {(['overview', 'users', 'programs', 'media', 'activity'] as Tab[]).map((key) => (
+        {([
+          ['overview', fa.admin.tabs.overview],
+          ['users', fa.admin.tabs.users],
+          ['programs', fa.admin.tabs.programs],
+          ['media', fa.admin.tabs.media],
+          ['activity', fa.admin.tabs.activity],
+        ] as Array<[Tab, string]>).map(([key, label]) => (
           <button key={key} type="button" className={`admin-tabs__btn ${tab === key ? 'is-active' : ''}`} onClick={() => setTab(key)}>
-            {key}
+            {label}
           </button>
         ))}
       </div>
@@ -92,13 +99,13 @@ export function AdminView() {
       {tab === 'overview' && overview ? (
         <div className="admin-stats">
           {[
-            ['Users', overview.users],
-            ['Programs', overview.programs],
-            ['Shared images', overview.communityMedia],
-            ['Personal overrides', overview.personalMedia],
-            ['Sessions', overview.sessions],
-            ['Completed', overview.completedSessions],
-            ['This week', overview.sessionsThisWeek],
+            [fa.admin.stats.users, overview.users],
+            [fa.admin.stats.programs, overview.programs],
+            [fa.admin.stats.sharedImages, overview.communityMedia],
+            [fa.admin.stats.personalOverrides, overview.personalMedia],
+            [fa.admin.stats.sessions, overview.sessions],
+            [fa.admin.stats.completed, overview.completedSessions],
+            [fa.admin.stats.thisWeek, overview.sessionsThisWeek],
           ].map(([label, value]) => (
             <div key={label} className="admin-stat card">
               <span>{label}</span>
@@ -111,23 +118,23 @@ export function AdminView() {
       {tab === 'users' ? (
         <div className="admin-panel card">
           <div className="admin-panel__toolbar">
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users…" />
-            <button type="button" className="btn btn--ghost" onClick={() => void load()}>Search</button>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={fa.admin.searchUsers} />
+            <button type="button" className="btn btn--ghost" onClick={() => void load()}>{fa.admin.search}</button>
           </div>
           <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
-                <tr><th>Name</th><th>Email</th><th>Goal</th><th>Level</th><th /></tr>
+                <tr><th>{fa.admin.name}</th><th>{fa.admin.email}</th><th>{fa.admin.goal}</th><th>{fa.admin.level}</th><th /></tr>
               </thead>
               <tbody>
                 {users.map((u) => (
                   <tr key={u.id}>
-                    <td>{u.name}{u.isAdmin ? ' · admin' : ''}</td>
+                    <td>{u.name}{u.isAdmin ? ` · ${fa.admin.adminBadge}` : ''}</td>
                     <td>{u.email}</td>
                     <td>{u.goal}</td>
                     <td>{u.fitnessLevel}</td>
                     <td>
-                      <button type="button" className="icon-btn" onClick={() => void removeUser(u.id)} aria-label="Delete user">
+                      <button type="button" className="icon-btn" onClick={() => void removeUser(u.id)} aria-label={fa.admin.deleteUser}>
                         <Trash2 size={16} />
                       </button>
                     </td>
@@ -144,17 +151,17 @@ export function AdminView() {
           <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
-                <tr><th>Program</th><th>Owner</th><th>Days</th><th>Active</th><th /></tr>
+                <tr><th>{fa.admin.program}</th><th>{fa.admin.owner}</th><th>{fa.admin.days}</th><th>{fa.admin.active}</th><th /></tr>
               </thead>
               <tbody>
                 {programs.map((p) => (
                   <tr key={p._id ?? p.id}>
                     <td>{p.name}</td>
                     <td>{(p as Program & { owner?: { email?: string } }).owner?.email ?? '—'}</td>
-                    <td>{p.daysPerWeek}×/wk</td>
-                    <td>{p.isActive ? 'Yes' : 'No'}</td>
+                    <td>{p.daysPerWeek}×/هفته</td>
+                    <td>{p.isActive ? fa.common.yes : fa.common.no}</td>
                     <td>
-                      <button type="button" className="icon-btn" onClick={() => void removeProgram(String(p._id ?? p.id))} aria-label="Delete program">
+                      <button type="button" className="icon-btn" onClick={() => void removeProgram(String(p._id ?? p.id))} aria-label={fa.admin.deleteProgram}>
                         <Trash2 size={16} />
                       </button>
                     </td>
@@ -175,7 +182,7 @@ export function AdminView() {
           <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
-                <tr><th>User</th><th>Program</th><th>Status</th><th>When</th><th>Min</th></tr>
+                <tr><th>{fa.admin.userCol}</th><th>{fa.admin.program}</th><th>{fa.admin.status}</th><th>{fa.admin.when}</th><th>{fa.admin.min}</th></tr>
               </thead>
               <tbody>
                 {sessions.map((s) => (
